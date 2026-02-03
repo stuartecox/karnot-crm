@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
-import { Building, Mail, Phone, Globe, Linkedin, Plus, Edit, Trash2, Search, Filter, DollarSign, MapPin, Users, FileText, Grid, List, Send, Download, X, CheckSquare, Copy, PlusCircle, ExternalLink, Navigation, Target, Handshake, UserCheck, Upload } from 'lucide-react';
+import { Building, Mail, Phone, Globe, Linkedin, Plus, Edit, Trash2, Search, Filter, DollarSign, MapPin, Users, FileText, Grid, List, Send, Download, X, CheckSquare, Copy, PlusCircle, ExternalLink, Navigation, Target, Handshake, UserCheck, Upload, Save } from 'lucide-react';
 import { importInvestors } from '../utils/importInvestors';
 import InvestorFunnel from '../components/InvestorFunnel';
 import InvestorWebScraper from '../components/InvestorWebScraper';
@@ -1569,7 +1569,7 @@ stuart@karnot.com`
 };
 
 // ========================================
-// INVESTOR MODAL (UPDATED WITH EMBEDDED CONTACTS)
+// INVESTOR MODAL (UPDATED WITH EMBEDDED CONTACTS AND INLINE EDITING)
 // ========================================
 const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities, contacts }) => {
   const [activeTab, setActiveTab] = useState('DETAILS');
@@ -1613,6 +1613,7 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
     notes: ''
   });
   const [editingContactId, setEditingContactId] = useState(null);
+  const [editingContactData, setEditingContactData] = useState(null);
 
   // ADDED: Contact management functions
   const handleAddContact = () => {
@@ -1656,29 +1657,46 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
     });
   };
 
-  const handleUpdateContact = (contactId, updates) => {
+  // UPDATED: Now properly handles inline editing
+  const handleStartEditContact = (contact) => {
+    setEditingContactId(contact.id);
+    setEditingContactData({...contact});
+  };
+
+  const handleSaveContactEdit = () => {
+    if (!editingContactData.name.trim()) {
+      alert('Contact name cannot be empty');
+      return;
+    }
+
     let updatedContacts = (formData.contacts || []).map(c =>
-      c.id === contactId ? { ...c, ...updates } : c
+      c.id === editingContactId ? editingContactData : c
     );
 
     // If setting as primary, unmark others
-    if (updates.isPrimary) {
+    if (editingContactData.isPrimary) {
       updatedContacts = updatedContacts.map(c =>
-        c.id === contactId ? c : { ...c, isPrimary: false }
+        c.id === editingContactId ? c : { ...c, isPrimary: false }
       );
 
-      const primaryContact = updatedContacts.find(c => c.id === contactId);
       setFormData({
         ...formData,
         contacts: updatedContacts,
-        contactPerson: primaryContact.name,
-        email: primaryContact.email || formData.email
+        contactPerson: editingContactData.name,
+        email: editingContactData.email || formData.email,
+        phone: editingContactData.phone || formData.phone
       });
     } else {
       setFormData({ ...formData, contacts: updatedContacts });
     }
 
     setEditingContactId(null);
+    setEditingContactData(null);
+  };
+
+  const handleCancelContactEdit = () => {
+    setEditingContactId(null);
+    setEditingContactData(null);
   };
 
   const handleDeleteContact = (contactId) => {
@@ -2102,7 +2120,7 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
               </div>
             )}
 
-            {/* UPDATED PEOPLE TAB WITH EMBEDDED CONTACTS */}
+            {/* UPDATED PEOPLE TAB WITH EMBEDDED CONTACTS AND INLINE EDITING */}
             {activeTab === 'PEOPLE' && (
               <div className="space-y-4">
                 {/* ADD NEW CONTACT FORM */}
@@ -2184,7 +2202,7 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
                   </div>
                 </div>
 
-                {/* CONTACTS LIST */}
+                {/* CONTACTS LIST WITH INLINE EDITING */}
                 {(formData.contacts || []).length === 0 ? (
                   <div className="text-center py-8">
                     <Users size={48} className="mx-auto text-gray-200 mb-2"/>
@@ -2202,72 +2220,168 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
                             : 'border-gray-200 hover:border-teal-400'
                         }`}
                       >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              {contact.isPrimary && (
-                                <span className="text-yellow-600 text-xs">⭐</span>
-                              )}
-                              <h4 className="font-bold text-gray-800">{contact.name}</h4>
-                              {contact.isPrimary && (
-                                <span className="text-[9px] font-black uppercase bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">
-                                  Primary
-                                </span>
-                              )}
+                        {editingContactId === contact.id ? (
+                          // EDIT MODE
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                type="text"
+                                value={editingContactData.name}
+                                onChange={(e) => setEditingContactData({...editingContactData, name: e.target.value})}
+                                placeholder="Full Name *"
+                                className="p-2 border rounded-lg text-sm font-bold"
+                              />
+                              <input
+                                type="text"
+                                value={editingContactData.role}
+                                onChange={(e) => setEditingContactData({...editingContactData, role: e.target.value})}
+                                placeholder="Role / Title"
+                                className="p-2 border rounded-lg text-sm"
+                              />
                             </div>
-                            <p className="text-xs text-teal-600 font-bold uppercase">{contact.role || 'No Title'}</p>
-                          </div>
 
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {!contact.isPrimary && (
-                              <button
-                                type="button"
-                                onClick={() => handleSetPrimary(contact.id)}
-                                className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded"
-                                title="Set as Primary"
-                              >
-                                ⭐
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteContact(contact.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                type="email"
+                                value={editingContactData.email}
+                                onChange={(e) => setEditingContactData({...editingContactData, email: e.target.value})}
+                                placeholder="Email"
+                                className="p-2 border rounded-lg text-sm"
+                              />
+                              <input
+                                type="tel"
+                                value={editingContactData.phone}
+                                onChange={(e) => setEditingContactData({...editingContactData, phone: e.target.value})}
+                                placeholder="Phone"
+                                className="p-2 border rounded-lg text-sm"
+                              />
+                            </div>
 
-                        <div className="mt-2 space-y-1">
-                          {contact.email && (
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <Mail size={12} className="text-gray-400" />
-                              <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
-                                {contact.email}
-                              </a>
+                            <input
+                              type="url"
+                              value={editingContactData.linkedin}
+                              onChange={(e) => setEditingContactData({...editingContactData, linkedin: e.target.value})}
+                              placeholder="LinkedIn URL"
+                              className="w-full p-2 border rounded-lg text-sm"
+                            />
+
+                            <input
+                              type="text"
+                              value={editingContactData.notes}
+                              onChange={(e) => setEditingContactData({...editingContactData, notes: e.target.value})}
+                              placeholder="Notes"
+                              className="w-full p-2 border rounded-lg text-sm"
+                            />
+
+                            <div className="flex items-center justify-between">
+                              <label className="flex items-center gap-2 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={editingContactData.isPrimary}
+                                  onChange={(e) => setEditingContactData({...editingContactData, isPrimary: e.target.checked})}
+                                  className="rounded"
+                                />
+                                <span className="font-bold text-gray-700">Primary Contact</span>
+                              </label>
+
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleCancelContactEdit}
+                                  className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-bold"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleSaveContactEdit}
+                                  className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-bold flex items-center gap-1"
+                                >
+                                  <Save size={14} />
+                                  Save
+                                </button>
+                              </div>
                             </div>
-                          )}
-                          {contact.phone && (
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <Phone size={12} className="text-gray-400" />
-                              <span>{contact.phone}</span>
+                          </div>
+                        ) : (
+                          // VIEW MODE
+                          <>
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  {contact.isPrimary && (
+                                    <span className="text-yellow-600 text-xs">⭐</span>
+                                  )}
+                                  <h4 className="font-bold text-gray-800">{contact.name}</h4>
+                                  {contact.isPrimary && (
+                                    <span className="text-[9px] font-black uppercase bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">
+                                      Primary
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-teal-600 font-bold uppercase">{contact.role || 'No Title'}</p>
+                              </div>
+
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEditContact(contact)}
+                                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                  title="Edit Contact"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                {!contact.isPrimary && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetPrimary(contact.id)}
+                                    className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded"
+                                    title="Set as Primary"
+                                  >
+                                    ⭐
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteContact(contact.id)}
+                                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             </div>
-                          )}
-                          {contact.linkedin && (
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <Linkedin size={12} className="text-gray-400" />
-                              <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
-                                {contact.linkedin.replace('https://www.linkedin.com/in/', '')}
-                              </a>
+
+                            <div className="mt-2 space-y-1">
+                              {contact.email && (
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <Mail size={12} className="text-gray-400" />
+                                  <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                                    {contact.email}
+                                  </a>
+                                </div>
+                              )}
+                              {contact.phone && (
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <Phone size={12} className="text-gray-400" />
+                                  <span>{contact.phone}</span>
+                                </div>
+                              )}
+                              {contact.linkedin && (
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <Linkedin size={12} className="text-gray-400" />
+                                  <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                                    {contact.linkedin.replace('https://www.linkedin.com/in/', '')}
+                                  </a>
+                                </div>
+                              )}
+                              {contact.notes && (
+                                <div className="mt-2 text-xs text-gray-500 italic bg-gray-50 p-2 rounded">
+                                  💡 {contact.notes}
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {contact.notes && (
-                            <div className="mt-2 text-xs text-gray-500 italic bg-gray-50 p-2 rounded">
-                              💡 {contact.notes}
-                            </div>
-                          )}
-                        </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
