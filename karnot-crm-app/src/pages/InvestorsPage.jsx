@@ -310,6 +310,7 @@ const CSVImportModal = ({ onClose, onImport, user }) => {
           notes: row[mapping.notes] || '',
           focus: [],
           interactions: [],
+          contacts: [], // ← Initialize empty contacts array
           amount: 0,
           status: 'ACTIVE',
           createdAt: serverTimestamp()
@@ -1362,9 +1363,8 @@ stuart@karnot.com`
     onToggleEmailMenu();
   };
 
-  const relatedContacts = contacts?.filter(c => 
-    c.company?.toLowerCase() === investor.name?.toLowerCase()
-  ) || [];
+  // Get embedded contacts from investor record
+  const embeddedContacts = investor.contacts || [];
 
   return (
     <div className={`bg-white rounded-lg border-2 transition-all p-4 relative ${
@@ -1473,13 +1473,13 @@ stuart@karnot.com`
           </div>
         )}
 
-        {relatedContacts.length > 0 && (
+        {embeddedContacts.length > 0 && (
           <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
             <div className="text-xs font-bold text-blue-700 mb-1">
-              {relatedContacts.length} Contact{relatedContacts.length !== 1 ? 's' : ''}
+              {embeddedContacts.length} Contact{embeddedContacts.length !== 1 ? 's' : ''}
             </div>
             <div className="text-xs text-blue-600">
-              {relatedContacts.map(c => `${c.firstName} ${c.lastName}`).join(', ')}
+              {embeddedContacts.map(c => c.name).join(', ')}
             </div>
           </div>
         )}
@@ -1569,17 +1569,19 @@ stuart@karnot.com`
 };
 
 // ========================================
-// INVESTOR MODAL (EXISTING - NO CHANGES)
+// INVESTOR MODAL (UPDATED WITH EMBEDDED CONTACTS)
 // ========================================
 const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities, contacts }) => {
   const [activeTab, setActiveTab] = useState('DETAILS');
+  
+  // UPDATED: Added contacts array to initial state
   const [formData, setFormData] = useState(investor || {
     name: '',
     type: 'Venture Capital',
     region: 'Philippines',
     city: '',
-    contactPerson: '',
-    email: '',
+    contactPerson: '',  // Keep for backward compat (primary contact name)
+    email: '',          // Keep for backward compat (primary contact email)
     phone: '',
     website: '',
     linkedin: '',
@@ -1591,13 +1593,119 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
     stage: 'RESEARCH',
     amount: 0,
     status: 'ACTIVE',
-    interactions: []
+    interactions: [],
+    contacts: []        // ← ADDED: embedded contacts array
   });
 
   const [focusInput, setFocusInput] = useState('');
   const [newLogType, setNewLogType] = useState('Call');
   const [newLogOutcome, setNewLogOutcome] = useState('');
   const [newLogDate, setNewLogDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // ADDED: Contact management state
+  const [newContact, setNewContact] = useState({
+    name: '',
+    role: '',
+    email: '',
+    phone: '',
+    linkedin: '',
+    isPrimary: false,
+    notes: ''
+  });
+  const [editingContactId, setEditingContactId] = useState(null);
+
+  // ADDED: Contact management functions
+  const handleAddContact = () => {
+    if (!newContact.name.trim()) {
+      alert('Please enter a contact name');
+      return;
+    }
+
+    const contact = {
+      id: Date.now().toString(),
+      ...newContact,
+      createdAt: new Date().toISOString()
+    };
+
+    // If this is marked as primary, unmark others
+    let updatedContacts = [...(formData.contacts || [])];
+    if (contact.isPrimary) {
+      updatedContacts = updatedContacts.map(c => ({ ...c, isPrimary: false }));
+    }
+
+    setFormData({
+      ...formData,
+      contacts: [...updatedContacts, contact],
+      // Also update the legacy contactPerson field if this is primary
+      ...(contact.isPrimary && {
+        contactPerson: contact.name,
+        email: contact.email || formData.email,
+        phone: contact.phone || formData.phone
+      })
+    });
+
+    // Reset form
+    setNewContact({
+      name: '',
+      role: '',
+      email: '',
+      phone: '',
+      linkedin: '',
+      isPrimary: false,
+      notes: ''
+    });
+  };
+
+  const handleUpdateContact = (contactId, updates) => {
+    let updatedContacts = (formData.contacts || []).map(c =>
+      c.id === contactId ? { ...c, ...updates } : c
+    );
+
+    // If setting as primary, unmark others
+    if (updates.isPrimary) {
+      updatedContacts = updatedContacts.map(c =>
+        c.id === contactId ? c : { ...c, isPrimary: false }
+      );
+
+      const primaryContact = updatedContacts.find(c => c.id === contactId);
+      setFormData({
+        ...formData,
+        contacts: updatedContacts,
+        contactPerson: primaryContact.name,
+        email: primaryContact.email || formData.email
+      });
+    } else {
+      setFormData({ ...formData, contacts: updatedContacts });
+    }
+
+    setEditingContactId(null);
+  };
+
+  const handleDeleteContact = (contactId) => {
+    if (!window.confirm('Delete this contact?')) return;
+
+    setFormData({
+      ...formData,
+      contacts: (formData.contacts || []).filter(c => c.id !== contactId)
+    });
+  };
+
+  const handleSetPrimary = (contactId) => {
+    const updatedContacts = (formData.contacts || []).map(c => ({
+      ...c,
+      isPrimary: c.id === contactId
+    }));
+
+    const primaryContact = updatedContacts.find(c => c.id === contactId);
+
+    setFormData({
+      ...formData,
+      contacts: updatedContacts,
+      contactPerson: primaryContact.name,
+      email: primaryContact.email || formData.email,
+      phone: primaryContact.phone || formData.phone
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -1647,10 +1755,6 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
       interactions: formData.interactions.filter(i => i.id !== id)
     });
   };
-
-  const relatedContacts = contacts?.filter(c =>
-    c.company?.toLowerCase() === formData.name?.toLowerCase()
-  ) || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
@@ -1890,7 +1994,7 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
                   : 'text-gray-400'
               }`}
             >
-              People ({relatedContacts.length})
+              People ({(formData.contacts || []).length})
             </button>
           </div>
 
@@ -1998,34 +2102,175 @@ const InvestorModal = ({ investor, onSave, onCancel, regions, types, priorities,
               </div>
             )}
 
+            {/* UPDATED PEOPLE TAB WITH EMBEDDED CONTACTS */}
             {activeTab === 'PEOPLE' && (
-              <div className="space-y-3">
-                {relatedContacts.length === 0 ? (
+              <div className="space-y-4">
+                {/* ADD NEW CONTACT FORM */}
+                <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-blue-300 space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users size={16} className="text-blue-600" />
+                    <span className="text-xs font-black uppercase text-blue-800">Add Contact at this Firm</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={newContact.name}
+                      onChange={(e) => setNewContact({...newContact, name: e.target.value})}
+                      placeholder="Full Name *"
+                      className="p-2 border rounded-lg text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={newContact.role}
+                      onChange={(e) => setNewContact({...newContact, role: e.target.value})}
+                      placeholder="Role / Title"
+                      className="p-2 border rounded-lg text-sm"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="email"
+                      value={newContact.email}
+                      onChange={(e) => setNewContact({...newContact, email: e.target.value})}
+                      placeholder="Email"
+                      className="p-2 border rounded-lg text-sm"
+                    />
+                    <input
+                      type="tel"
+                      value={newContact.phone}
+                      onChange={(e) => setNewContact({...newContact, phone: e.target.value})}
+                      placeholder="Phone"
+                      className="p-2 border rounded-lg text-sm"
+                    />
+                  </div>
+
+                  <input
+                    type="url"
+                    value={newContact.linkedin}
+                    onChange={(e) => setNewContact({...newContact, linkedin: e.target.value})}
+                    placeholder="LinkedIn URL"
+                    className="w-full p-2 border rounded-lg text-sm"
+                  />
+
+                  <input
+                    type="text"
+                    value={newContact.notes}
+                    onChange={(e) => setNewContact({...newContact, notes: e.target.value})}
+                    placeholder="Notes (e.g., 'Ex-Grab GM, best for ops discussions')"
+                    className="w-full p-2 border rounded-lg text-sm"
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={newContact.isPrimary}
+                        onChange={(e) => setNewContact({...newContact, isPrimary: e.target.checked})}
+                        className="rounded"
+                      />
+                      <span className="font-bold text-gray-700">Primary Contact</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={handleAddContact}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-bold flex items-center gap-2"
+                    >
+                      <PlusCircle size={16} />
+                      Add Contact
+                    </button>
+                  </div>
+                </div>
+
+                {/* CONTACTS LIST */}
+                {(formData.contacts || []).length === 0 ? (
                   <div className="text-center py-8">
                     <Users size={48} className="mx-auto text-gray-200 mb-2"/>
-                    <p className="text-gray-400 text-sm font-bold">No contacts linked yet.</p>
-                    <p className="text-[10px] text-gray-400">Add contacts via the Contacts tab.</p>
+                    <p className="text-gray-400 text-sm font-bold">No contacts added yet.</p>
+                    <p className="text-[10px] text-gray-400">Add the key people at this investor firm above.</p>
                   </div>
                 ) : (
-                  relatedContacts.map(c => (
-                    <div key={c.id} className="p-4 bg-white border border-gray-200 rounded-2xl hover:border-teal-400 transition-all">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-bold text-gray-800">{c.firstName} {c.lastName}</h4>
-                          <p className="text-xs text-teal-600 font-bold uppercase">{c.jobTitle || 'No Title'}</p>
+                  <div className="space-y-3">
+                    {(formData.contacts || []).map(contact => (
+                      <div
+                        key={contact.id}
+                        className={`p-4 bg-white border-2 rounded-2xl transition-all group ${
+                          contact.isPrimary
+                            ? 'border-yellow-400 bg-yellow-50'
+                            : 'border-gray-200 hover:border-teal-400'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              {contact.isPrimary && (
+                                <span className="text-yellow-600 text-xs">⭐</span>
+                              )}
+                              <h4 className="font-bold text-gray-800">{contact.name}</h4>
+                              {contact.isPrimary && (
+                                <span className="text-[9px] font-black uppercase bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">
+                                  Primary
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-teal-600 font-bold uppercase">{contact.role || 'No Title'}</p>
+                          </div>
+
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!contact.isPrimary && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetPrimary(contact.id)}
+                                className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded"
+                                title="Set as Primary"
+                              >
+                                ⭐
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteContact(contact.id)}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
-                        {c.phone && (
-                          <a href={`tel:${c.phone}`} className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors">
-                            <Phone size={14} />
-                          </a>
-                        )}
+
+                        <div className="mt-2 space-y-1">
+                          {contact.email && (
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <Mail size={12} className="text-gray-400" />
+                              <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                                {contact.email}
+                              </a>
+                            </div>
+                          )}
+                          {contact.phone && (
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <Phone size={12} className="text-gray-400" />
+                              <span>{contact.phone}</span>
+                            </div>
+                          )}
+                          {contact.linkedin && (
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <Linkedin size={12} className="text-gray-400" />
+                              <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                                {contact.linkedin.replace('https://www.linkedin.com/in/', '')}
+                              </a>
+                            </div>
+                          )}
+                          {contact.notes && (
+                            <div className="mt-2 text-xs text-gray-500 italic bg-gray-50 p-2 rounded">
+                              💡 {contact.notes}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                        <Mail size={12} />
-                        <span>{c.email || 'No Email'}</span>
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
             )}
