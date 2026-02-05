@@ -592,41 +592,45 @@ const EaaSInvestorCalculator = () => {
               </div>
             </div>
 
-            {/* LPG Inputs */}
+            {/* LPG Pricing (bottles calculated from water usage) */}
             {inputs.heatingType === 'lpg' && (
               <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-4">
                 <h4 className="text-sm font-bold text-orange-700 mb-3 flex items-center gap-2">
-                  <Flame size={16} /> LPG Consumption
+                  <Flame size={16} /> LPG Pricing
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label="Bottles/Month"
-                    type="number"
-                    value={inputs.lpgBottlesPerMonth}
-                    onChange={handleChange('lpgBottlesPerMonth', true)}
-                  />
-                  <Input
-                    label="Price/Bottle (₱)"
-                    type="number"
-                    value={inputs.lpgPricePerBottle}
-                    onChange={handleChange('lpgPricePerBottle', true)}
-                  />
-                </div>
-                <div className="mt-3 text-sm text-orange-700">
-                  <strong>Current Monthly Cost:</strong> {fmtPHP(calculations.currentMonthlyCostPHP)}
+                <Input
+                  label="Price/Bottle (₱)"
+                  type="number"
+                  value={inputs.lpgPricePerBottle}
+                  onChange={handleChange('lpgPricePerBottle', true)}
+                />
+                <div className="mt-3 p-3 bg-orange-100 rounded-lg">
+                  <div className="text-xs text-orange-600 uppercase font-bold mb-1">Calculated from water usage:</div>
+                  <div className="text-sm text-orange-800">
+                    <strong>{calculations.lpgBottlesPerMonth?.toFixed(1)}</strong> bottles/month × ₱{inputs.lpgPricePerBottle}
+                  </div>
+                  <div className="text-lg font-bold text-orange-700 mt-1">
+                    = {fmtPHP(calculations.currentMonthlyCostPHP)}/month
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Electric Inputs */}
+            {/* Electric - auto-calculated */}
             {inputs.heatingType === 'electric' && (
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                <Input
-                  label="Current Monthly Bill (₱)"
-                  type="number"
-                  value={inputs.currentMonthlyBill}
-                  onChange={handleChange('currentMonthlyBill', true)}
-                />
+                <h4 className="text-sm font-bold text-blue-700 mb-3 flex items-center gap-2">
+                  <Zap size={16} /> Electric Water Heating Cost
+                </h4>
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <div className="text-xs text-blue-600 uppercase font-bold mb-1">Calculated from water usage:</div>
+                  <div className="text-sm text-blue-800">
+                    {calculations.dailyThermalKWh?.toFixed(1)} kWh thermal ÷ 0.95 COP × ₱{inputs.electricityRate}/kWh
+                  </div>
+                  <div className="text-lg font-bold text-blue-700 mt-1">
+                    = {fmtPHP(calculations.currentMonthlyCostPHP)}/month
+                  </div>
+                </div>
               </div>
             )}
 
@@ -780,12 +784,12 @@ const EaaSInvestorCalculator = () => {
                   <span className="font-mono">{calculations.dailyHeatPumpKwh?.toFixed(1)} kWh</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Required Capacity:</span>
-                  <span className="font-mono">{calculations.requiredCapacityKW?.toFixed(1)} kW</span>
+                  <span>Monthly kWh:</span>
+                  <span className="font-mono">{calculations.monthlyHeatPumpKwh?.toFixed(0)} kWh</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Performance Factor:</span>
-                  <span className="font-mono">{calculations.performanceFactor?.toFixed(2)}</span>
+                  <span>Product COP:</span>
+                  <span className="font-mono">{calculations.productCOP}</span>
                 </div>
               </div>
             )}
