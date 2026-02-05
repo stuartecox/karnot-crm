@@ -1,3 +1,4 @@
+Investorfinancialmodel · JSX
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   TrendingUp, DollarSign, BarChart3, PieChart, Target, Award,
@@ -125,18 +126,12 @@ const InvestorFinancialModel = () => {
     // 1. Equipment Rental / EaaS Fee
     const annualRentalUSD = monthlyFeeUSD * 12;
 
-    // 2. Electricity Sales Margin
-    const annualElectricityKwh = monthlyHeatPumpKwh * 12;
-    const electricityCostToKarnot = annualElectricityKwh * (inputs.electricityRate * 0.85) / CONFIG.FX_RATE; // Bulk rate
-    const electricityChargedToCustomer = annualElectricityKwh * inputs.electricityRate / CONFIG.FX_RATE;
-    const annualElectricityMarginUSD = (electricityChargedToCustomer - electricityCostToKarnot) * (inputs.electricityMargin / 100);
-
-    // 3. Carbon Credits
+    // 2. Carbon Credits (no electricity margin - customer pays Meralco directly)
     const annualCO2TonsAvoided = (lpgKgPerYear * CONFIG.LPG_CO2_PER_KG) / 1000;
     const annualCarbonRevenueUSD = annualCO2TonsAvoided * inputs.carbonCreditPrice;
 
-    // Total Revenue per Unit
-    const totalAnnualRevenueUSD = annualRentalUSD + annualElectricityMarginUSD + annualCarbonRevenueUSD;
+    // Total Revenue per Unit (EaaS + Carbon only)
+    const totalAnnualRevenueUSD = annualRentalUSD + annualCarbonRevenueUSD;
 
     // --- OPERATING COSTS (Per Unit, Annual) ---
     const maintenanceCostUSD = baseInvestment * 0.02; // 2% of equipment
@@ -278,7 +273,6 @@ const InvestorFinancialModel = () => {
 
       // Revenue Streams
       annualRentalUSD,
-      annualElectricityMarginUSD,
       annualCarbonRevenueUSD,
       totalAnnualRevenueUSD,
 
