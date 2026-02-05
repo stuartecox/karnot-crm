@@ -301,8 +301,9 @@ const InvestorFinancialModel = () => {
       npv10,
       npv12,
 
-      // Carbon
+      // Carbon/LPG
       lpgKgPerYear,
+      lpgBottlesPerMonth,
       annualCO2TonsAvoided,
 
       // Cash Flows
@@ -444,19 +445,19 @@ const InvestorFinancialModel = () => {
             </div>
 
             {inputs.heatingType === 'lpg' && (
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="mb-4">
                 <Input
-                  label="LPG Bottles/Month"
-                  type="number"
-                  value={inputs.lpgBottlesPerMonth}
-                  onChange={handleChange('lpgBottlesPerMonth', true)}
-                />
-                <Input
-                  label={`Price/Bottle (${symbol})`}
+                  label={`LPG Price/Bottle (${symbol})`}
                   type="number"
                   value={inputs.lpgPricePerBottle}
                   onChange={handleChange('lpgPricePerBottle', true)}
                 />
+                <div className="mt-2 p-2 bg-orange-50 rounded-lg text-sm">
+                  <span className="text-orange-600 font-bold">
+                    {calculations.lpgBottlesPerMonth?.toFixed(1)} bottles/month
+                  </span>
+                  <span className="text-gray-500"> (calculated from water usage)</span>
+                </div>
               </div>
             )}
 
