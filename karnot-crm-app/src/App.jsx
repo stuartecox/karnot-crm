@@ -67,7 +67,6 @@ import InvestorEmailManager from './components/InvestorEmailManager.jsx';
 import FundraisingTaskBoard from './components/FundraisingTaskBoard.jsx';
 import InvestorsPage from './pages/InvestorsPage.jsx';
 import CallCentre from './pages/CallCentre.jsx';
-import DocumentsPage from './pages/DocumentsPage.jsx';
 
 // ==========================================
 // 2. COMPONENT IMPORTS
@@ -77,8 +76,6 @@ import HeatPumpCalculator from './components/HeatPumpCalculator.jsx';
 import WarmRoomCalc from './components/WarmRoomCalc.jsx';
 import DatasheetLibrary from './components/DatasheetLibrary.jsx';
 import RSRHCalculator from './components/RSRHCalculator.jsx';
-import AquaHeroCalculator from './components/AquaHeroCalculator.jsx';
-import OfficeHVACCalculator from './components/OfficeHVACCalculator.jsx';
 
 // ==========================================
 // 2B. NEW INVESTOR RESEARCH COMPONENTS
@@ -88,6 +85,8 @@ import InvestorResearchChecklist from './components/InvestorResearchChecklist.js
 import EmailTemplateGenerator from './components/EmailTemplateGenerator.jsx';
 import DealStructureChecker from './components/DealStructureChecker.jsx';
 import InvestorAutoResearch from './components/InvestorAutoResearch.jsx';
+import InvestorFinancialModel from './components/InvestorFinancialModel.jsx';
+import EaaSInvestorCalculator from './components/EaaSInvestorCalculator.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -106,8 +105,8 @@ import {
     Users, Settings, Calculator, Plus, Landmark, ChevronDown,
     MapPin, Wrench, Briefcase, FileText, Target, Package, 
     UserCheck, Calendar as CalendarIcon, CheckCircle, Globe, Upload, Sparkles,
-    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Droplets, Thermometer // <--- Added Droplets here
-} from 'lucide-react';
+    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map
+} from 'lucide-react'; 
 
 // ==========================================
 // 5. DROPDOWN MENU COMPONENT
@@ -220,9 +219,9 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
     // Investment Menu
     const investmentMenu = [
         { view: 'investmentPipeline', label: 'Command Center', icon: TrendingUp },
-        // Added the comma 👇
-{ view: 'documents', label: 'Deck Library', icon: FileText, badge: 'PDF' },
-{ view: 'fundraisingBoard', label: 'Cambridge Roadmap', icon: Map, badge: 'NEW' },
+        { view: 'eaasCalc', label: 'EaaS Calculator', icon: Calculator, badge: 'NEW' },
+        { view: 'investorModel', label: 'Investor Model', icon: Target },
+        { view: 'fundraisingBoard', label: 'Cambridge Roadmap', icon: Map },
         { view: 'investors', label: 'Investor Companies', icon: Building, badge: '43' },
         { view: 'investmentCallCentre', label: 'Call Centre', icon: Phone },
         { view: 'investmentTasks', label: 'General Tasks', icon: CheckCircle },
@@ -230,16 +229,13 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
     ];
 
    // Calculators Menu
-// Calculators Menu
-      const calculatorsMenu = [
-        { view: 'calculatorsHub', label: 'Calculator Hub', icon: Calculator },
-        { view: 'heatPumpCalc', label: 'Heat Pump ROI', icon: Calculator },
-        { view: 'aquaHeroCalc', label: 'AquaHERO Global', icon: Droplets, badge: 'NEW' },
-        { view: 'warmRoomCalc', label: 'Warm Room', icon: Calculator },
-        { view: 'coldRoomCalc', label: 'Cold Room', icon: Calculator },
-        { view: 'rsrhCalc', label: 'RSRH Cattle', icon: Target, badge: 'NEW' }, // <--- Add this comma
-        { view: 'officeHvacCalc', label: 'Office HVAC', icon: Thermometer, badge: 'NEW' }
-    ];
+const calculatorsMenu = [
+    { view: 'calculatorsHub', label: 'Calculator Hub', icon: Calculator },
+    { view: 'heatPumpCalc', label: 'Heat Pump ROI', icon: Calculator },
+    { view: 'warmRoomCalc', label: 'Warm Room', icon: Calculator },
+    { view: 'coldRoomCalc', label: 'Cold Room', icon: Calculator },
+    { view: 'rsrhCalc', label: 'RSRH Cattle', icon: Target, badge: 'NEW' }
+];
 
     return (
         <header className="bg-white shadow-md sticky top-0 z-50 border-b-2 border-orange-500">
@@ -781,14 +777,6 @@ export default function App() {
                         <RSRHCalculator />
                     </div>
                 )}
-                {activeView === 'officeHvacCalc' && (
-    <div className="max-w-7xl mx-auto">
-        <Button onClick={() => setActiveView('calculatorsHub')} variant="secondary" className="mb-4">
-            ← Back to Calculators
-        </Button>
-        <OfficeHVACCalculator />
-    </div>
-)}
 
                 {/* ====================================== */}
                 {/* 6C. INVESTMENT MODULES                 */}
@@ -814,14 +802,17 @@ export default function App() {
                 )}
 
                 {activeView === 'investmentEmails' && (
-    <InvestorEmailManager user={user} />
-)}
+                    <InvestorEmailManager user={user} />
+                )}
 
-{/* ADD THIS BLOCK */}
-{activeView === 'documents' && (
-    <DocumentsPage />
-)}
-                
+                {activeView === 'investorModel' && (
+                    <InvestorFinancialModel />
+                )}
+
+                {activeView === 'eaasCalc' && (
+                    <EaaSInvestorCalculator />
+                )}
+
                 {/* 7. QUOTING */}
                 {activeView === 'calculator' && (
                     <QuoteCalculator 
@@ -862,34 +853,6 @@ export default function App() {
                 
                 {activeView === 'warmRoomCalc' && <WarmRoomCalc setActiveView={setActiveView} user={user} />}
                 {activeView === 'coldRoomCalc' && <ColdRoomCalc setActiveView={setActiveView} user={user} />}
-                
-                {activeView === 'aquaHeroCalc' && (
-                    <div className="max-w-7xl mx-auto">
-                        <Button onClick={() => setActiveView('calculatorsHub')} variant="secondary" className="mb-4">
-                            ← Back to Calculators
-                        </Button>
-                        <AquaHeroCalculator />
-                    </div>
-                )}
-
-                {activeView === 'rsrhCalc' && (
-                    <div className="max-w-7xl mx-auto">
-                        <Button onClick={() => setActiveView('calculatorsHub')} variant="secondary" className="mb-4">
-                            ← Back to Calculators
-                        </Button>
-                        <RSRHCalculator />
-                    </div>
-                )}
-                
-                {activeView === 'officeHvacCalc' && (
-                    <div className="max-w-7xl mx-auto">
-                        <Button onClick={() => setActiveView('calculatorsHub')} variant="secondary" className="mb-4">
-                            ← Back to Calculators
-                        </Button>
-                        {/* THIS IS THE CHANGE 👇 */}
-                        <OfficeHVACCalculator user={user} />
-                    </div>
-                )}
                 
                 {activeView === 'admin' && <AdminPage user={user} />}
                 
