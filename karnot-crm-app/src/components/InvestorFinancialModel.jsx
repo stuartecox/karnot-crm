@@ -1,4 +1,3 @@
-Investorfinancialmodel · JSX
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   TrendingUp, DollarSign, BarChart3, PieChart, Target, Award,
