@@ -126,19 +126,25 @@ const EaaSInvestorCalculator = () => {
     const actualLift = Math.max(1, deltaT);
     const performanceFactor = (ratedLift / actualLift) * (1 + ((inputs.ambientTemp - ratedAmbient) * 0.015));
 
-    // --- 2. CURRENT CUSTOMER COSTS ---
+    // --- 2. CURRENT CUSTOMER COSTS (derived from water usage / thermal demand) ---
     let currentMonthlyCostPHP = 0;
     let lpgKgPerMonth = 0;
     let lpgKgPerYear = 0;
+    let lpgBottlesPerMonth = 0;
     let annualGridKwhSaved = 0; // For electric customer carbon calc
+    const LPG_BURNER_EFFICIENCY = 0.85; // 85% typical LPG burner efficiency
 
     if (inputs.heatingType === 'lpg') {
-      // LPG Customer
-      lpgKgPerMonth = inputs.lpgBottlesPerMonth * inputs.lpgBottleSize;
-      lpgKgPerYear = lpgKgPerMonth * 12;
-      currentMonthlyCostPHP = inputs.lpgBottlesPerMonth * inputs.lpgPricePerBottle;
+      // LPG Customer - calculate LPG needed from thermal demand
+      // LPG kg = thermal kWh / (burner efficiency × energy content per kg)
+      const dailyLpgKg = dailyThermalKWh / (LPG_BURNER_EFFICIENCY * LPG_KWH_PER_KG);
+      lpgKgPerMonth = dailyLpgKg * 30;
+      lpgKgPerYear = dailyLpgKg * 365;
+      // Calculate bottles and cost
+      lpgBottlesPerMonth = lpgKgPerMonth / inputs.lpgBottleSize;
+      currentMonthlyCostPHP = lpgBottlesPerMonth * inputs.lpgPricePerBottle;
     } else {
-      // Electric Customer - calculate from thermal demand (not total bill which includes AC, lights, etc.)
+      // Electric Customer - calculate from thermal demand
       const dailyKwhElectricHeater = dailyThermalKWh / COP_ELECTRIC_HEATER;
       const monthlyKwhElectricHeater = dailyKwhElectricHeater * 30;
       currentMonthlyCostPHP = monthlyKwhElectricHeater * inputs.electricityRate;
@@ -195,17 +201,32 @@ const EaaSInvestorCalculator = () => {
     const avgDrawRateLph = inputs.dailyLitersHotWater / inputs.operatingHoursPerDay;
     const peakDrawRateLph = avgDrawRateLph * 1.5; // 50% peak factor
     const gapLph = Math.max(0, peakDrawRateLph - recoveryRateLph);
-    const tankSizeLiters = Math.max(
-      gapLph * 2, // Gap-based
-      peakDrawRateLph * 0.65, // Peak buffer
-      inputs.dailyLitersHotWater * 0.35 // Daily reserve
-    );
-    const recommendedTankSize = Math.ceil(tankSizeLiters / 100) * 100;
 
-    // Tank cost (estimate)
-    const tankCostUSD = recommendedTankSize <= 200 ? 800 :
-                        recommendedTankSize <= 500 ? 1200 :
-                        recommendedTankSize <= 1000 ? 1800 : 2500;
+    // Check if AquaHero (has integrated tank - 200L or 300L built-in)
+    const productName = (selectedProduct.name || selectedProduct.Name || '').toLowerCase();
+    const isAquaHero = productName.includes('aquahero') || productName.includes('aqua hero');
+    const integratedTankSize = selectedProduct.tankCapacity || (isAquaHero ? 200 : 0);
+
+    // Calculate if external tank needed
+    let recommendedTankSize = 0;
+    let tankCostUSD = 0;
+
+    if (isAquaHero || integratedTankSize > 0) {
+      // AquaHero has built-in tank - no external tank needed
+      recommendedTankSize = integratedTankSize;
+      tankCostUSD = 0; // Included in unit price
+    } else {
+      // Standard heat pump - calculate external tank requirement
+      const tankSizeLiters = Math.max(
+        gapLph * 2, // Gap-based
+        peakDrawRateLph * 0.65, // Peak buffer
+        inputs.dailyLitersHotWater * 0.35 // Daily reserve
+      );
+      recommendedTankSize = Math.ceil(tankSizeLiters / 100) * 100;
+      tankCostUSD = recommendedTankSize <= 200 ? 800 :
+                    recommendedTankSize <= 500 ? 1200 :
+                    recommendedTankSize <= 1000 ? 1800 : 2500;
+    }
 
     // --- 6. EaaS PRICING MODEL ---
     // Customer gets X% savings, pays the rest to utility
@@ -378,6 +399,7 @@ const EaaSInvestorCalculator = () => {
       productKW,
       productCOP,
       productPriceUSD,
+      isAquaHero,
       tankSizeLiters: recommendedTankSize,
       tankCostUSD,
       recoveryRateLph,
@@ -444,6 +466,7 @@ const EaaSInvestorCalculator = () => {
       // LPG/Carbon/Grid
       lpgKgPerMonth,
       lpgKgPerYear,
+      lpgBottlesPerMonth,
       annualGridKwhSaved,
 
       // Cash Flows
