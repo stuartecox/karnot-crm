@@ -74,7 +74,8 @@ const EaaSInvestorCalculator = () => {
 
   // === CONSTANTS ===
   const FX_RATE = 58.5; // PHP to USD
-  const COP_HEAT_PUMP = 3.85;
+  const COP_HEAT_PUMP_MIN = 3.85; // Minimum/conservative (used for sizing)
+  const COP_HEAT_PUMP_TYPICAL = 4.2; // Typical R290 in tropical climate
   const COP_ELECTRIC_HEATER = 0.95;
   const KWH_PER_LITER_DELTA_T = 0.001163; // kWh to raise 1L by 1°C
   const LPG_KWH_PER_KG = 13.8;
@@ -129,6 +130,7 @@ const EaaSInvestorCalculator = () => {
     let currentMonthlyCostPHP = 0;
     let lpgKgPerMonth = 0;
     let lpgKgPerYear = 0;
+    let annualGridKwhSaved = 0; // For electric customer carbon calc
 
     if (inputs.heatingType === 'lpg') {
       // LPG Customer
@@ -136,36 +138,22 @@ const EaaSInvestorCalculator = () => {
       lpgKgPerYear = lpgKgPerMonth * 12;
       currentMonthlyCostPHP = inputs.lpgBottlesPerMonth * inputs.lpgPricePerBottle;
     } else {
-      // Electric Customer
-      // Calculate how much electricity they use for heating
-      const dailyKwhElectric = dailyThermalKWh / COP_ELECTRIC_HEATER;
-      const monthlyKwhElectric = dailyKwhElectric * 30;
-      currentMonthlyCostPHP = monthlyKwhElectric * inputs.electricityRate;
-      // Estimate equivalent LPG for carbon calc
-      lpgKgPerYear = (dailyKwhElectric * 365) / LPG_KWH_PER_KG;
+      // Electric Customer - calculate from thermal demand (not total bill which includes AC, lights, etc.)
+      const dailyKwhElectricHeater = dailyThermalKWh / COP_ELECTRIC_HEATER;
+      const monthlyKwhElectricHeater = dailyKwhElectricHeater * 30;
+      currentMonthlyCostPHP = monthlyKwhElectricHeater * inputs.electricityRate;
+      // Grid kWh saved = electric heater usage - heat pump usage (using typical COP)
+      const dailyHeatPumpKwhCalc = dailyThermalKWh / COP_HEAT_PUMP_TYPICAL;
+      annualGridKwhSaved = (dailyKwhElectricHeater - dailyHeatPumpKwhCalc) * 365;
     }
 
     const currentAnnualCostPHP = currentMonthlyCostPHP * 12;
     const currentMonthlyCostUSD = currentMonthlyCostPHP / FX_RATE;
     const currentAnnualCostUSD = currentAnnualCostPHP / FX_RATE;
 
-    // --- 3. HEAT PUMP OPERATING COSTS ---
-    const dailyHeatPumpKwh = dailyThermalKWh / COP_HEAT_PUMP;
-    const monthlyHeatPumpKwh = dailyHeatPumpKwh * 30;
-    const annualHeatPumpKwh = dailyHeatPumpKwh * 365;
-
-    const heatPumpMonthlyCostPHP = monthlyHeatPumpKwh * inputs.electricityRate;
-    const heatPumpAnnualCostPHP = heatPumpMonthlyCostPHP * 12;
-    const heatPumpMonthlyCostUSD = heatPumpMonthlyCostPHP / FX_RATE;
-
-    // --- 4. ENERGY SAVINGS ---
-    const energySavingsMonthlyCostPHP = currentMonthlyCostPHP - heatPumpMonthlyCostPHP;
-    const energySavingsAnnualPHP = energySavingsMonthlyCostPHP * 12;
-    const energySavingsPercentActual = (energySavingsMonthlyCostPHP / currentMonthlyCostPHP) * 100;
-
-    // --- 5. HEAT PUMP SIZING ---
-    // Required capacity based on daily demand and operating hours
-    const avgPowerKW = dailyHeatPumpKwh / inputs.operatingHoursPerDay;
+    // --- 3. HEAT PUMP SIZING (use conservative COP for sizing) ---
+    const sizingDailyKwh = dailyThermalKWh / COP_HEAT_PUMP_MIN;
+    const avgPowerKW = sizingDailyKwh / inputs.operatingHoursPerDay;
     const requiredCapacityKW = avgPowerKW * 1.25; // 25% safety factor
     const adjustedCapacityKW = requiredCapacityKW / performanceFactor;
 
@@ -179,14 +167,28 @@ const EaaSInvestorCalculator = () => {
       name: 'Karnot iHEAT R290 - 15.5kW',
       kW_DHW_Nominal: 15.5,
       kW: 15.5,
-      COP_DHW: 3.85,
+      COP_DHW: 4.2,
       salesPriceUSD: 5140,
       Refrigerant: 'R290'
     };
 
     const productKW = selectedProduct.kW_DHW_Nominal || selectedProduct.kW || 15.5;
-    const productCOP = selectedProduct.COP_DHW || selectedProduct.cop || 3.85;
+    const productCOP = selectedProduct.COP_DHW || selectedProduct.cop || COP_HEAT_PUMP_TYPICAL;
     const productPriceUSD = selectedProduct.salesPriceUSD || 5140;
+
+    // --- 4. HEAT PUMP OPERATING COSTS (use actual product COP) ---
+    const dailyHeatPumpKwh = dailyThermalKWh / productCOP;
+    const monthlyHeatPumpKwh = dailyHeatPumpKwh * 30;
+    const annualHeatPumpKwh = dailyHeatPumpKwh * 365;
+
+    const heatPumpMonthlyCostPHP = monthlyHeatPumpKwh * inputs.electricityRate;
+    const heatPumpAnnualCostPHP = heatPumpMonthlyCostPHP * 12;
+    const heatPumpMonthlyCostUSD = heatPumpMonthlyCostPHP / FX_RATE;
+
+    // --- 5. ENERGY SAVINGS ---
+    const energySavingsMonthlyCostPHP = currentMonthlyCostPHP - heatPumpMonthlyCostPHP;
+    const energySavingsAnnualPHP = energySavingsMonthlyCostPHP * 12;
+    const energySavingsPercentActual = (energySavingsMonthlyCostPHP / currentMonthlyCostPHP) * 100;
 
     // Tank sizing (from HeatPumpCalculator logic)
     const recoveryRateLph = (productKW * 1000) / (deltaT * 1.163);
@@ -240,7 +242,15 @@ const EaaSInvestorCalculator = () => {
     const contractRevenueElectricityUSD = annualElectricityMarginUSD * contractYears;
 
     // Stream 3: Carbon Credits
-    const annualCO2AvoidedTons = (lpgKgPerYear * LPG_CO2_PER_KG) / 1000;
+    // For LPG: CO2 from burning LPG avoided
+    // For Electric: CO2 from reduced grid electricity
+    let annualCO2AvoidedTons = 0;
+    if (inputs.heatingType === 'lpg') {
+      annualCO2AvoidedTons = (lpgKgPerYear * LPG_CO2_PER_KG) / 1000;
+    } else {
+      // Electric: grid CO2 avoided from kWh savings
+      annualCO2AvoidedTons = (annualGridKwhSaved * GRID_CO2_PER_KWH) / 1000;
+    }
     const annualCarbonRevenueUSD = annualCO2AvoidedTons * inputs.carbonCreditPrice;
     const contractRevenueCarbonUSD = annualCarbonRevenueUSD * contractYears;
 
@@ -431,9 +441,10 @@ const EaaSInvestorCalculator = () => {
       ltvCacRatio,
       moic,
 
-      // LPG/Carbon
+      // LPG/Carbon/Grid
       lpgKgPerMonth,
       lpgKgPerYear,
+      annualGridKwhSaved,
 
       // Cash Flows
       cashFlowSchedule,
