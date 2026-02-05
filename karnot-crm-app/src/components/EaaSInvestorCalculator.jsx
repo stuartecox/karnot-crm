@@ -256,13 +256,7 @@ const EaaSInvestorCalculator = () => {
     // Stream 1: EaaS Fee (Equipment Rental)
     const contractRevenueEaaSUSD = eaasAnnualFeeUSD * contractYears;
 
-    // Stream 2: Electricity Sales Margin (if utility captures this)
-    const electricityMarginPercent = 15;
-    const annualElectricitySalesUSD = (annualHeatPumpKwh * inputs.electricityRate / FX_RATE);
-    const annualElectricityMarginUSD = annualElectricitySalesUSD * (electricityMarginPercent / 100);
-    const contractRevenueElectricityUSD = annualElectricityMarginUSD * contractYears;
-
-    // Stream 3: Carbon Credits
+    // Stream 2: Carbon Credits (customer pays Meralco directly - no electricity margin for Karnot)
     // For LPG: CO2 from burning LPG avoided
     // For Electric: CO2 from reduced grid electricity
     let annualCO2AvoidedTons = 0;
@@ -275,8 +269,8 @@ const EaaSInvestorCalculator = () => {
     const annualCarbonRevenueUSD = annualCO2AvoidedTons * inputs.carbonCreditPrice;
     const contractRevenueCarbonUSD = annualCarbonRevenueUSD * contractYears;
 
-    // Total Revenue
-    const totalAnnualRevenueUSD = eaasAnnualFeeUSD + annualElectricityMarginUSD + annualCarbonRevenueUSD;
+    // Total Revenue (EaaS + Carbon only - no electricity margin)
+    const totalAnnualRevenueUSD = eaasAnnualFeeUSD + annualCarbonRevenueUSD;
     const totalContractRevenueUSD = totalAnnualRevenueUSD * contractYears;
 
     // --- 9. OPERATING COSTS ---
@@ -352,7 +346,6 @@ const EaaSInvestorCalculator = () => {
           year: 0,
           investment: -totalInvestmentUSD,
           eaasRevenue: 0,
-          electricityRevenue: 0,
           carbonRevenue: 0,
           opex: 0,
           netCashFlow: -totalInvestmentUSD,
@@ -365,7 +358,6 @@ const EaaSInvestorCalculator = () => {
           year,
           investment: 0,
           eaasRevenue: eaasAnnualFeeUSD,
-          electricityRevenue: annualElectricityMarginUSD,
           carbonRevenue: annualCarbonRevenueUSD,
           opex: -totalAnnualOpexUSD,
           netCashFlow: netCF,
@@ -434,8 +426,6 @@ const EaaSInvestorCalculator = () => {
 
       // Revenue Streams
       contractRevenueEaaSUSD,
-      annualElectricityMarginUSD,
-      contractRevenueElectricityUSD,
       annualCO2AvoidedTons,
       annualCarbonRevenueUSD,
       contractRevenueCarbonUSD,
@@ -885,16 +875,12 @@ const EaaSInvestorCalculator = () => {
                 <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Annual Revenue Per Unit</h4>
                 <div className="space-y-2">
                   <div className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                    <div className="text-xs font-bold text-purple-600 uppercase">1. EaaS Fee</div>
+                    <div className="text-xs font-bold text-purple-600 uppercase">1. EaaS Fee (Equipment Rental)</div>
                     <div className="text-xl font-bold">{fmtUSD(calculations.eaasAnnualFeeUSD)}<span className="text-sm text-gray-500">/year</span></div>
                     <div className="text-xs text-gray-500">{fmtPHP(calculations.eaasMonthlyFeePHP)}/month</div>
                   </div>
-                  <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                    <div className="text-xs font-bold text-blue-600 uppercase">2. Electricity Margin</div>
-                    <div className="text-xl font-bold">{fmtUSD(calculations.annualElectricityMarginUSD)}<span className="text-sm text-gray-500">/year</span></div>
-                  </div>
                   <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-                    <div className="text-xs font-bold text-green-600 uppercase">3. Carbon Credits</div>
+                    <div className="text-xs font-bold text-green-600 uppercase">2. Carbon Credits</div>
                     <div className="text-xl font-bold">{fmtUSD(calculations.annualCarbonRevenueUSD)}<span className="text-sm text-gray-500">/year</span></div>
                     <div className="text-xs text-gray-500">{calculations.annualCO2AvoidedTons?.toFixed(1)} tons CO₂ @ ${inputs.carbonCreditPrice}/ton</div>
                   </div>
@@ -958,8 +944,7 @@ const EaaSInvestorCalculator = () => {
                     <tr>
                       <th className="px-3 py-2 text-left">Year</th>
                       <th className="px-3 py-2 text-right">Investment</th>
-                      <th className="px-3 py-2 text-right">EaaS</th>
-                      <th className="px-3 py-2 text-right">Elec Margin</th>
+                      <th className="px-3 py-2 text-right">EaaS Fee</th>
                       <th className="px-3 py-2 text-right">Carbon</th>
                       <th className="px-3 py-2 text-right">OPEX</th>
                       <th className="px-3 py-2 text-right">Net CF</th>
@@ -975,9 +960,6 @@ const EaaSInvestorCalculator = () => {
                         </td>
                         <td className="px-3 py-2 text-right text-purple-600">
                           {row.eaasRevenue > 0 ? fmtUSD(row.eaasRevenue) : '-'}
-                        </td>
-                        <td className="px-3 py-2 text-right text-blue-600">
-                          {row.electricityRevenue > 0 ? fmtUSD(row.electricityRevenue) : '-'}
                         </td>
                         <td className="px-3 py-2 text-right text-green-600">
                           {row.carbonRevenue > 0 ? fmtUSD(row.carbonRevenue) : '-'}
@@ -1098,7 +1080,7 @@ const EaaSInvestorCalculator = () => {
               </tr>
               <tr className="border-b">
                 <td className="px-4 py-2 font-medium">Revenue Streams</td>
-                <td className="px-4 py-2 text-center bg-orange-50 font-bold">3 (EaaS + Elec + Carbon)</td>
+                <td className="px-4 py-2 text-center bg-orange-50 font-bold">2 (EaaS + Carbon)</td>
                 <td className="px-4 py-2 text-center bg-blue-50">2 (Rental + Elec)</td>
               </tr>
               <tr className="border-b">
@@ -1124,7 +1106,7 @@ const EaaSInvestorCalculator = () => {
             </li>
             <li className="flex items-start gap-2">
               <ArrowRight size={14} className="text-green-600 mt-1" />
-              <span><strong>Triple revenue:</strong> Equipment + electricity + carbon (vs 2 for solar)</span>
+              <span><strong>Dual revenue:</strong> EaaS fee + carbon credits (clean, predictable)</span>
             </li>
             <li className="flex items-start gap-2">
               <ArrowRight size={14} className="text-green-600 mt-1" />
