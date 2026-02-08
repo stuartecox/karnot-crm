@@ -8,7 +8,7 @@ import { Card, Input, Button } from '../data/constants.jsx';
 import {
   Zap, MapPin, CheckCircle, AlertTriangle, ArrowRight, 
   Battery, Moon, Sun, DollarSign, Search, FileText, Download,
-  Layers, Edit3, RefreshCw
+  Layers, Edit3, RefreshCw, Save
 } from 'lucide-react';
 
 const SolvivaPartnerCalculator = () => {
@@ -17,11 +17,12 @@ const SolvivaPartnerCalculator = () => {
   const [loading, setLoading] = useState(true);
   
   // Google Solar Data
-  // Default: Cosmos Farm
   const [coordinates, setCoordinates] = useState({ lat: 16.023497, lng: 120.430082 }); 
   const [solarData, setSolarData] = useState(null);
   const [fetchingSolar, setFetchingSolar] = useState(false);
-  const [manualMode, setManualMode] = useState(false); 
+  
+  // We now ALWAYS use manual mode inputs, but we auto-fill them from API
+  const [manualMode, setManualMode] = useState(true); 
 
   // Inputs
   const [inputs, setInputs] = useState({
@@ -42,7 +43,7 @@ const SolvivaPartnerCalculator = () => {
     eaasFee: 2000,
     electricityRate: 12.50,
 
-    // Manual Override Defaults
+    // These start with "Default" values, but API will overwrite them
     manualRoofArea: 100, 
     manualSunHours: 5.5 
   });
@@ -71,31 +72,42 @@ const SolvivaPartnerCalculator = () => {
     loadData();
   }, []);
 
-  // === 2. SOLAR API HANDLER (FIXED) ===
+  // === 2. SOLAR API HANDLER (UPDATED) ===
   const handleSolarLookup = async () => {
     setFetchingSolar(true);
-    setManualMode(false); 
     
     const data = await fetchSolarPotential(coordinates.lat, coordinates.lng);
     
     if (data) {
       setSolarData(data);
       
-      // ✅ FIX: If data is from Open-Meteo, AUTO-UPDATE the input field!
-      if (data.source === 'OPEN_METEO') {
-         console.log("Using Weather API Data:", data);
-         setManualMode(true);
-         
-         // Update the state with the REAL sun hours from the API
-         setInputs(prev => ({
-             ...prev,
-             manualSunHours: data.peakSunHoursPerDay.toFixed(2) 
-         }));
+      // LOGIC: Take whatever data we found and PUSH it into the input boxes
+      let newArea = inputs.manualRoofArea;
+      let newSun = inputs.manualSunHours;
+
+      if (data.source === 'GOOGLE') {
+          // Google gives us Area + Sun
+          newArea = data.maxArrayAreaSqM.toFixed(0);
+          newSun = data.sunshineHours.toFixed(1);
+      } else if (data.source === 'OPEN_METEO') {
+          // Weather API only gives Sun
+          newSun = data.peakSunHoursPerDay.toFixed(2);
       }
-    } else {
-      console.warn("No Data Found. Switching to full Manual Mode.");
+
+      // Update the inputs visible to the user
+      setInputs(prev => ({
+        ...prev,
+        manualRoofArea: newArea,
+        manualSunHours: newSun
+      }));
+      
+      // Force manual mode so the math uses these new input values
       setManualMode(true);
-      setSolarData(null);
+
+    } else {
+      console.warn("No Data Found.");
+      // Just keep defaults
+      setManualMode(true);
     }
     setFetchingSolar(false);
   };
@@ -105,20 +117,13 @@ const SolvivaPartnerCalculator = () => {
     return `https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.lat},${coordinates.lng}&zoom=20&size=600x400&maptype=satellite&key=${key}`;
   };
 
-  // === 3. ANALYSIS LOGIC ===
+  // === 3. ANALYSIS LOGIC (Simpler now - always uses inputs) ===
   const analysis = useMemo(() => {
     // --- A. SOLAR POTENTIAL ---
-    let maxKwp = 0;
-    let sunHours = 0;
-
-    if (manualMode) {
-      // Calculate Kwp based on the User's Area & The API's Sun Hours
-      maxKwp = (inputs.manualRoofArea * 0.180); 
-      sunHours = inputs.manualSunHours;
-    } else if (solarData) {
-      maxKwp = solarData.maxKwp;
-      sunHours = solarData.sunshineHours;
-    }
+    // We trust the inputs (which might have been auto-filled by API)
+    const maxKwp = (inputs.manualRoofArea * 0.180); 
+    const sunHours = inputs.manualSunHours;
+    const yearlyGen = maxKwp * sunHours * 365;
 
     // --- B. LOAD CALCULATIONS ---
     const kwPerHP = 0.85; 
@@ -165,7 +170,7 @@ const SolvivaPartnerCalculator = () => {
       maxKwp,
       sunHours
     };
-  }, [inputs, solvivaProducts, solarData, manualMode]);
+  }, [inputs, solvivaProducts, solarData]); // Removed manualMode dependency as we always use inputs
 
   // === 4. PDF GENERATOR ===
   const generatePDFReport = () => {
@@ -191,7 +196,6 @@ const SolvivaPartnerCalculator = () => {
       </div>
       <div style="text-align: center; font-size: 10px; color: #666; margin-bottom: 30px;">
         Location: ${coordinates.lat}, ${coordinates.lng} 
-        ${manualMode ? '(Manual Data Override)' : '(Automated Solar Analysis)'}
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -299,7 +303,7 @@ const SolvivaPartnerCalculator = () => {
 
           <Card className="bg-white p-5 rounded-xl border border-slate-200">
             <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-              <MapPin size={18} className="text-green-500"/> 3. Roof Validation
+              <MapPin size={18} className="text-green-500"/> 3. Roof & Solar Data
             </h3>
             <div className="space-y-3">
               <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 relative mb-3 group">
@@ -312,60 +316,41 @@ const SolvivaPartnerCalculator = () => {
                 <Input label="Lng" value={coordinates.lng} onChange={(e) => setCoordinates({...coordinates, lng: e.target.value})} />
               </div>
               
-              <Button onClick={handleSolarLookup} disabled={fetchingSolar} className="w-full flex items-center justify-center gap-2">
-                {fetchingSolar ? 'Scanning...' : <><RefreshCw size={16}/> Analyze Roof Data</>}
+              <Button onClick={handleSolarLookup} disabled={fetchingSolar} className="w-full flex items-center justify-center gap-2 shadow-lg bg-orange-600 hover:bg-orange-700">
+                {fetchingSolar ? 'Fetching...' : <><RefreshCw size={16}/> UPDATE SOLAR DATA</>}
               </Button>
 
-              {manualMode && (
-                <div className="mt-3 p-3 bg-orange-50 text-orange-900 text-xs rounded border border-orange-200 animate-in fade-in">
-                  <div className="flex items-start gap-2 mb-2 font-bold">
-                    <Edit3 size={14} className="shrink-0 mt-0.5"/>
-                    <span>Manual Override Enabled</span>
-                  </div>
-                  <p className="mb-2 opacity-80">
-                    {solarData?.source === 'OPEN_METEO' 
-                      ? "✅ Sun Hours fetched from Satellite! Please confirm Roof Area:" 
-                      : "Solar Data unavailable. Please estimate:"}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                 <div className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-700">
+                    <Edit3 size={16}/> 
+                    <span>Calculation Inputs:</span>
+                 </div>
+                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block mb-1 font-bold">Roof Area (m²)</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Roof Area (m²)</label>
                       <input 
                         type="number" 
                         value={inputs.manualRoofArea} 
                         onChange={(e) => setInputs({...inputs, manualRoofArea: +e.target.value})}
-                        className="w-full p-1 border rounded text-black"
+                        className="w-full p-2 border border-slate-300 rounded text-slate-900 font-bold"
                       />
                     </div>
                     <div>
-                      <label className="block mb-1 font-bold">Sun Hours</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Sun Hours/Day</label>
                       <input 
                         type="number" 
                         value={inputs.manualSunHours} 
                         onChange={(e) => setInputs({...inputs, manualSunHours: +e.target.value})}
-                        className="w-full p-1 border rounded text-black font-bold bg-yellow-50"
+                        className="w-full p-2 border border-slate-300 rounded text-slate-900 font-bold bg-yellow-50"
                       />
                     </div>
                   </div>
-                </div>
-              )}
-
-              {solarData && !manualMode && (
-                <div className="mt-3 p-3 bg-slate-900 text-white text-xs rounded border border-slate-700 animate-in fade-in">
-                  <div className="flex justify-between mb-1">
-                    <span>Max Panels:</span>
-                    <span className="font-bold text-yellow-400">{solarData.maxPanels}</span>
-                  </div>
-                  <div className="flex justify-between mb-1">
-                    <span>Max System:</span>
-                    <span className="font-bold text-yellow-400">{solarData.maxKwp.toFixed(2)} kWp</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sun Hours:</span>
-                    <span>{solarData.sunshineHours.toFixed(0)} hr/yr</span>
-                  </div>
-                </div>
-              )}
+                  {solarData && (
+                     <div className="mt-2 text-[10px] text-green-600 font-bold text-center">
+                        ✅ Updated from {solarData.source === 'GOOGLE' ? 'Google Solar API' : 'Weather Satellite'}
+                     </div>
+                  )}
+              </div>
             </div>
           </Card>
         </div>
