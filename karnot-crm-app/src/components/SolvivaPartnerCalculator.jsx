@@ -4,11 +4,12 @@ import { collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { fetchSolarPotential } from '../utils/googleSolar';
 import html2pdf from 'html2pdf.js';
+import { APIProvider, Map } from '@vis.gl/react-google-maps';
 import { Card, Input, Button } from '../data/constants.jsx';
 import {
   Zap, MapPin, CheckCircle, AlertTriangle, ArrowRight, 
   Battery, Moon, Sun, DollarSign, Search, FileText, Download,
-  Layers, Edit3, RefreshCw, Save
+  Layers, Edit3, RefreshCw, Save, MousePointer2
 } from 'lucide-react';
 
 const SolvivaPartnerCalculator = () => {
@@ -21,7 +22,6 @@ const SolvivaPartnerCalculator = () => {
   const [solarData, setSolarData] = useState(null);
   const [fetchingSolar, setFetchingSolar] = useState(false);
   
-  // We now ALWAYS use manual mode inputs, but we auto-fill them from API
   const [manualMode, setManualMode] = useState(true); 
 
   // Inputs
@@ -41,9 +41,9 @@ const SolvivaPartnerCalculator = () => {
     
     // Commercials
     eaasFee: 2000,
-    electricityRate: 12.50,
+    electricityRate: 12.50, // PHP per kWh
 
-    // These start with "Default" values, but API will overwrite them
+    // Manual Override Defaults
     manualRoofArea: 100, 
     manualSunHours: 5.5 
   });
@@ -72,7 +72,7 @@ const SolvivaPartnerCalculator = () => {
     loadData();
   }, []);
 
-  // === 2. SOLAR API HANDLER (UPDATED) ===
+  // === 2. SOLAR API HANDLER ===
   const handleSolarLookup = async () => {
     setFetchingSolar(true);
     
@@ -81,49 +81,40 @@ const SolvivaPartnerCalculator = () => {
     if (data) {
       setSolarData(data);
       
-      // LOGIC: Take whatever data we found and PUSH it into the input boxes
       let newArea = inputs.manualRoofArea;
       let newSun = inputs.manualSunHours;
 
       if (data.source === 'GOOGLE') {
-          // Google gives us Area + Sun
           newArea = data.maxArrayAreaSqM.toFixed(0);
           newSun = data.sunshineHours.toFixed(1);
       } else if (data.source === 'OPEN_METEO') {
-          // Weather API only gives Sun
           newSun = data.peakSunHoursPerDay.toFixed(2);
       }
 
-      // Update the inputs visible to the user
       setInputs(prev => ({
         ...prev,
         manualRoofArea: newArea,
         manualSunHours: newSun
       }));
-      
-      // Force manual mode so the math uses these new input values
       setManualMode(true);
 
     } else {
       console.warn("No Data Found.");
-      // Just keep defaults
       setManualMode(true);
     }
     setFetchingSolar(false);
   };
 
-  const getMapUrl = () => {
+  const getStaticMapUrl = () => {
     const key = import.meta.env.VITE_GOOGLE_SOLAR_KEY;
     return `https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.lat},${coordinates.lng}&zoom=20&size=600x400&maptype=satellite&key=${key}`;
   };
 
-  // === 3. ANALYSIS LOGIC (Simpler now - always uses inputs) ===
+  // === 3. ANALYSIS LOGIC ===
   const analysis = useMemo(() => {
-    // --- A. SOLAR POTENTIAL ---
-    // We trust the inputs (which might have been auto-filled by API)
-    const maxKwp = (inputs.manualRoofArea * 0.180); 
+    // --- A. SOLAR GENERATION (SENSITIVE TO SUN HOURS) ---
+    const roofMaxKwp = (inputs.manualRoofArea * 0.180); // 180W/m2
     const sunHours = inputs.manualSunHours;
-    const yearlyGen = maxKwp * sunHours * 365;
 
     // --- B. LOAD CALCULATIONS ---
     const kwPerHP = 0.85; 
@@ -136,22 +127,43 @@ const SolvivaPartnerCalculator = () => {
     const peakLoad_A = inputs.baseLoadKW + acTotalKW + showerPeakKW; 
     const peakLoad_B = inputs.baseLoadKW + acTotalKW + 0.69;         
     
+    // --- C. SYSTEM SELECTION ---
     const planA = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= peakLoad_A) 
                || solvivaProducts[solvivaProducts.length - 1];
                
     const planB = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= peakLoad_B) 
                || solvivaProducts[0];
 
-    // Roof Fit Check
-    const planAFits = maxKwp > 0 ? (planA?.kW_Cooling_Nominal <= maxKwp) : true;
-    const planBFits = maxKwp > 0 ? (planB?.kW_Cooling_Nominal <= maxKwp) : true;
+    const planAFits = roofMaxKwp > 0 ? (planA?.kW_Cooling_Nominal <= roofMaxKwp) : true;
+    const planBFits = roofMaxKwp > 0 ? (planB?.kW_Cooling_Nominal <= roofMaxKwp) : true;
 
     const costA = planA?.salesPriceUSD || 0;
     const costB_Solar = planB?.salesPriceUSD || 0;
     const costB_Total = costB_Solar + inputs.eaasFee;
     
-    const monthlySavings = costA - costB_Total;
-    const fiveYearSavings = monthlySavings * 60;
+    // --- D. ROI CALCULATION (NEW LOGIC) ---
+    // Calculate how much electricity the chosen system actually generates
+    // Use the SMALLER of: The Plan Size OR The Roof Max Size
+    const systemSizeA = Math.min(planA?.kW_Cooling_Nominal || 0, roofMaxKwp);
+    const systemSizeB = Math.min(planB?.kW_Cooling_Nominal || 0, roofMaxKwp);
+
+    const monthlyGenA_kWh = systemSizeA * sunHours * 30;
+    const monthlyGenB_kWh = systemSizeB * sunHours * 30;
+
+    const monthlyBillSavingsA = monthlyGenA_kWh * inputs.electricityRate;
+    const monthlyBillSavingsB = monthlyGenB_kWh * inputs.electricityRate;
+
+    // Net Value = (Bill Savings) - (Lease Cost)
+    const netValueA = monthlyBillSavingsA - costA;
+    const netValueB = monthlyBillSavingsB - costB_Total;
+
+    // The "Difference" (Advantage of Partner Model)
+    // Typically Partner Model is cheaper hardware, so net value is higher
+    const monthlyAdvantage = costA - costB_Total; // Hardware savings
+    
+    // Total 5 Year Benefit
+    // Includes Hardware Savings + The Grid Value of the Solar
+    const fiveYearSavings = (monthlyAdvantage * 60) + (monthlyBillSavingsB * 60);
 
     return {
       acTotalKW,
@@ -162,19 +174,23 @@ const SolvivaPartnerCalculator = () => {
       planB,
       costA,
       costB_Total,
-      monthlySavings,
-      fiveYearSavings,
       planAFits,
       planBFits,
       inverterSaved: (peakLoad_A - peakLoad_B).toFixed(1),
-      maxKwp,
-      sunHours
+      maxKwp: roofMaxKwp,
+      sunHours,
+      
+      // New Metrics
+      monthlyGenB_kWh,
+      monthlyBillSavingsB,
+      monthlyAdvantage,
+      fiveYearSavings
     };
-  }, [inputs, solvivaProducts, solarData]); // Removed manualMode dependency as we always use inputs
+  }, [inputs, solvivaProducts, solarData]); 
 
   // === 4. PDF GENERATOR ===
   const generatePDFReport = () => {
-    const mapImgUrl = getMapUrl();
+    const mapImgUrl = getStaticMapUrl();
     const element = document.createElement('div');
     element.style.padding = '20px';
     element.style.fontFamily = 'Helvetica, Arial, sans-serif';
@@ -210,7 +226,7 @@ const SolvivaPartnerCalculator = () => {
             <div style="font-size: 16px; font-weight: bold;">${analysis.planA?.name || 'Custom Build'}</div>
           </div>
           <div>
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Monthly Cost (60mo)</div>
+            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Hardware Cost (60mo)</div>
             <div style="font-size: 20px; font-weight: bold; color: #dc3545;">₱${analysis.costA.toLocaleString()}</div>
           </div>
         </div>
@@ -226,16 +242,16 @@ const SolvivaPartnerCalculator = () => {
             <div style="font-size: 16px; font-weight: bold;">${analysis.planB?.name}</div>
           </div>
           <div>
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Monthly Cost (w/ Karnot)</div>
+            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Hardware Cost (w/ Karnot)</div>
             <div style="font-size: 20px; font-weight: bold; color: #28a745;">₱${analysis.costB_Total.toLocaleString()}</div>
           </div>
         </div>
       </div>
 
       <div style="background: #131B28; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-top: 40px;">
-        <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">TOTAL CUSTOMER SAVINGS (5 YEARS)</div>
+        <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">TOTAL VALUE (5 YEARS)</div>
         <div style="font-size: 36px; font-weight: bold; color: #F56600; margin: 10px 0;">₱${analysis.fiveYearSavings.toLocaleString()}</div>
-        <div style="font-size: 12px; opacity: 0.8;">By right-sizing the solar asset and adding thermal storage.</div>
+        <div style="font-size: 12px; opacity: 0.8;">Includes hardware savings + solar electricity generation.</div>
       </div>
     `;
 
@@ -306,14 +322,28 @@ const SolvivaPartnerCalculator = () => {
               <MapPin size={18} className="text-green-500"/> 3. Roof & Solar Data
             </h3>
             <div className="space-y-3">
-              <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 relative mb-3 group">
-                <img src={getMapUrl()} alt="Satellite View" className="w-full h-full object-cover" />
-                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded">Google Satellite</div>
+              
+              {/* --- INTERACTIVE MAP CONTAINER --- */}
+              <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 relative mb-3">
+                <APIProvider apiKey={import.meta.env.VITE_GOOGLE_SOLAR_KEY}>
+                  <Map
+                    style={{width: '100%', height: '100%'}}
+                    defaultCenter={coordinates}
+                    defaultZoom={19}
+                    mapTypeId="hybrid"
+                    gestureHandling={'cooperative'} 
+                    disableDefaultUI={false} 
+                  />
+                </APIProvider>
+                
+                <div className="absolute bottom-2 left-2 bg-white/80 text-slate-800 text-[10px] px-2 py-1 rounded font-bold flex items-center gap-1">
+                  <MousePointer2 size={10}/> Interactive: Drag & Zoom
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Input label="Lat" value={coordinates.lat} onChange={(e) => setCoordinates({...coordinates, lat: e.target.value})} />
-                <Input label="Lng" value={coordinates.lng} onChange={(e) => setCoordinates({...coordinates, lng: e.target.value})} />
+                <Input label="Lat" value={coordinates.lat} onChange={(e) => setCoordinates({...coordinates, lat: Number(e.target.value)})} />
+                <Input label="Lng" value={coordinates.lng} onChange={(e) => setCoordinates({...coordinates, lng: Number(e.target.value)})} />
               </div>
               
               <Button onClick={handleSolarLookup} disabled={fetchingSolar} className="w-full flex items-center justify-center gap-2 shadow-lg bg-orange-600 hover:bg-orange-700">
@@ -345,11 +375,6 @@ const SolvivaPartnerCalculator = () => {
                       />
                     </div>
                   </div>
-                  {solarData && (
-                     <div className="mt-2 text-[10px] text-green-600 font-bold text-center">
-                        ✅ Updated from {solarData.source === 'GOOGLE' ? 'Google Solar API' : 'Weather Satellite'}
-                     </div>
-                  )}
               </div>
             </div>
           </Card>
@@ -400,27 +425,31 @@ const SolvivaPartnerCalculator = () => {
             </div>
           </div>
 
+          {/* NEW FINANCIAL SUMMARY: Includes Solar Generation */}
           <div className="bg-slate-900 text-white p-8 rounded-xl shadow-lg">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Monthly Bill Breakdown (60-Mo Term)</h3>
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Financial Impact Analysis</h3>
             <div className="grid grid-cols-3 gap-4 items-end">
               <div>
-                <p className="text-sm text-slate-400 mb-1">Status Quo</p>
-                <p className="text-2xl font-bold text-red-400 line-through decoration-white decoration-2">₱{analysis.costA.toLocaleString()}</p>
+                <p className="text-sm text-slate-400 mb-1">Hardware Savings</p>
+                <p className="text-2xl font-bold text-white">₱{analysis.monthlyAdvantage.toLocaleString()} <span className="text-sm text-slate-500">/mo</span></p>
               </div>
               <div className="text-center pb-2">
-                <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold inline-block mb-2 shadow-lg animate-pulse">SAVE ₱{analysis.monthlySavings.toLocaleString()} / mo</div>
-                <ArrowRight className="mx-auto text-slate-500"/>
+                 <div className="text-sm text-slate-400 mb-1">Solar Electricity Value</div>
+                 <div className="text-xl font-bold text-yellow-400">
+                    ₱{analysis.monthlyBillSavingsB.toLocaleString()} /mo
+                 </div>
+                 <div className="text-[10px] text-slate-500">
+                    ({analysis.monthlyGenB_kWh.toFixed(0)} kWh @ ₱{inputs.electricityRate})
+                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-slate-400 mb-1">Partner Model</p>
-                <p className="text-3xl font-bold text-green-400">₱{analysis.costB_Total.toLocaleString()}</p>
-                <p className="text-[10px] text-slate-500 mt-1">(Solar ₱{analysis.planB?.salesPriceUSD?.toLocaleString()} + Karnot ₱{inputs.eaasFee.toLocaleString()})</p>
+                <p className="text-sm text-slate-400 mb-1">Total 5-Yr Benefit</p>
+                <p className="text-3xl font-bold text-green-400">₱{analysis.fiveYearSavings.toLocaleString()}</p>
               </div>
             </div>
             <div className="mt-8 pt-6 border-t border-slate-700 flex justify-between items-center">
               <div>
-                <p className="text-xs text-slate-400 uppercase font-bold">5-Year Total Savings</p>
-                <p className="text-2xl font-bold text-white">₱{analysis.fiveYearSavings.toLocaleString()}</p>
+                <p className="text-xs text-slate-400 uppercase font-bold">Change Sun Hours to see impact</p>
               </div>
               <Button onClick={generatePDFReport} className="bg-orange-600 hover:bg-orange-700 text-white border-none">
                 <Download className="mr-2" size={18}/> Generate Proposal PDF
