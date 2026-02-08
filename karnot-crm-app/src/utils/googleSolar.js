@@ -1,33 +1,66 @@
 // src/utils/googleSolar.js
 
-const GOOGLE_API_KEY = "AIzaSyAE1x3m2oghe-5lb-ECuC7OgMKs65apHWI"; // <--- Insert your Key here
+// 1. Get the key securely from the environment
+// NOTE: If using Vite, change this to: import.meta.env.VITE_GOOGLE_SOLAR_KEY
+const GOOGLE_API_KEY = process.env.REACT_APP_GOOGLE_SOLAR_KEY; 
 
+/**
+ * Fetches solar potential data for a specific location (Lat/Lng).
+ * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ * @returns {Promise<Object|null>} - Returns formatted solar data or null if failed/no data.
+ */
 export const fetchSolarPotential = async (lat, lng) => {
-  try {
-    // 1. Get Building Insights
-    const response = await fetch(
-      `https://solar.googleapis.com/v1/buildingInsights:findClosest?location.latitude=${lat}&location.longitude=${lng}&requiredQuality=HIGH&key=${GOOGLE_API_KEY}`
-    );
+  // Safety check for the key
+  if (!GOOGLE_API_KEY) {
+    console.error("❌ Missing Google Solar API Key! Check your .env file.");
+    return null;
+  }
 
-    if (!response.ok) throw new Error("Failed to fetch solar data");
+  try {
+    // 2. Call the Google Solar API (Building Insights Endpoint)
+    const url = `https://solar.googleapis.com/v1/buildingInsights:findClosest?location.latitude=${lat}&location.longitude=${lng}&requiredQuality=HIGH&key=${GOOGLE_API_KEY}`;
+    
+    const response = await fetch(url);
+
+    // Handle errors (e.g., location not covered, quota exceeded)
+    if (!response.ok) {
+      const errData = await response.json();
+      console.warn("⚠️ Solar API Error:", errData.error?.message || response.statusText);
+      return null;
+    }
     
     const data = await response.json();
+    
+    // 3. Extract the critical data points
+    // The API returns a lot; we only grab what the calculator needs.
     const solarPotential = data.solarPotential;
     
-    // 2. Extract key metrics for sizing
+    // Calculate Max System Size (kWp)
+    // Google provides `maxArrayPanelsCount`. We assume a standard 450W panel for the calc.
+    const ASSUMED_PANEL_WATTAGE = 450; 
+    const maxKwp = (solarPotential.maxArrayPanelsCount * ASSUMED_PANEL_WATTAGE) / 1000;
+
     return {
+      // Basic Specs
       maxPanels: solarPotential.maxArrayPanelsCount,
       maxArrayAreaSqM: solarPotential.maxArrayAreaMeters2,
-      // Google gives specific panel capacity, but let's assume standard 450W for sizing checks
-      maxKwp: (solarPotential.maxArrayPanelsCount * 0.450), 
+      maxKwp: maxKwp, 
+      
+      // Energy & Environment
       sunshineHours: solarPotential.maxSunshineHoursPerYear,
       carbonOffsetFactor: solarPotential.carbonOffsetFactorKgPerMwh,
       
-      // Roof segments (pitch/azimuth) could be used for advanced yield calc later
-      roofSegments: solarPotential.roofSegmentStats
+      // Financials (Google provides financial analyses, but we use just the raw potential here)
+      // You can expand this later to use `solarPotential.financialAnalyses` if needed.
+      
+      // Technical details for the map overlay (optional future feature)
+      center: data.center,
+      imageryQuality: data.imageryQuality
     };
+
   } catch (error) {
-    console.error("Solar API Error:", error);
+    console.error("❌ Network or Parsing Error:", error);
     return null;
   }
 };
