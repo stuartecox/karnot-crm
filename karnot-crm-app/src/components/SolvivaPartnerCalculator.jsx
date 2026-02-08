@@ -12,7 +12,7 @@ import {
   Layers, Edit3, RefreshCw, Save, MousePointer2, Locate
 } from 'lucide-react';
 
-// --- COMPONENT: HANDLES ADDRESS SEARCH & GEOCODING ---
+// --- COMPONENT: ADDRESS SEARCH ---
 const GeocoderControl = ({ address, onLocationFound }) => {
   const map = useMap();
   const geocodingLib = useMapsLibrary('geocoding');
@@ -33,11 +33,8 @@ const GeocoderControl = ({ address, onLocationFound }) => {
         const newLat = location.lat();
         const newLng = location.lng();
         
-        // Move Map
         map.panTo({ lat: newLat, lng: newLng });
         map.setZoom(19);
-
-        // Tell Parent Component
         onLocationFound(newLat, newLng);
       } else {
         alert("Location not found. Try a different address format.");
@@ -52,23 +49,33 @@ const GeocoderControl = ({ address, onLocationFound }) => {
   );
 };
 
-// --- COMPONENT: SYNC MAP DRAG TO INPUTS ---
-const MapEvents = ({ onCenterChanged }) => {
+// --- COMPONENT: MOVES MAP WHEN LAT/LNG INPUTS CHANGE ---
+const RecenterMap = ({ lat, lng }) => {
   const map = useMap();
-  
+  useEffect(() => {
+    if (map) {
+      map.panTo({ lat, lng });
+    }
+  }, [map, lat, lng]);
+  return null;
+};
+
+// --- COMPONENT: UPDATES INPUTS WHEN MAP IS DRAGGED ---
+const MapEvents = ({ onDragEnd }) => {
+  const map = useMap();
   useEffect(() => {
     if (!map) return;
     
-    // Listen for the "dragend" event (when user stops dragging)
-    const listener = map.addListener('dragend', () => {
+    // Using 'idle' event ensures we capture the final position after drag OR zoom
+    const listener = map.addListener('idle', () => {
       const center = map.getCenter();
       if (center) {
-        onCenterChanged(center.lat(), center.lng());
+        onDragEnd(center.lat(), center.lng());
       }
     });
 
     return () => google.maps.event.removeListener(listener);
-  }, [map, onCenterChanged]);
+  }, [map, onDragEnd]);
 
   return null;
 };
@@ -81,7 +88,7 @@ const SolvivaPartnerCalculator = () => {
   
   // Google Solar Data
   const [coordinates, setCoordinates] = useState({ lat: 16.023497, lng: 120.430082 }); 
-  const [addressSearch, setAddressSearch] = useState("Cosmos Farm, Pangasinan"); // Default Search
+  const [addressSearch, setAddressSearch] = useState("Cosmos Farm, Pangasinan"); 
   const [solarData, setSolarData] = useState(null);
   const [fetchingSolar, setFetchingSolar] = useState(false);
   const [manualMode, setManualMode] = useState(true); 
@@ -172,12 +179,14 @@ const SolvivaPartnerCalculator = () => {
     return `https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.lat},${coordinates.lng}&zoom=20&size=600x400&maptype=satellite&key=${key}`;
   };
 
-  // Called when Map is Dragged
-  const handleMapDrag = useCallback((lat, lng) => {
+  // Called when Map STOPS moving (Drag End)
+  const handleMapIdle = useCallback((lat, lng) => {
+    // Only update if the difference is significant to prevent loops
+    // (Optional optimization, but simple setCoordinates is usually fine here)
     setCoordinates({ lat, lng });
   }, []);
 
-  // Called when Address Found
+  // Called when Address Search Finds a Location
   const handleAddressFound = useCallback((lat, lng) => {
     setCoordinates({ lat, lng });
   }, []);
@@ -397,15 +406,20 @@ const SolvivaPartnerCalculator = () => {
                 <APIProvider apiKey={import.meta.env.VITE_GOOGLE_SOLAR_KEY}>
                   <Map
                     style={{width: '100%', height: '100%'}}
-                    center={coordinates} // Must match state
+                    defaultCenter={coordinates} // UNLOCKED (Draggable)
                     defaultZoom={19}
                     mapTypeId="hybrid"
                     gestureHandling={'cooperative'} 
                     disableDefaultUI={false} 
                   >
-                     {/* Child components to handle logic */}
+                     {/* 1. Allows Searching */}
                      <GeocoderControl address={addressSearch} onLocationFound={handleAddressFound} />
-                     <MapEvents onCenterChanged={handleMapDrag} />
+                     
+                     {/* 2. Moves Map when Inputs Change */}
+                     <RecenterMap lat={coordinates.lat} lng={coordinates.lng} />
+
+                     {/* 3. Updates Inputs when Map Dragged */}
+                     <MapEvents onDragEnd={handleMapIdle} />
                   </Map>
                 </APIProvider>
                 
@@ -454,7 +468,7 @@ const SolvivaPartnerCalculator = () => {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          {/* ... (Rest of the results display is unchanged) ... */}
+          {/* RESULTS COLUMN UNCHANGED */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className={`p-6 rounded-xl border-2 ${analysis.planAFits ? 'border-red-200 bg-red-50' : 'border-red-500 bg-red-100'}`}>
               <div className="flex justify-between mb-4">
