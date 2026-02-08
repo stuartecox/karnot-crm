@@ -76,6 +76,8 @@ import HeatPumpCalculator from './components/HeatPumpCalculator.jsx';
 import WarmRoomCalc from './components/WarmRoomCalc.jsx';
 import DatasheetLibrary from './components/DatasheetLibrary.jsx';
 import RSRHCalculator from './components/RSRHCalculator.jsx';
+// --- NEW IMPORT HERE ---
+import SolvivaPartnerCalculator from './components/SolvivaPartnerCalculator.jsx';
 
 // ==========================================
 // 2B. NEW INVESTOR RESEARCH COMPONENTS
@@ -105,7 +107,7 @@ import {
     Users, Settings, Calculator, Plus, Landmark, ChevronDown,
     MapPin, Wrench, Briefcase, FileText, Target, Package, 
     UserCheck, Calendar as CalendarIcon, CheckCircle, Globe, Upload, Sparkles,
-    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map
+    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap
 } from 'lucide-react'; 
 
 // ==========================================
@@ -229,13 +231,15 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
     ];
 
    // Calculators Menu
-const calculatorsMenu = [
-    { view: 'calculatorsHub', label: 'Calculator Hub', icon: Calculator },
-    { view: 'heatPumpCalc', label: 'Heat Pump ROI', icon: Calculator },
-    { view: 'warmRoomCalc', label: 'Warm Room', icon: Calculator },
-    { view: 'coldRoomCalc', label: 'Cold Room', icon: Calculator },
-    { view: 'rsrhCalc', label: 'RSRH Cattle', icon: Target, badge: 'NEW' }
-];
+    const calculatorsMenu = [
+        { view: 'calculatorsHub', label: 'Calculator Hub', icon: Calculator },
+        { view: 'heatPumpCalc', label: 'Heat Pump ROI', icon: Calculator },
+        { view: 'warmRoomCalc', label: 'Warm Room', icon: Calculator },
+        { view: 'coldRoomCalc', label: 'Cold Room', icon: Calculator },
+        { view: 'rsrhCalc', label: 'RSRH Cattle', icon: Target },
+        // --- ADDED NEW SOLVIVA CALCULATOR HERE ---
+        { view: 'solvivaCalc', label: 'Solviva Partner', icon: Zap, badge: 'NEW' } 
+    ];
 
     return (
         <header className="bg-white shadow-md sticky top-0 z-50 border-b-2 border-orange-500">
@@ -822,7 +826,7 @@ export default function App() {
                         initialData={quoteToEdit} 
                         companies={companies} 
                         contacts={contacts} 
-                        opportunities={opportunities}
+                        opportunities={opportunities} 
                     />
                 )}
                 
@@ -853,6 +857,16 @@ export default function App() {
                 
                 {activeView === 'warmRoomCalc' && <WarmRoomCalc setActiveView={setActiveView} user={user} />}
                 {activeView === 'coldRoomCalc' && <ColdRoomCalc setActiveView={setActiveView} user={user} />}
+                
+                {/* --- ADDED SOLVIVA VIEW HERE --- */}
+                {activeView === 'solvivaCalc' && (
+                    <div className="max-w-7xl mx-auto">
+                        <Button onClick={() => setActiveView('calculatorsHub')} variant="secondary" className="mb-4">
+                            ← Back to Calculators
+                        </Button>
+                        <SolvivaPartnerCalculator />
+                    </div>
+                )}
                 
                 {activeView === 'admin' && <AdminPage user={user} />}
                 
