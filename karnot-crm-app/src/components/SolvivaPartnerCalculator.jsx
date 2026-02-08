@@ -6,7 +6,7 @@ import { fetchSolarPotential } from '../utils/googleSolar';
 import { Card, Input, Button } from '../data/constants.jsx';
 import {
   Zap, MapPin, CheckCircle, AlertTriangle, ArrowRight, 
-  Battery, Moon, Sun, DollarSign, Search
+  Battery, Moon, Sun, DollarSign, Search, FileText
 } from 'lucide-react';
 
 const SolvivaPartnerCalculator = () => {
@@ -132,6 +132,159 @@ const SolvivaPartnerCalculator = () => {
       inverterSaved: (peakLoad_A - peakLoad_B).toFixed(1)
     };
   }, [inputs, solvivaProducts, solarData]);
+
+  // === 4. PDF GENERATOR ===
+  const generatePDFReport = () => {
+    const reportHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Solviva x Karnot Proposal</title>
+        <style>
+          body { font-family: 'Helvetica', sans-serif; color: #333; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { border-bottom: 4px solid #F56600; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+          .header h1 { margin: 0; color: #131B28; font-size: 28px; }
+          .header h2 { margin: 5px 0 0; color: #666; font-size: 16px; font-weight: normal; }
+          .section { margin-bottom: 30px; background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+          .section-title { font-size: 18px; font-weight: bold; color: #131B28; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+          
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+          .card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #eee; }
+          .card.highlight { border: 2px solid #28a745; background: #f0fff4; }
+          .card.bad { border: 2px solid #dc3545; background: #fff5f5; }
+          
+          .stat-label { font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold; }
+          .stat-val { font-size: 20px; font-weight: bold; margin-top: 5px; }
+          .text-red { color: #dc3545; }
+          .text-green { color: #28a745; }
+          
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th { text-align: left; padding: 10px; background: #eee; font-size: 12px; text-transform: uppercase; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 14px; }
+          tr:last-child td { border-bottom: none; }
+          
+          .savings-banner { background: #131B28; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-top: 40px; }
+          .savings-amount { font-size: 36px; font-weight: bold; color: #F56600; }
+          
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>Optimization Proposal</h1>
+            <h2>Solviva Solar + Karnot Thermal Battery</h2>
+          </div>
+          <div style="text-align: right;">
+            <div>${new Date().toLocaleDateString()}</div>
+            <div style="font-weight: bold; color: #F56600;">INTEGRATED SOLUTION</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">The Challenge: "The Shower Spike"</div>
+          <p>The customer's <strong>${inputs.showers} electric showers</strong> create a massive <strong>${(inputs.showers * inputs.showerPowerKW).toFixed(1)} kW</strong> power spike. This forces an oversized inverter and drains the battery during evening use.</p>
+        </div>
+
+        <div class="grid">
+          <div class="card bad">
+            <div class="section-title" style="color: #dc3545;">Scenario A: Solar Only</div>
+            
+            <div style="margin-bottom: 10px;">
+              <div class="stat-label">Required Peak Load</div>
+              <div class="stat-val text-red">${analysis.peakLoad_A.toFixed(1)} kW</div>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+              <div class="stat-label">Required Solviva System</div>
+              <div class="stat-val" style="font-size: 16px;">${analysis.planA?.name || 'Custom Build'}</div>
+            </div>
+
+            <div>
+              <div class="stat-label">Monthly Cost (60mo)</div>
+              <div class="stat-val text-red">₱${analysis.costA.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div class="card highlight">
+            <div class="section-title" style="color: #28a745;">Scenario B: Partner Model</div>
+            
+            <div style="margin-bottom: 10px;">
+              <div class="stat-label">Optimized Peak Load</div>
+              <div class="stat-val text-green">${analysis.peakLoad_B.toFixed(1)} kW</div>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+              <div class="stat-label">Required Solviva System</div>
+              <div class="stat-val" style="font-size: 16px;">${analysis.planB?.name}</div>
+            </div>
+
+            <div>
+              <div class="stat-label">Monthly Cost (w/ Karnot)</div>
+              <div class="stat-val text-green">₱${analysis.costB_Total.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top: 30px;">
+          <div class="section-title">Battery Optimization Analysis</div>
+          <table>
+            <tr>
+              <th>Metric</th>
+              <th>Scenario A</th>
+              <th>Scenario B</th>
+              <th>Impact</th>
+            </tr>
+            <tr>
+              <td><strong>Inverter Sizing</strong></td>
+              <td>${analysis.peakLoad_A.toFixed(1)} kW</td>
+              <td>${analysis.peakLoad_B.toFixed(1)} kW</td>
+              <td style="color: #28a745; font-weight: bold;">-${analysis.inverterSaved} kW Required</td>
+            </tr>
+            <tr>
+              <td><strong>Night Load (AC Only)</strong></td>
+              <td>Sensitive to Spikes</td>
+              <td>${analysis.totalSteadyNightLoad.toFixed(1)} kWh Stable</td>
+              <td>Protected Battery</td>
+            </tr>
+            <tr>
+              <td><strong>Hot Water</strong></td>
+              <td>Direct Electric</td>
+              <td>Stored Thermal Energy</td>
+              <td>Zero Grid Impact</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="savings-banner">
+          <div>TOTAL CUSTOMER SAVINGS (5 YEARS)</div>
+          <div class="savings-amount">₱${analysis.fiveYearSavings.toLocaleString()}</div>
+          <div style="font-size: 14px; margin-top: 10px; opacity: 0.8;">
+            By right-sizing the solar asset and adding thermal storage.
+          </div>
+        </div>
+        
+        <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #999;">
+          Generated by Solviva Partner Engine • Confidential
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(reportHTML);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        setTimeout(() => printWindow.print(), 500);
+      };
+    } else {
+      alert("Please allow pop-ups to view the PDF proposal.");
+    }
+  };
 
   if (loading) return <div className="p-10 text-center">Loading Solviva Pricing Database...</div>;
 
@@ -341,8 +494,11 @@ const SolvivaPartnerCalculator = () => {
                 <p className="text-xs text-slate-400 uppercase font-bold">5-Year Total Savings</p>
                 <p className="text-2xl font-bold text-white">₱{analysis.fiveYearSavings.toLocaleString()}</p>
               </div>
-              <Button className="bg-orange-600 hover:bg-orange-700 text-white border-none">
-                Generate Proposal PDF
+              <Button 
+                onClick={generatePDFReport} 
+                className="bg-orange-600 hover:bg-orange-700 text-white border-none"
+              >
+                <FileText className="mr-2" size={18}/> Generate Proposal PDF
               </Button>
             </div>
           </div>
