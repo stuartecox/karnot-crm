@@ -1,16 +1,78 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { fetchSolarPotential } from '../utils/googleSolar';
 import html2pdf from 'html2pdf.js';
-import { APIProvider, Map } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Card, Input, Button } from '../data/constants.jsx';
 import {
   Zap, MapPin, CheckCircle, AlertTriangle, ArrowRight, 
   Battery, Moon, Sun, DollarSign, Search, FileText, Download,
-  Layers, Edit3, RefreshCw, Save, MousePointer2
+  Layers, Edit3, RefreshCw, Save, MousePointer2, Locate
 } from 'lucide-react';
+
+// --- COMPONENT: HANDLES ADDRESS SEARCH & GEOCODING ---
+const GeocoderControl = ({ address, onLocationFound }) => {
+  const map = useMap();
+  const geocodingLib = useMapsLibrary('geocoding');
+  const [geocoder, setGeocoder] = useState(null);
+
+  useEffect(() => {
+    if (geocodingLib) {
+      setGeocoder(new geocodingLib.Geocoder());
+    }
+  }, [geocodingLib]);
+
+  const handleSearch = () => {
+    if (!geocoder || !map || !address) return;
+
+    geocoder.geocode({ address: address }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const location = results[0].geometry.location;
+        const newLat = location.lat();
+        const newLng = location.lng();
+        
+        // Move Map
+        map.panTo({ lat: newLat, lng: newLng });
+        map.setZoom(19);
+
+        // Tell Parent Component
+        onLocationFound(newLat, newLng);
+      } else {
+        alert("Location not found. Try a different address format.");
+      }
+    });
+  };
+
+  return (
+    <Button onClick={handleSearch} className="absolute right-1 top-1 h-8 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow-md z-10 flex items-center gap-1">
+      <Search size={14}/> Find
+    </Button>
+  );
+};
+
+// --- COMPONENT: SYNC MAP DRAG TO INPUTS ---
+const MapEvents = ({ onCenterChanged }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!map) return;
+    
+    // Listen for the "dragend" event (when user stops dragging)
+    const listener = map.addListener('dragend', () => {
+      const center = map.getCenter();
+      if (center) {
+        onCenterChanged(center.lat(), center.lng());
+      }
+    });
+
+    return () => google.maps.event.removeListener(listener);
+  }, [map, onCenterChanged]);
+
+  return null;
+};
+
 
 const SolvivaPartnerCalculator = () => {
   // === STATE ===
@@ -19,9 +81,9 @@ const SolvivaPartnerCalculator = () => {
   
   // Google Solar Data
   const [coordinates, setCoordinates] = useState({ lat: 16.023497, lng: 120.430082 }); 
+  const [addressSearch, setAddressSearch] = useState("Cosmos Farm, Pangasinan"); // Default Search
   const [solarData, setSolarData] = useState(null);
   const [fetchingSolar, setFetchingSolar] = useState(false);
-  
   const [manualMode, setManualMode] = useState(true); 
 
   // Inputs
@@ -41,7 +103,7 @@ const SolvivaPartnerCalculator = () => {
     
     // Commercials
     eaasFee: 2000,
-    electricityRate: 12.50, // PHP per kWh
+    electricityRate: 12.50, 
 
     // Manual Override Defaults
     manualRoofArea: 100, 
@@ -110,13 +172,21 @@ const SolvivaPartnerCalculator = () => {
     return `https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.lat},${coordinates.lng}&zoom=20&size=600x400&maptype=satellite&key=${key}`;
   };
 
+  // Called when Map is Dragged
+  const handleMapDrag = useCallback((lat, lng) => {
+    setCoordinates({ lat, lng });
+  }, []);
+
+  // Called when Address Found
+  const handleAddressFound = useCallback((lat, lng) => {
+    setCoordinates({ lat, lng });
+  }, []);
+
   // === 3. ANALYSIS LOGIC ===
   const analysis = useMemo(() => {
-    // --- A. SOLAR GENERATION (SENSITIVE TO SUN HOURS) ---
-    const roofMaxKwp = (inputs.manualRoofArea * 0.180); // 180W/m2
+    const roofMaxKwp = (inputs.manualRoofArea * 0.180); 
     const sunHours = inputs.manualSunHours;
 
-    // --- B. LOAD CALCULATIONS ---
     const kwPerHP = 0.85; 
     const acTotalKW = inputs.acCount * inputs.acHorsePower * kwPerHP;
     const acNightKWh = acTotalKW * inputs.acHoursNight;
@@ -127,7 +197,6 @@ const SolvivaPartnerCalculator = () => {
     const peakLoad_A = inputs.baseLoadKW + acTotalKW + showerPeakKW; 
     const peakLoad_B = inputs.baseLoadKW + acTotalKW + 0.69;         
     
-    // --- C. SYSTEM SELECTION ---
     const planA = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= peakLoad_A) 
                || solvivaProducts[solvivaProducts.length - 1];
                
@@ -141,9 +210,6 @@ const SolvivaPartnerCalculator = () => {
     const costB_Solar = planB?.salesPriceUSD || 0;
     const costB_Total = costB_Solar + inputs.eaasFee;
     
-    // --- D. ROI CALCULATION (NEW LOGIC) ---
-    // Calculate how much electricity the chosen system actually generates
-    // Use the SMALLER of: The Plan Size OR The Roof Max Size
     const systemSizeA = Math.min(planA?.kW_Cooling_Nominal || 0, roofMaxKwp);
     const systemSizeB = Math.min(planB?.kW_Cooling_Nominal || 0, roofMaxKwp);
 
@@ -153,16 +219,10 @@ const SolvivaPartnerCalculator = () => {
     const monthlyBillSavingsA = monthlyGenA_kWh * inputs.electricityRate;
     const monthlyBillSavingsB = monthlyGenB_kWh * inputs.electricityRate;
 
-    // Net Value = (Bill Savings) - (Lease Cost)
     const netValueA = monthlyBillSavingsA - costA;
     const netValueB = monthlyBillSavingsB - costB_Total;
 
-    // The "Difference" (Advantage of Partner Model)
-    // Typically Partner Model is cheaper hardware, so net value is higher
-    const monthlyAdvantage = costA - costB_Total; // Hardware savings
-    
-    // Total 5 Year Benefit
-    // Includes Hardware Savings + The Grid Value of the Solar
+    const monthlyAdvantage = costA - costB_Total; 
     const fiveYearSavings = (monthlyAdvantage * 60) + (monthlyBillSavingsB * 60);
 
     return {
@@ -179,8 +239,6 @@ const SolvivaPartnerCalculator = () => {
       inverterSaved: (peakLoad_A - peakLoad_B).toFixed(1),
       maxKwp: roofMaxKwp,
       sunHours,
-      
-      // New Metrics
       monthlyGenB_kWh,
       monthlyBillSavingsB,
       monthlyAdvantage,
@@ -211,7 +269,7 @@ const SolvivaPartnerCalculator = () => {
         <img src="${mapImgUrl}" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
       <div style="text-align: center; font-size: 10px; color: #666; margin-bottom: 30px;">
-        Location: ${coordinates.lat}, ${coordinates.lng} 
+        Location: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)} 
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -323,21 +381,36 @@ const SolvivaPartnerCalculator = () => {
             </h3>
             <div className="space-y-3">
               
+              {/* --- ADDRESS SEARCH BAR --- */}
+              <div className="relative mb-2">
+                 <input 
+                   type="text"
+                   value={addressSearch}
+                   onChange={(e) => setAddressSearch(e.target.value)}
+                   className="w-full p-2 pr-20 border border-slate-300 rounded text-sm"
+                   placeholder="Enter address (e.g. Cosmos Farm, Pangasinan)"
+                 />
+              </div>
+
               {/* --- INTERACTIVE MAP CONTAINER --- */}
-              <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 relative mb-3">
+              <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 relative mb-3 shadow-inner">
                 <APIProvider apiKey={import.meta.env.VITE_GOOGLE_SOLAR_KEY}>
                   <Map
                     style={{width: '100%', height: '100%'}}
-                    defaultCenter={coordinates}
+                    center={coordinates} // Must match state
                     defaultZoom={19}
                     mapTypeId="hybrid"
                     gestureHandling={'cooperative'} 
                     disableDefaultUI={false} 
-                  />
+                  >
+                     {/* Child components to handle logic */}
+                     <GeocoderControl address={addressSearch} onLocationFound={handleAddressFound} />
+                     <MapEvents onCenterChanged={handleMapDrag} />
+                  </Map>
                 </APIProvider>
                 
-                <div className="absolute bottom-2 left-2 bg-white/80 text-slate-800 text-[10px] px-2 py-1 rounded font-bold flex items-center gap-1">
-                  <MousePointer2 size={10}/> Interactive: Drag & Zoom
+                <div className="absolute bottom-2 left-2 bg-white/90 text-slate-800 text-[10px] px-2 py-1 rounded font-bold flex items-center gap-1 shadow-sm border border-gray-200">
+                  <MousePointer2 size={10}/> Drag to adjust
                 </div>
               </div>
 
@@ -381,6 +454,7 @@ const SolvivaPartnerCalculator = () => {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
+          {/* ... (Rest of the results display is unchanged) ... */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className={`p-6 rounded-xl border-2 ${analysis.planAFits ? 'border-red-200 bg-red-50' : 'border-red-500 bg-red-100'}`}>
               <div className="flex justify-between mb-4">
@@ -425,7 +499,6 @@ const SolvivaPartnerCalculator = () => {
             </div>
           </div>
 
-          {/* NEW FINANCIAL SUMMARY: Includes Solar Generation */}
           <div className="bg-slate-900 text-white p-8 rounded-xl shadow-lg">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Financial Impact Analysis</h3>
             <div className="grid grid-cols-3 gap-4 items-end">
