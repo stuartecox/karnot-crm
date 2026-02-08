@@ -8,7 +8,7 @@ import { Card, Input, Button } from '../data/constants.jsx';
 import {
   Zap, MapPin, CheckCircle, AlertTriangle, ArrowRight, 
   Battery, Moon, Sun, DollarSign, Search, FileText, Download,
-  Layers, Edit3
+  Layers, Edit3, RefreshCw
 } from 'lucide-react';
 
 const SolvivaPartnerCalculator = () => {
@@ -21,7 +21,7 @@ const SolvivaPartnerCalculator = () => {
   const [coordinates, setCoordinates] = useState({ lat: 16.023497, lng: 120.430082 }); 
   const [solarData, setSolarData] = useState(null);
   const [fetchingSolar, setFetchingSolar] = useState(false);
-  const [manualMode, setManualMode] = useState(false); // New Override State
+  const [manualMode, setManualMode] = useState(false); 
 
   // Inputs
   const [inputs, setInputs] = useState({
@@ -42,7 +42,7 @@ const SolvivaPartnerCalculator = () => {
     eaasFee: 2000,
     electricityRate: 12.50,
 
-    // Manual Override Defaults (Pangasinan Avg)
+    // Manual Override Defaults
     manualRoofArea: 100, 
     manualSunHours: 5.5 
   });
@@ -71,18 +71,29 @@ const SolvivaPartnerCalculator = () => {
     loadData();
   }, []);
 
-  // === 2. SOLAR API HANDLER (WITH FALLBACK) ===
+  // === 2. SOLAR API HANDLER (FIXED) ===
   const handleSolarLookup = async () => {
     setFetchingSolar(true);
-    setManualMode(false); // Reset mode
+    setManualMode(false); 
     
     const data = await fetchSolarPotential(coordinates.lat, coordinates.lng);
     
     if (data) {
       setSolarData(data);
+      
+      // ✅ FIX: If data is from Open-Meteo, AUTO-UPDATE the input field!
+      if (data.source === 'OPEN_METEO') {
+         console.log("Using Weather API Data:", data);
+         setManualMode(true);
+         
+         // Update the state with the REAL sun hours from the API
+         setInputs(prev => ({
+             ...prev,
+             manualSunHours: data.peakSunHoursPerDay.toFixed(2) 
+         }));
+      }
     } else {
-      // If API returns null (404/Not Found), trigger Manual Mode
-      console.warn("Location not covered by Solar API. Switching to Manual Mode.");
+      console.warn("No Data Found. Switching to full Manual Mode.");
       setManualMode(true);
       setSolarData(null);
     }
@@ -96,12 +107,12 @@ const SolvivaPartnerCalculator = () => {
 
   // === 3. ANALYSIS LOGIC ===
   const analysis = useMemo(() => {
-    // --- A. SOLAR POTENTIAL (AUTO OR MANUAL) ---
+    // --- A. SOLAR POTENTIAL ---
     let maxKwp = 0;
     let sunHours = 0;
 
     if (manualMode) {
-      // Manual Calculation: Area * 0.18 efficiency (approx 180W/m2)
+      // Calculate Kwp based on the User's Area & The API's Sun Hours
       maxKwp = (inputs.manualRoofArea * 0.180); 
       sunHours = inputs.manualSunHours;
     } else if (solarData) {
@@ -248,6 +259,12 @@ const SolvivaPartnerCalculator = () => {
             Comparing Solviva "Hybrid" (Battery) vs. Karnot Optimized Model
           </p>
         </div>
+        <div className="text-right">
+          <div className="text-xs font-bold text-slate-400 uppercase">Pricing Source</div>
+          <div className="text-green-600 font-bold flex items-center gap-1 justify-end">
+            <CheckCircle size={16}/> {solvivaProducts.length} CSV Records
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -296,7 +313,7 @@ const SolvivaPartnerCalculator = () => {
               </div>
               
               <Button onClick={handleSolarLookup} disabled={fetchingSolar} className="w-full flex items-center justify-center gap-2">
-                {fetchingSolar ? 'Scanning...' : <><Layers size={16}/> Analyze Roof Data</>}
+                {fetchingSolar ? 'Scanning...' : <><RefreshCw size={16}/> Analyze Roof Data</>}
               </Button>
 
               {manualMode && (
@@ -305,7 +322,11 @@ const SolvivaPartnerCalculator = () => {
                     <Edit3 size={14} className="shrink-0 mt-0.5"/>
                     <span>Manual Override Enabled</span>
                   </div>
-                  <p className="mb-2 opacity-80">Google Solar Data unavailable for this rural location. Please estimate:</p>
+                  <p className="mb-2 opacity-80">
+                    {solarData?.source === 'OPEN_METEO' 
+                      ? "✅ Sun Hours fetched from Satellite! Please confirm Roof Area:" 
+                      : "Solar Data unavailable. Please estimate:"}
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block mb-1 font-bold">Roof Area (m²)</label>
@@ -322,7 +343,7 @@ const SolvivaPartnerCalculator = () => {
                         type="number" 
                         value={inputs.manualSunHours} 
                         onChange={(e) => setInputs({...inputs, manualSunHours: +e.target.value})}
-                        className="w-full p-1 border rounded text-black"
+                        className="w-full p-1 border rounded text-black font-bold bg-yellow-50"
                       />
                     </div>
                   </div>
