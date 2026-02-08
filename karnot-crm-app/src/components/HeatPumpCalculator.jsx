@@ -1,40 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebase'; 
 import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
 import { calculateHeatPump, calculateFixtureDemand, CONFIG } from '../utils/heatPumpLogic'; 
 import { Card, Section, Input, Button } from '../data/constants.jsx'; 
-import { 
-  Save, Calculator, RefreshCw, FileText, X, ChevronDown, ChevronUp, 
-  AlertCircle, CheckCircle, TrendingUp, Award, Target, BarChart3, 
-  Droplets, Gauge, Sun, DollarSign, TrendingDown, Shield 
-} from 'lucide-react';
+import { Save, Calculator, RefreshCw, FileText, X, ChevronDown, ChevronUp, AlertCircle, CheckCircle, TrendingUp, Award, Target, BarChart3, Droplets, Gauge, Sun, Thermometer, DollarSign, TrendingDown } from 'lucide-react';
 
 const HeatPumpCalculator = () => {  
   const [inputs, setInputs] = useState({
     currency: 'PHP',
-    userType: 'commercial', 
+    userType: 'home',
     homeOccupants: 4,
-    dailyLitersInput: 2500, 
+    dailyLitersInput: 500,
     mealsPerDay: 0,
     roomsPerDay: 0,
-    hoursPerDay: 16,        
-    heatingType: 'lpg',
+    hoursPerDay: 12,
+    heatingType: 'electric',
     fuelPrice: 12.25,
-    elecRate: 12.50,
+    elecRate: 12.25,
     gasRate: 7.0,
-    lpgPrice: 1100,         
+    lpgPrice: 950,
     lpgSize: 11,
     dieselPrice: 60,
     ambientTemp: 30,
-    inletTemp: 25,
+    inletTemp: 15,
     targetTemp: 55,
     systemType: 'grid-solar',
     sunHours: 5.5,
     heatPumpType: 'all',
     includeCooling: false,
-    enableEnterpriseROI: true, 
-    enterpriseWACC: 0.12,
+    enableEnterpriseROI: false,
+    enterpriseWACC: 0.07,
     annualRevenue: 0,
     waterSavingsScore: 5,
     reliabilityScore: 8,
@@ -51,15 +47,14 @@ const HeatPumpCalculator = () => {
     people: 0, 
     hours: 8 
   });
-   
+  
   const [result, setResult] = useState(null);
   const [dbProducts, setDbProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const symbol = CONFIG?.SYMBOLS?.[inputs.currency] || '₱';
+  const symbol = CONFIG?.SYMBOLS?.[inputs.currency] || '$';
 
-  // === 1. FETCH & FILTER INVENTORY (STRICT MODE) ===
   useEffect(() => {
     const fetchInventory = async () => {
       const user = getAuth().currentUser;
@@ -69,40 +64,7 @@ const HeatPumpCalculator = () => {
       }
       try {
         const snap = await getDocs(collection(db, "users", user.uid, "products"));
-        
-        // --- STRICT FILTERING LOGIC ---
-        const prods = snap.docs.map(doc => {
-            const data = doc.data();
-            return { 
-                id: doc.id, 
-                ...data,
-                // Normalize keys
-                kW: parseFloat(data.kW || data.kW_DHW_Nominal || data.kW_Cooling_Nominal || 0),
-                cop: parseFloat(data.cop || data.COP_DHW || 0), // Default to 0 to catch bad data
-                price: parseFloat(data.price || data.salesPriceUSD || 0),
-                refrigerant: data.refrigerant || data.Refrigerant || 'Unknown',
-                category: data.category || 'Unknown',
-                name: data.name || data.Name || 'Unknown Product'
-            };
-        })
-        .filter(p => {
-            // 1. MUST NOT be a battery or solar panel
-            const nameLower = p.name.toLowerCase();
-            const categoryLower = p.category.toLowerCase();
-            const bannedKeywords = ['ivolt', 'battery', 'solar panel', 'inverter', 'cable'];
-            
-            if (bannedKeywords.some(kw => nameLower.includes(kw))) return false;
-            
-            // 2. MUST explicitly be a Heat Pump category OR have valid Heat Pump physics
-            // Valid Physics: COP must be > 1.5 (Batteries don't have COP)
-            const isHeatPumpCategory = categoryLower.includes('heat pump') || categoryLower.includes('heater');
-            const hasValidPhysics = p.cop > 1.5 && p.kW > 0;
-
-            return isHeatPumpCategory || hasValidPhysics;
-        });
-        
-        console.log("Filtered Products Available for Sizing:", prods.length);
-        setDbProducts(prods);
+        setDbProducts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (e) { 
         console.error('Error fetching products:', e); 
       } finally { 
@@ -112,7 +74,6 @@ const HeatPumpCalculator = () => {
     fetchInventory();
   }, []);
 
-  // === 2. CALCULATION TRIGGER ===
   useEffect(() => {
     if (!loading && dbProducts.length > 0) {
       setResult(calculateHeatPump(inputs, dbProducts));
@@ -132,22 +93,6 @@ const HeatPumpCalculator = () => {
       }));
     }
   }, [inputs.currency]);
-
-  // === 3. PHYSICS CHECK ===
-  const physicsCheck = useMemo(() => {
-      const deltaT = inputs.targetTemp - inputs.inletTemp;
-      const kwhPerLiter = 0.001163;
-      const thermalLoadKwh = inputs.dailyLitersInput * deltaT * kwhPerLiter;
-      const lpgKwhPerKg = 13.8;
-      const lpgEfficiency = 0.85;
-      const lpgKgRequired = thermalLoadKwh / (lpgEfficiency * lpgKwhPerKg);
-      
-      return {
-          deltaT,
-          thermalLoadKwh,
-          lpgKgRequired
-      };
-  }, [inputs]);
 
   const handleChange = (field, isNumber = false) => (e) => {
     const val = isNumber ? parseFloat(e.target.value) || 0 : e.target.value;
@@ -214,62 +159,68 @@ const HeatPumpCalculator = () => {
 <title>Karnot Report - ${system.name}</title>
 <style>
 @page { size: A4; margin: 20mm; }
-body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #1d1d1f; max-width: 210mm; margin: 0 auto; padding: 20mm; }
-.header { border-bottom: 3px solid #F56600; padding-bottom: 15px; margin-bottom: 25px; display:flex; justify-content:space-between; align-items:end; }
-h1 { color: #131B28; font-size: 24pt; margin: 0; }
-h2 { color: #F56600; font-size: 14pt; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-top: 25px; }
+body { font-family: Arial, sans-serif; font-size: 10pt; color: #1d1d1f; max-width: 210mm; margin: 0 auto; padding: 20mm; }
+.header { text-align: center; border-bottom: 3px solid #F56600; padding-bottom: 15px; margin-bottom: 25px; }
+h1 { color: #F56600; font-size: 24pt; margin: 0; }
+h2 { color: #1d1d1f; font-size: 14pt; border-bottom: 2px solid #d2d2d7; padding-bottom: 8px; margin-top: 25px; }
 table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
-td { padding: 8px; border-bottom: 1px solid #eee; }
+td { padding: 10px 8px; border-bottom: 1px solid #d2d2d7; }
 td:last-child { text-align: right; font-weight: bold; }
-.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
-.metric-box { background: #f9fafb; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
-.metric-value { font-size: 16pt; font-weight: bold; color: #131B28; }
-.metric-label { font-size: 8pt; color: #666; text-transform:uppercase; margin-top: 5px; }
-.footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 8pt; color: #999; }
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+.metric-box { background: #f5f5f7; padding: 15px; border-radius: 8px; text-align: center; }
+.metric-value { font-size: 18pt; font-weight: bold; color: #F56600; }
+.metric-label { font-size: 9pt; color: #6e6e73; margin-top: 5px; }
+.info-box { background: #fff9e6; border-left: 4px solid #ffc107; padding: 15px; margin: 15px 0; }
+.footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #d2d2d7; font-size: 8pt; color: #8e8e93; }
+@media print { .page-break { page-break-before: always; } }
 </style>
 </head>
 <body>
 <div class="header">
-  <div>
-    <h1>Karnot Energy</h1>
-    <div style="color:#666;">Commercial EaaS Proposal</div>
-  </div>
-  <div style="text-align:right;">
-    <div>${new Date().toLocaleDateString()}</div>
-    <div style="font-weight:bold; color:#F56600;">SOLVIVA PARTNER MODEL</div>
-  </div>
+<h1>Karnot Energy Solutions</h1>
+<p>${isEnterprise ? 'Enterprise ROI Analysis' : 'Heat Pump Savings Report'}</p>
+<p>${new Date().toLocaleDateString()}</p>
 </div>
-
-<h2>Operational Profile</h2>
+${isEnterprise ? `<h2>Enterprise ROI Metrics</h2>
 <div class="metric-grid">
-  <div class="metric-box"><div class="metric-value">${metrics.dailyLiters} L</div><div class="metric-label">Daily Hot Water</div></div>
-  <div class="metric-box"><div class="metric-value">${physicsCheck.thermalLoadKwh.toFixed(1)} kWh</div><div class="metric-label">Thermal Load</div></div>
-  <div class="metric-box"><div class="metric-value">${(physicsCheck.lpgKgRequired * 30).toFixed(0)} kg</div><div class="metric-label">Monthly LPG Avoided</div></div>
+<div class="metric-box"><div class="metric-value">${financials.symbol}${fmt(enterpriseROI.financial.npv)}</div><div class="metric-label">NPV @ ${(inputs.enterpriseWACC * 100).toFixed(1)}%</div></div>
+<div class="metric-box"><div class="metric-value">${enterpriseROI.financial.irr.toFixed(1)}%</div><div class="metric-label">IRR</div></div>
+<div class="metric-box"><div class="metric-value">${enterpriseROI.csv.strategicROI.toFixed(1)}%</div><div class="metric-label">Strategic ROI</div></div>
 </div>
-
-<h2>System Specification</h2>
-<p><strong>Unit:</strong> ${system.name}</p>
-<p><strong>Capacity:</strong> ${system.kW} kW (R290 Natural Refrigerant)</p>
-${inputs.systemType === 'grid-solar' ? `<p><strong>Solar Hybrid:</strong> Integrated with on-site PV offset.</p>` : ''}
-
-<h2>Financial Impact (5 Years)</h2>
-<div class="metric-grid">
-  <div class="metric-box"><div class="metric-value">${financials.symbol}${fmt(financials.totalAnnualSavings)}</div><div class="metric-label">Annual Savings</div></div>
-  <div class="metric-box"><div class="metric-value">${financials.paybackYears} Yrs</div><div class="metric-label">Payback</div></div>
-  <div class="metric-box"><div class="metric-value">${fmt(emissions.annualSaved)} kg</div><div class="metric-label">CO₂ Reduction</div></div>
-</div>
-
-${isEnterprise ? `
-<h2>Enterprise Value</h2>
+<p><strong>Recommendation:</strong> ${enterpriseROI.viability.recommendation}</p>
+<h3>CSV Scorecard</h3>
 <table>
-<tr><td>Net Present Value (NPV)</td><td>${financials.symbol}${fmt(enterpriseROI.financial.npv)}</td></tr>
-<tr><td>Internal Rate of Return (IRR)</td><td>${enterpriseROI.financial.irr.toFixed(1)}%</td></tr>
-<tr><td>Strategic ROI Score</td><td>${enterpriseROI.csv.strategicROI.toFixed(1)}%</td></tr>
+<tr><td>Carbon Reduction</td><td>${enterpriseROI.csv.breakdown.carbon.toFixed(1)}/10</td></tr>
+<tr><td>Energy Efficiency</td><td>${enterpriseROI.csv.breakdown.energy.toFixed(1)}/10</td></tr>
+<tr><td>Water Efficiency</td><td>${enterpriseROI.csv.breakdown.water.toFixed(1)}/10</td></tr>
+<tr><td>Overall CSV Score</td><td><strong>${enterpriseROI.csv.score.toFixed(1)}/10</strong></td></tr>
+</table>` : ''}
+<h2>System: ${system.name}</h2>
+<p><strong>Refrigerant:</strong> ${system.refrigerant} | <strong>Power:</strong> ${system.kW} kW | <strong>COP:</strong> ${system.cop}</p>
+<div class="metric-grid">
+<div class="metric-box"><div class="metric-value">${financials.symbol}${fmt(financials.totalAnnualSavings)}</div><div class="metric-label">Annual Savings</div></div>
+<div class="metric-box"><div class="metric-value">${financials.paybackYears} Yrs</div><div class="metric-label">Payback</div></div>
+<div class="metric-box"><div class="metric-value">${fmt(emissions.annualSaved)} kg</div><div class="metric-label">CO₂ Reduction</div></div>
+</div>
+<h2>Financial Summary</h2>
+<table>
+<tr><td>Current Annual Cost</td><td>${financials.symbol}${fmt(financials.currentAnnualCost)}</td></tr>
+<tr><td>New Annual Cost</td><td>${financials.symbol}${fmt(financials.newAnnualCost)}</td></tr>
+<tr><td>Annual Savings</td><td>${financials.symbol}${fmt(financials.totalAnnualSavings)}</td></tr>
 </table>
-` : ''}
-
+<div class="info-box">
+<h3 style="margin-top:0;">Tank Sizing Analysis</h3>
+<table>
+<tr><td>Daily Demand</td><td>${metrics.dailyLiters} L</td></tr>
+<tr><td>Peak Draw Rate</td><td>${tankSizing.peakDrawRateLph.toFixed(1)} L/hr</td></tr>
+<tr><td>Recovery Rate</td><td>${tankSizing.recoveryRateLph.toFixed(1)} L/hr</td></tr>
+<tr><td>Recommended Tank</td><td><strong>${tankSizing.recommendedTankSize} L</strong></td></tr>
+</table>
+</div>
+${cooling ? `<div class="info-box"><h3>Free Cooling Bonus</h3><p>Provides <strong>${cooling.coolingKW.toFixed(1)} kW</strong> cooling, saving <strong>${financials.symbol}${fmt(cooling.annualSavings)}</strong> annually.</p></div>` : ''}
 <div class="footer">
-Generated by Karnot Engineering Engine • Confirmed by Solviva Pricing Database
+<p><strong>Karnot Energy Solutions Inc.</strong></p>
+<p>© ${new Date().getFullYear()} All Rights Reserved | Report ID: KRN-${Date.now().toString(36).toUpperCase()}</p>
 </div>
 </body>
 </html>`;
@@ -286,12 +237,11 @@ Generated by Karnot Engineering Engine • Confirmed by Solviva Pricing Database
     }
   };
 
-  const showLitersInput = ['office', 'spa', 'school', 'commercial', 'industrial'].includes(inputs.userType);
+  const showLitersInput = ['office', 'spa', 'school'].includes(inputs.userType);
   const showMealsInput = ['restaurant', 'resort'].includes(inputs.userType);
   const showRoomsInput = inputs.userType === 'resort';
   const showOccupantsInput = inputs.userType === 'home';
-
-  return (
+return (
     <>
       <Card>
         <div className="flex justify-between items-center mb-6 border-b pb-4">
@@ -409,8 +359,6 @@ Generated by Karnot Engineering Engine • Confirmed by Solviva Pricing Database
               <option value="spa">Spa / Clinic</option>
               <option value="school">Schools & Colleges</option>
               <option value="office">Office</option>
-              <option value="commercial">Commercial (General)</option>
-              <option value="industrial">Industrial</option>
             </select>
 
             {showOccupantsInput && (
@@ -573,10 +521,6 @@ Generated by Karnot Engineering Engine • Confirmed by Solviva Pricing Database
 
             {inputs.systemType === 'grid-solar' && (
               <>
-                <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-xs text-yellow-800 mb-3">
-                    <Sun size={14} className="inline mr-1"/>
-                    <strong>Solviva Mode:</strong> Checks Solviva solar pricing.
-                </div>
                 <Input 
                   label="Avg Daily Sun Hours" 
                   type="number" 
@@ -622,40 +566,14 @@ Generated by Karnot Engineering Engine • Confirmed by Solviva Pricing Database
           <Button 
             onClick={() => setResult(calculateHeatPump(inputs, dbProducts))} 
             variant="primary"
-            className="w-full shadow-lg"
+            className="w-full"
           >
             Calculate Savings & ROI
           </Button>
         </div>
-
-        {/* ENTERPRISE ROI RESULTS */}
+{/* ENTERPRISE ROI RESULTS */}
         {result && !result.error && result.enterpriseROI && (
           <div className="mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-300">
-            
-            {/* PHYSICS CHECK (NEW) */}
-            <div className="bg-indigo-900 text-white p-4 rounded-lg mb-6 shadow-md border-l-4 border-green-400">
-                <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold flex items-center gap-2">
-                        <Shield size={18} className="text-green-400"/> Thermal Physics Check
-                    </h3>
-                    <span className="text-xs bg-indigo-800 px-2 py-1 rounded text-indigo-200">Consistent with Investor Model</span>
-                </div>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                        <div className="text-xs text-indigo-300 uppercase">Thermal Load</div>
-                        <div className="text-xl font-bold font-mono">{physicsCheck.thermalLoadKwh.toFixed(1)} <span className="text-sm">kWh/day</span></div>
-                    </div>
-                    <div>
-                        <div className="text-xs text-indigo-300 uppercase">Baseline LPG</div>
-                        <div className="text-xl font-bold font-mono">{(physicsCheck.lpgKgRequired * 30).toFixed(0)} <span className="text-sm">kg/mo</span></div>
-                    </div>
-                    <div>
-                        <div className="text-xs text-indigo-300 uppercase">Heat Pump Elec</div>
-                        <div className="text-xl font-bold font-mono text-green-400">{(physicsCheck.thermalLoadKwh / (result.system.cop || 3.0)).toFixed(1)} <span className="text-sm">kWh/day</span></div>
-                    </div>
-                </div>
-            </div>
-
             <div className="flex items-center gap-2 mb-4">
               <Target className="text-blue-600" size={28}/>
               <h3 className="text-2xl font-bold text-blue-900">Enterprise ROI Analysis</h3>
