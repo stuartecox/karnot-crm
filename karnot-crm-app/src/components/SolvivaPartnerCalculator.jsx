@@ -206,24 +206,26 @@ const SolvivaPartnerCalculator = () => {
           .filter(p => p.category === 'Competitor Solar')
           .sort((a, b) => (a.kW_Cooling_Nominal || 0) - (b.kW_Cooling_Nominal || 0));
           
-        // Filter 2: Karnot Heat Pumps (AquaHERO, iHEAT, iCOOL with heat recovery)
+        // Filter 2: Karnot Heat Pumps - ANY product with kW_DHW_Nominal > 0 AND R290 refrigerant
         const heatPumps = allProds
           .filter(p => {
-             const cat = (p.category || '').toLowerCase();
-             const name = (p.name || '').toLowerCase();
-             // Include: AquaHERO, iHEAT, iCOOL (but not iVolt or pure cooling-only units)
-             const isHeating = cat.includes('aquahero') || 
-                              cat.includes('iheat') || 
-                              name.includes('aquahero') || 
-                              name.includes('iheat') ||
-                              (cat.includes('icool') && p.kW_DHW_Nominal && p.kW_DHW_Nominal > 0); // iCOOL with heat recovery
-             const notExcluded = !name.includes('ivolt');
-             return isHeating && notExcluded;
+             const hasHeating = (p.kW_DHW_Nominal && p.kW_DHW_Nominal > 0) || 
+                               (p.kW_Heating_Nominal && p.kW_Heating_Nominal > 0);
+             const notSolar = p.category !== 'Competitor Solar';
+             const isR290 = (p.Refrigerant || p.refrigerant || '').toUpperCase().includes('R290');
+             return hasHeating && notSolar && isR290;
           })
-          .sort((a, b) => (a.kW_DHW_Nominal || 0) - (b.kW_DHW_Nominal || 0));
+          .sort((a, b) => (a.kW_DHW_Nominal || a.kW_Heating_Nominal || 0) - (b.kW_DHW_Nominal || b.kW_Heating_Nominal || 0));
 
         setSolvivaProducts(competitors);
         setKarnotProducts(heatPumps);
+        
+        console.log("=== LOADED PRODUCTS ===");
+        console.log("Karnot Heat Pumps:", heatPumps.length);
+        heatPumps.forEach(p => {
+          console.log(`  - ${p.name}: $${p.salesPriceUSD} (${p.kW_DHW_Nominal || 0} kW DHW)`);
+        });
+        console.log("Solviva Solar:", competitors.length);
       } catch (err) {
         console.error("Error loading products:", err);
       } finally {
@@ -299,6 +301,12 @@ const SolvivaPartnerCalculator = () => {
     
     const requiredRecoveryKW = dailyThermalKWh / inputs.recoveryHours;
 
+    console.log("=== HEAT PUMP SELECTION ===");
+    console.log(`Daily liters: ${dailyLiters}L`);
+    console.log(`Thermal energy: ${dailyThermalKWh.toFixed(2)} kWh`);
+    console.log(`Required recovery: ${requiredRecoveryKW.toFixed(2)} kW`);
+    console.log(`Available products: ${karnotProducts.length}`);
+
     // --- STEP B: SELECT THE MACHINE (DIRECTLY FROM DATABASE) ---
     // Find the smallest Karnot unit that meets the required Recovery KW
     let selectedKarnot = karnotProducts.find(p => (p.kW_DHW_Nominal || p.kW || 0) >= requiredRecoveryKW);
@@ -306,10 +314,12 @@ const SolvivaPartnerCalculator = () => {
     // If no product meets requirement, use the largest available
     if (!selectedKarnot && karnotProducts.length > 0) {
       selectedKarnot = karnotProducts[karnotProducts.length - 1];
+      console.log("⚠️  No product meets requirement, using largest:", selectedKarnot.name);
     }
     
     // If still no products (empty database), show error state
     if (!selectedKarnot) {
+      console.error("❌ No Karnot products found in database!");
       return {
         error: true,
         message: "No Karnot heat pump products found in database. Please add products in Product Manager.",
@@ -336,6 +346,12 @@ const SolvivaPartnerCalculator = () => {
     
     const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
     const externalTankCost = externalTankNeeded * inputs.externalTankCostPerLiter;
+
+    console.log("✅ SELECTED:", selectedKarnot.name);
+    console.log(`   Price: $${selectedKarnot.salesPriceUSD}`);
+    console.log(`   Capacity: ${selectedKarnot.kW_DHW_Nominal || selectedKarnot.kW || 0} kW`);
+    console.log(`   Tank: ${integratedTankVolume}L integrated, ${externalTankNeeded}L external`);
+    console.log(`   Total cost: $${selectedKarnot.salesPriceUSD + externalTankCost + inputs.installationCostPerUnit}`);
 
     // --- STEP D: ELECTRICAL LOADS (SCENARIO A vs B) ---
     const kwPerHP = 0.85; 
