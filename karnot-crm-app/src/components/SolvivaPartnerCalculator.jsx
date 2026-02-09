@@ -3,7 +3,6 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { fetchSolarPotential } from '../utils/googleSolar';
-// Note: Ensure calculateFixtureDemand is exported from your utils
 import { calculateFixtureDemand } from '../utils/heatPumpLogic'; 
 import html2pdf from 'html2pdf.js';
 import { APIProvider, Map, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
@@ -82,10 +81,10 @@ const MapEvents = ({ onDragEnd }) => {
 const SolvivaPartnerCalculator = () => {
   // === STATE ===
   const [solvivaProducts, setSolvivaProducts] = useState([]);
-  const [karnotProducts, setKarnotProducts] = useState([]); // Store Heat Pumps separately
+  const [karnotProducts, setKarnotProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showMath, setShowMath] = useState(false); // TOGGLE FOR DETAILS
-  const [showFixtureModal, setShowFixtureModal] = useState(false); // FIXTURE MODAL
+  const [showMath, setShowMath] = useState(false);
+  const [showFixtureModal, setShowFixtureModal] = useState(false);
   
   // Google Solar Data
   const [coordinates, setCoordinates] = useState({ lat: 16.023497, lng: 120.430082 }); 
@@ -98,7 +97,7 @@ const SolvivaPartnerCalculator = () => {
     // Water Heating Demand
     showers: 3,
     people: 4,
-    showerPowerKW: 3.5, // Standard electric shower rating
+    showerPowerKW: 3.5,
     
     // Cooling Load
     acCount: 3,
@@ -119,8 +118,8 @@ const SolvivaPartnerCalculator = () => {
     // Engineering Physics
     inletTemp: 25,
     targetTemp: 55,
-    panelWattage: 550, // Standard 550W panel
-    recoveryHours: 10, // Target recovery time for sizing
+    panelWattage: 550,
+    recoveryHours: 10,
   });
 
   const [fixtureInputs, setFixtureInputs] = useState({ 
@@ -142,7 +141,7 @@ const SolvivaPartnerCalculator = () => {
           .filter(p => p.category === 'Competitor Solar')
           .sort((a, b) => (a.kW_Cooling_Nominal || 0) - (b.kW_Cooling_Nominal || 0));
           
-        // Filter 2: Karnot Heat Pumps (Look for AquaHERO/Heat Pumps)
+        // Filter 2: Karnot Heat Pumps
         const heatPumps = allProds
           .filter(p => {
              const cat = (p.category || '').toLowerCase();
@@ -211,46 +210,39 @@ const SolvivaPartnerCalculator = () => {
 
   const applyFixtureCalculation = () => {
     const liters = calculateFixtureDemand(fixtureInputs);
-    // Simple logic: update 'people' equivalent or just use liters directly in future updates
-    // For now, let's just close modal as this calculator relies on direct inputs
+    // Apply the calculated liters and people count back to inputs
+    setInputs(prev => ({
+      ...prev,
+      people: fixtureInputs.people || prev.people,
+      // You could also add a dailyLiters field if you want to override the calculation
+    }));
     setShowFixtureModal(false);
   };
 
   // === 3. ANALYSIS LOGIC (THE CORE) ===
   const analysis = useMemo(() => {
     // --- STEP A: SIZE THE THERMAL LOAD ---
-    // 1. Calculate Daily Hot Water Demand (Liters)
-    // Estimation: 50L/person + 60L/shower event (conservative commercial)
     const dailyLiters = (inputs.people * 50) + (inputs.showers * 60);
     
-    // 2. Calculate Thermal Energy Required (kWh)
-    // Formula: Liters * DeltaT * 1.163 / 1000
     const deltaT = inputs.targetTemp - inputs.inletTemp;
     const dailyThermalKWh = (dailyLiters * deltaT * 1.163) / 1000;
     
-    // 3. Required Recovery Rate (kW)
-    // We want to recover the full daily load within X hours (e.g. 10 hours for solar day)
     const requiredRecoveryKW = dailyThermalKWh / inputs.recoveryHours;
 
     // --- STEP B: SELECT THE MACHINE ---
-    // Find the smallest Karnot unit that meets the required Recovery KW
-    const selectedKarnot = karnotProducts.find(p => (p.kW_DHW_Nominal || p.kW) >= requiredRecoveryKW)
-                        || karnotProducts[karnotProducts.length - 1] // Fallback to largest
-                        || { name: "Manual Est.", salesPriceUSD: 4500, kW_DHW_Nominal: 3.5, tankVolume: 0 };
+    const selectedKarnot = karnotProducts.find(p => (p.kW_DHW_Nominal || p.kW || 0) >= requiredRecoveryKW)
+                        || karnotProducts[karnotProducts.length - 1]
+                        || { name: "Manual Est.", salesPriceUSD: 4500, kW_DHW_Nominal: 3.5, cop: 4.2, tankVolume: 0 };
 
     // --- STEP C: TANK MATH ---
-    // 1. Total Volume Needed (Peak Buffer method ~ 100% of daily demand for safety)
     const requiredTotalVolume = Math.ceil(dailyLiters / 100) * 100;
     
-    // 2. Check Integrated Tank (e.g. AquaHERO 200)
     let integratedTankVolume = selectedKarnot.tankVolume || 0;
-    // Fallback: Check name string if DB field missing
     if (!integratedTankVolume) {
         if (selectedKarnot.name?.includes("200")) integratedTankVolume = 200;
         else if (selectedKarnot.name?.includes("300")) integratedTankVolume = 300;
     }
     
-    // 3. Calculate External Tank Need
     const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
 
     // --- STEP D: ELECTRICAL LOADS (SCENARIO A vs B) ---
@@ -262,25 +254,22 @@ const SolvivaPartnerCalculator = () => {
     const peakLoad_A = inputs.baseLoadKW + acTotalKW + showerPeakKW; 
     
     // Scenario B: Partner Model (Showers replaced by Heat Pump)
-    // Heat Pump Input Power = Output / COP
     const hpInputKW = (selectedKarnot.kW_DHW_Nominal || 3.5) / (selectedKarnot.cop || 4.2);
     const peakLoad_B = inputs.baseLoadKW + acTotalKW + hpInputKW;         
     
     // --- STEP E: SELECT SOLVIVA SYSTEMS ---
-    // 20% Safety Factor on Inverter Sizing
     const targetInverterA = peakLoad_A * 1.2;
     const targetInverterB = peakLoad_B * 1.2;
 
     const planA = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= targetInverterA) 
-               || solvivaProducts[solvivaProducts.length - 1];
+               || solvivaProducts[solvivaProducts.length - 1]
+               || { name: "Solviva 10kW", kW_Cooling_Nominal: 10, salesPriceUSD: 8000 };
                
     const planB = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= targetInverterB) 
-               || solvivaProducts[0];
+               || solvivaProducts[0]
+               || { name: "Solviva 5kW", kW_Cooling_Nominal: 5, salesPriceUSD: 5000 };
 
     // --- STEP F: PANEL COUNTS ---
-    // Calculate panels needed for each system size
-    // Assuming Solviva Kit KW is the Inverter size, and we match PV to Inverter 1:1 ratio
-    // Standard Panel: 550W
     const panelsA = Math.ceil((planA?.kW_Cooling_Nominal || 0) * 1000 / inputs.panelWattage);
     const panelsB = Math.ceil((planB?.kW_Cooling_Nominal || 0) * 1000 / inputs.panelWattage);
     const panelsSaved = Math.max(0, panelsA - panelsB);
@@ -291,30 +280,44 @@ const SolvivaPartnerCalculator = () => {
     const costKarnot = selectedKarnot.salesPriceUSD || 4500;
     const costB_Total = costB_Solar + costKarnot;
     
-    // Monthly Savings (vs Grid)
-    // Gen B is usually smaller, but we are comparing Total Project Value
+    // Monthly Generation and Savings
     const monthlyGenB_kWh = (planB?.kW_Cooling_Nominal || 0) * inputs.manualSunHours * 30;
     const monthlyBillSavingsB = monthlyGenB_kWh * inputs.electricityRate;
 
-    const monthlyAdvantage = costA - costB_Total; // CAPEX Savings
-    const fiveYearSavings = (monthlyAdvantage * 60) + (monthlyBillSavingsB * 60);
+    const monthlyAdvantage = (costA - costB_Total) / 60; // Spread CAPEX savings over 5 years
+    const fiveYearSavings = (costA - costB_Total) + (monthlyBillSavingsB * 60);
 
     return {
       // Thermal
-      dailyLiters, dailyThermalKWh, requiredRecoveryKW,
+      dailyLiters, 
+      dailyThermalKWh, 
+      requiredRecoveryKW,
       // Machine
-      selectedKarnot, hpInputKW,
+      selectedKarnot, 
+      hpInputKW,
       // Tank
-      requiredTotalVolume, integratedTankVolume, externalTankNeeded,
+      requiredTotalVolume, 
+      integratedTankVolume, 
+      externalTankNeeded,
       // Electrical
-      peakLoad_A, peakLoad_B,
+      peakLoad_A, 
+      peakLoad_B,
       // Solar
-      planA, planB, panelsA, panelsB, panelsSaved,
+      planA, 
+      planB, 
+      panelsA, 
+      panelsB, 
+      panelsSaved,
       // Financials
-      costA, costB_Total, costKarnot,
-      monthlyBillSavingsB, fiveYearSavings, monthlyAdvantage
+      costA, 
+      costB_Total, 
+      costKarnot,
+      monthlyGenB_kWh,
+      monthlyBillSavingsB, 
+      fiveYearSavings, 
+      monthlyAdvantage
     };
-  }, [inputs, solvivaProducts, karnotProducts, solarData]); 
+  }, [inputs, solvivaProducts, karnotProducts]); 
 
   // === 4. PDF GENERATOR ===
   const generatePDFReport = () => {
@@ -352,7 +355,7 @@ const SolvivaPartnerCalculator = () => {
                 <td style="padding: 4px; color: #64748b;">Selected Unit:</td>
                 <td style="padding: 4px; font-weight: bold; color: #F56600;">${analysis.selectedKarnot.name}</td>
                 <td style="padding: 4px; color: #64748b;">Recovery Rate:</td>
-                <td style="padding: 4px; font-weight: bold;">${analysis.selectedKarnot.kW_DHW_Nominal} kW</td>
+                <td style="padding: 4px; font-weight: bold;">${analysis.selectedKarnot.kW_DHW_Nominal || analysis.selectedKarnot.kW || 3.5} kW</td>
             </tr>
             <tr>
                 <td style="padding: 4px; color: #64748b;">Integrated Tank:</td>
@@ -363,7 +366,7 @@ const SolvivaPartnerCalculator = () => {
         </table>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
         <div style="background: #fff5f5; padding: 15px; border-radius: 6px; border: 2px solid #dc3545;">
           <div style="font-size: 16px; font-weight: bold; color: #dc3545; margin-bottom: 10px;">Scenario A: Solar Only</div>
           <div style="font-size: 12px; margin-bottom: 5px;"><strong>${analysis.planA?.name}</strong></div>
@@ -373,16 +376,34 @@ const SolvivaPartnerCalculator = () => {
 
         <div style="background: #f0fff4; padding: 15px; border-radius: 6px; border: 2px solid #28a745;">
           <div style="font-size: 16px; font-weight: bold; color: #28a745; margin-bottom: 10px;">Scenario B: Partner Model</div>
-          <div style="font-size: 12px; margin-bottom: 5px;"><strong>${analysis.planB?.name}</strong> + Karnot</div>
+          <div style="font-size: 12px; margin-bottom: 5px;"><strong>${analysis.planB?.name}</strong> + ${analysis.selectedKarnot.name}</div>
           <div style="font-size: 12px; margin-bottom: 15px;">Panels: <strong>${analysis.panelsB}</strong> (Saved ${analysis.panelsSaved})</div>
           <div style="font-size: 24px; font-weight: bold; color: #28a745;">$${analysis.costB_Total.toLocaleString()}</div>
+        </div>
+      </div>
+
+      <div style="background: #1e293b; color: white; padding: 20px; border-radius: 8px;">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 15px; color: #94a3b8;">5-Year Financial Impact</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+          <div>
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">CAPEX Savings</div>
+            <div style="font-size: 20px; font-weight: bold;">$${(analysis.costA - analysis.costB_Total).toLocaleString()}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Monthly Bill Savings</div>
+            <div style="font-size: 20px; font-weight: bold; color: #fbbf24;">₱${analysis.monthlyBillSavingsB.toLocaleString()}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Total 5-Year Benefit</div>
+            <div style="font-size: 24px; font-weight: bold; color: #10b981;">₱${analysis.fiveYearSavings.toLocaleString()}</div>
+          </div>
         </div>
       </div>
     `;
 
     const opt = {
       margin: 0.5,
-      filename: `Solviva_Proposal_${new Date().toISOString().split('T')[0]}.pdf`,
+      filename: `Solviva_Karnot_Proposal_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -401,7 +422,7 @@ const SolvivaPartnerCalculator = () => {
             <Zap className="text-orange-500"/> Solviva Partner Sizing Engine
           </h1>
           <p className="text-sm text-slate-500">
-            Comparing Solviva "Hybrid" (Battery) vs. Karnot Optimized Model
+            Engineering-Driven System Optimization
           </p>
         </div>
         <div className="text-right">
@@ -467,10 +488,10 @@ const SolvivaPartnerCalculator = () => {
                </div>
                <div className="grid grid-cols-2 gap-3">
                   <Input label="AC Units" type="number" value={inputs.acCount} onChange={(e) => setInputs({...inputs, acCount: +e.target.value})} />
-                  <Input label="Night Hours" type="number" value={inputs.acHoursNight} onChange={(e) => setInputs({...inputs, acHoursNight: +e.target.value})} />
+                  <Input label="AC HP Each" type="number" step="0.5" value={inputs.acHorsePower} onChange={(e) => setInputs({...inputs, acHorsePower: +e.target.value})} />
                </div>
                
-               <div className="flex gap-2">
+               <div className="flex gap-2 mt-4">
                  <Button 
                    variant="secondary"
                    onClick={() => setShowFixtureModal(true)}
@@ -489,18 +510,18 @@ const SolvivaPartnerCalculator = () => {
           </Card>
         </div>
 
-        {/* === RIGHT COLUMN: FINANCIALS === */}
+        {/* === RIGHT COLUMN: ANALYSIS & FINANCIALS === */}
         <div className="lg:col-span-2 space-y-6">
           
           {/* --- DETAILED ENGINEERING BREAKDOWN --- */}
           {showMath && (
-            <div className="bg-slate-100 p-4 rounded-xl border border-slate-300 text-sm animate-in fade-in slide-in-from-top-4">
+            <div className="bg-slate-100 p-4 rounded-xl border border-slate-300 text-sm">
                <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
                  <Calculator size={16}/> Detailed Engineering Calculations
                </h4>
                <div className="grid grid-cols-3 gap-4">
                   
-                  {/* COL 1: THERMAL LOAD & TANK */}
+                  {/* COL 1: THERMAL LOAD */}
                   <div className="bg-white p-3 rounded border border-slate-200">
                      <div className="text-xs font-bold text-slate-400 uppercase mb-2">1. Load Sizing</div>
                      <div className="flex justify-between border-b border-slate-100 py-1">
@@ -521,10 +542,10 @@ const SolvivaPartnerCalculator = () => {
                   <div className="bg-white p-3 rounded border border-slate-200">
                      <div className="text-xs font-bold text-slate-400 uppercase mb-2">2. Karnot Selection</div>
                      <div className="flex justify-between border-b border-slate-100 py-1">
-                        <span>Model:</span> <span className="font-mono truncate w-20">{analysis.karnotUnit.name}</span>
+                        <span className="text-xs">Model:</span> <span className="font-mono text-xs truncate max-w-[120px]">{analysis.selectedKarnot.name}</span>
                      </div>
                      <div className="flex justify-between border-b border-slate-100 py-1">
-                        <span>Output:</span> <span className="font-mono">{analysis.karnotUnit.kW_DHW_Nominal} kW</span>
+                        <span>Output:</span> <span className="font-mono">{analysis.selectedKarnot.kW_DHW_Nominal || analysis.selectedKarnot.kW || 3.5} kW</span>
                      </div>
                      <div className="flex justify-between border-b border-slate-100 py-1">
                         <span>Int. Tank:</span> <span className="font-mono">{analysis.integratedTankVolume} L</span>
@@ -536,7 +557,7 @@ const SolvivaPartnerCalculator = () => {
 
                   {/* COL 3: SOLAR MATH */}
                   <div className="bg-white p-3 rounded border border-slate-200">
-                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">3. Solar Sizing (@550W)</div>
+                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">3. Solar Sizing</div>
                      <div className="space-y-2">
                         <div>
                            <div className="text-[10px] text-red-500 font-bold">SOLAR ONLY</div>
@@ -544,7 +565,7 @@ const SolvivaPartnerCalculator = () => {
                               <span>Load:</span> <span>{analysis.peakLoad_A.toFixed(1)} kW</span>
                            </div>
                            <div className="flex justify-between font-mono text-xs font-bold">
-                              <span>Panels:</span> <span>{analysis.panelsA} units</span>
+                              <span>Panels:</span> <span>{analysis.panelsA} × 550W</span>
                            </div>
                         </div>
                         <div className="border-t border-slate-100 pt-1">
@@ -553,7 +574,7 @@ const SolvivaPartnerCalculator = () => {
                               <span>Load:</span> <span>{analysis.peakLoad_B.toFixed(1)} kW</span>
                            </div>
                            <div className="flex justify-between font-mono text-xs font-bold">
-                              <span>Panels:</span> <span>{analysis.panelsB} units</span>
+                              <span>Panels:</span> <span>{analysis.panelsB} × 550W</span>
                            </div>
                         </div>
                      </div>
@@ -566,7 +587,7 @@ const SolvivaPartnerCalculator = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* SCENARIO A: SOLAR ONLY */}
-            <div className={`p-6 rounded-xl border-2 ${analysis.planAFits ? 'border-red-200 bg-red-50' : 'border-red-500 bg-red-100'}`}>
+            <div className="p-6 rounded-xl border-2 border-red-500 bg-red-50">
               <div className="flex justify-between mb-4">
                 <h3 className="font-bold text-slate-700">Scenario A: Solar Only</h3>
                 <span className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-200">High Load</span>
@@ -575,7 +596,7 @@ const SolvivaPartnerCalculator = () => {
                 <div>
                   <p className="text-xs uppercase text-slate-500 font-bold">Required Inverter</p>
                   <p className="text-2xl font-bold text-red-600">{analysis.peakLoad_A.toFixed(1)} kW</p>
-                  <p className="text-xs text-slate-500 mt-1">{analysis.panelsA}x Solar Panels</p>
+                  <p className="text-xs text-slate-500 mt-1">{analysis.panelsA}× Solar Panels</p>
                 </div>
                 <div className="pt-4 border-t border-red-200">
                   <p className="text-xs uppercase text-slate-500 font-bold">Solviva System Cost</p>
@@ -602,18 +623,20 @@ const SolvivaPartnerCalculator = () => {
                 <div className="pt-4 border-t border-green-200">
                   <p className="text-xs uppercase text-green-700 font-bold">Total System Cost</p>
                   <p className="text-2xl font-bold text-green-900">${analysis.costB_Total.toLocaleString()}</p>
-                  <p className="text-[10px] text-green-700">Includes {analysis.karnotUnit.name}</p>
+                  <p className="text-[10px] text-green-700">Includes {analysis.selectedKarnot.name}</p>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* FINANCIAL IMPACT */}
           <div className="bg-slate-900 text-white p-8 rounded-xl shadow-lg">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Financial Impact Analysis</h3>
             <div className="grid grid-cols-3 gap-4 items-end">
               <div>
                 <p className="text-sm text-slate-400 mb-1">CAPEX Savings</p>
-                <p className="text-2xl font-bold text-white">₱{(analysis.monthlyAdvantage * 58).toLocaleString()} <span className="text-xs text-slate-500">Upfront</span></p>
+                <p className="text-2xl font-bold text-white">₱{((analysis.costA - analysis.costB_Total) * 58).toLocaleString()}</p>
+                <p className="text-xs text-slate-500">Upfront Difference</p>
               </div>
               <div className="text-center pb-2">
                  <div className="text-sm text-slate-400 mb-1">Solar Gen Value</div>
@@ -626,12 +649,13 @@ const SolvivaPartnerCalculator = () => {
               </div>
               <div className="text-right">
                 <p className="text-sm text-slate-400 mb-1">Total 5-Yr Benefit</p>
-                <p className="text-3xl font-bold text-green-400">₱{analysis.fiveYearSavings.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-green-400">₱{(analysis.fiveYearSavings * 58).toLocaleString()}</p>
               </div>
             </div>
             <div className="mt-8 pt-6 border-t border-slate-700 flex justify-between items-center">
               <div>
-                <p className="text-xs text-slate-400 uppercase font-bold">Change Sun Hours to see impact</p>
+                <p className="text-xs text-slate-400 uppercase font-bold">Partnership Advantage</p>
+                <p className="text-sm text-slate-300">Lower upfront cost + ongoing savings for customer</p>
               </div>
               <Button onClick={generatePDFReport} className="bg-orange-600 hover:bg-orange-700 text-white border-none">
                 <Download className="mr-2" size={18}/> Generate Proposal PDF
@@ -653,11 +677,14 @@ const SolvivaPartnerCalculator = () => {
             </div>
             <div className="space-y-4">
               <Input label="Number of Showers" type="number" value={fixtureInputs.showers} onChange={handleFixtureChange('showers')} />
+              <Input label="Number of Basins" type="number" value={fixtureInputs.basins} onChange={handleFixtureChange('basins')} />
+              <Input label="Number of Sinks" type="number" value={fixtureInputs.sinks} onChange={handleFixtureChange('sinks')} />
               <Input label="Occupants" type="number" value={fixtureInputs.people} onChange={handleFixtureChange('people')} />
+              <Input label="Operating Hours/Day" type="number" value={fixtureInputs.hours} onChange={handleFixtureChange('hours')} />
             </div>
             <div className="flex gap-3 mt-6">
               <Button variant="secondary" onClick={() => setShowFixtureModal(false)} className="flex-1">Cancel</Button>
-              <Button variant="primary" onClick={applyFixtureCalculation} className="flex-1">Apply</Button>
+              <Button onClick={applyFixtureCalculation} className="flex-1 bg-blue-600 hover:bg-blue-700">Apply</Button>
             </div>
           </div>
         </div>
