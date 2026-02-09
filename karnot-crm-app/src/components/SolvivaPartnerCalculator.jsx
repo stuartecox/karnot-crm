@@ -196,7 +196,7 @@ const SolvivaPartnerCalculator = () => {
       let newSun = inputs.manualSunHours;
 
       if (data.source === 'GOOGLE') {
-          newArea = Math.round.floor(data.maxArrayAreaSqM);
+          newArea = Math.floor(data.maxArrayAreaSqM);
           newSun = parseFloat(data.sunshineHours.toFixed(1));
       } else if (data.source === 'OPEN_METEO') {
           newSun = parseFloat(data.peakSunHoursPerDay.toFixed(2));
@@ -493,16 +493,26 @@ return {
       totalPartnerRevenueUpfront,
       totalPartnerRevenueFiveYear,
       revenueIncrease
-      // Solviva Monthly Payments
-  monthlyPayment_SolarOnly: Math.round(monthlyPayment_SolarOnly),
-  monthlyPayment_Partner_Total: Math.round(monthlyPayment_Partner_Total),
-  residualBill_SolarOnly: Math.round(residualBill_SolarOnly),
-  residualBill_Partner: Math.round(residualBill_Partner),
-  netMonthlyCost_SolarOnly: Math.round(netMonthlyCost_SolarOnly),
-  netMonthlyCost_Partner: Math.round(netMonthlyCost_Partner),
-  monthlyAdvantage_Customer: Math.round(monthlyAdvantage_Customer),
-};
-  }, [inputs, solvivaProducts, karnotProducts]); 
+      // Around line 420, BEFORE "// Solviva Monthly Payments"
+      monthlySavings: Math.round(monthlySavings),
+      monthlyPaymentPHP: Math.round(monthlyPayment * 58),
+      netMonthlyCashFlow: Math.round(monthlySavings - (monthlyPayment * 58)),
+      simplePayback: Math.round((costB_Total * 58) / (annualFuelSavings + annualSolarValue) * 10) / 10,
+
+      // Solviva Business Metrics
+      solvivaUnitMargin: Math.round(costB_Solar * 0.35),
+      karnotCommission: Math.round(costKarnot * 0.15),
+      installationRevenue: Math.round(installationCost * 0.20),
+      annualServiceRevenue: Math.round(inputs.annualServicePerUnit),
+      fiveYearServiceRevenue: Math.round(inputs.annualServicePerUnit * 5),
+      totalPartnerRevenueUpfront: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)),
+      totalPartnerRevenueFiveYear: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20) + (inputs.annualServicePerUnit * 5)),
+      revenueIncrease: Math.round(((((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)) / (costA * 0.35)) - 1) * 100),
+
+      // Solviva Monthly Payments (your existing code is fine here)
+  },
+  
+  [inputs, solvivaProducts, karnotProducts]); 
 
   // === 4. ENHANCED PDF GENERATOR ===
   const generatePDFReport = () => {
@@ -970,19 +980,19 @@ return {
   <div className="grid grid-cols-2 gap-4">
     <div className="bg-red-50 border-2 border-red-300 p-4 rounded">
       <div className="text-sm font-bold mb-2">Solar Only</div>
-      <div>Payment: ${Math.round(monthlyPayment_SolarOnly)}/mo</div>
-      <div>Grid: ₱{Math.round(residualBill_SolarOnly)}</div>
-      <div className="font-bold mt-2">Total: ₱{Math.round(netMonthlyCost_SolarOnly)}/mo</div>
+      <div>Payment: ${Math.round(analysis.monthlyPayment_SolarOnly)}/mo</div>
+<div>Grid: ₱{Math.round(analysis.residualBill_SolarOnly)}</div>
+<div className="font-bold mt-2">Total: ₱{Math.round(analysis.netMonthlyCost_SolarOnly)}/mo</div>
     </div>
     <div className="bg-green-50 border-2 border-green-500 p-4 rounded">
       <div className="text-sm font-bold mb-2">Partner Model</div>
-      <div>Payment: ${Math.round(monthlyPayment_Partner)}/mo</div>
-      <div>Grid: ₱{Math.round(residualBill_Partner)}</div>
-      <div className="font-bold mt-2">Total: ₱{Math.round(netMonthlyCost_Partner)}/mo</div>
+      <div>Payment: ${Math.round(analysis.monthlyPayment_Partner_Total)}/mo</div>
+<div>Grid: ₱{Math.round(analysis.residualBill_Partner)}</div>
+<div className="font-bold mt-2">Total: ₱{Math.round(analysis.netMonthlyCost_Partner)}/mo</div>
     </div>
   </div>
   <div className="bg-yellow-100 p-4 mt-4 rounded text-center">
-    <div className="text-2xl font-bold">₱{Math.round(monthlyAdvantage)}/month savings</div>
+    <<div className="text-2xl font-bold">₱{Math.round(analysis.monthlyAdvantage_Customer)}/month savings</div>
   </div>
 </div>
          
