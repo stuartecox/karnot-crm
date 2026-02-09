@@ -279,7 +279,7 @@ const SolvivaPartnerCalculator = () => {
         else if (selectedKarnot.name?.includes("300")) integratedTankVolume = 300;
     }
     
-    const externalTankNeeded = Math.round.max(0, requiredTotalVolume - integratedTankVolume);
+    const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
     const externalTankCost = externalTankNeeded * inputs.externalTankCostPerLiter;
 
     // --- STEP D: ELECTRICAL LOADS (SCENARIO A vs B) ---
