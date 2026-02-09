@@ -237,7 +237,7 @@ const InvestorFinancialModel = () => {
     const upfrontEquipmentMargin = equipmentMarginUSD;
     
     // 2. Electricity revenue (NEW demand from heat pump)
-    const monthlyHeatPumpKwh = dailyHeatPumpKwh * 30;
+    // monthlyHeatPumpKwh already calculated in STEP G
     const annualHeatPumpKwh = dailyHeatPumpKwh * 365;
     const annualElectricityRevenue = annualHeatPumpKwh * inputs.electricityRate; // PHP
     const annualElectricityRevenueUSD = annualElectricityRevenue / CONFIG.FX_RATE;
