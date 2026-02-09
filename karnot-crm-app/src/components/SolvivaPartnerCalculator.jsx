@@ -206,12 +206,19 @@ const SolvivaPartnerCalculator = () => {
           .filter(p => p.category === 'Competitor Solar')
           .sort((a, b) => (a.kW_Cooling_Nominal || 0) - (b.kW_Cooling_Nominal || 0));
           
-        // Filter 2: Karnot Heat Pumps
+        // Filter 2: Karnot Heat Pumps (AquaHERO, iHEAT, iCOOL with heat recovery)
         const heatPumps = allProds
           .filter(p => {
              const cat = (p.category || '').toLowerCase();
              const name = (p.name || '').toLowerCase();
-             return (cat.includes('heat pump') || cat.includes('heater') || name.includes('aquahero')) && !name.includes('ivolt');
+             // Include: AquaHERO, iHEAT, iCOOL (but not iVolt or pure cooling-only units)
+             const isHeating = cat.includes('aquahero') || 
+                              cat.includes('iheat') || 
+                              name.includes('aquahero') || 
+                              name.includes('iheat') ||
+                              (cat.includes('icool') && p.kW_DHW_Nominal && p.kW_DHW_Nominal > 0); // iCOOL with heat recovery
+             const notExcluded = !name.includes('ivolt');
+             return isHeating && notExcluded;
           })
           .sort((a, b) => (a.kW_DHW_Nominal || 0) - (b.kW_DHW_Nominal || 0));
 
