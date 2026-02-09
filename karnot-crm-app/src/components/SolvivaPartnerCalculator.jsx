@@ -135,7 +135,11 @@ const SolvivaPartnerCalculator = () => {
     panelWattage: 550,
     recoveryHours: 10,
     
-    // Cost Assumptions
+    // Add to your inputs state:
+    solvivaFinancingTerm: 60, // 12, 36, or 60 months
+    monthlyElectricBill: 8000, // PHP
+    
+// Cost Assumptions
     externalTankCostPerLiter: 2.5, // USD per liter
     installationCostPerUnit: 600, // USD per heat pump installation
     annualServicePerUnit: 172, // USD per unit per year (Luzon rate)
@@ -192,7 +196,7 @@ const SolvivaPartnerCalculator = () => {
       let newSun = inputs.manualSunHours;
 
       if (data.source === 'GOOGLE') {
-          newArea = Math.floor(data.maxArrayAreaSqM);
+          newArea = Math.round.floor(data.maxArrayAreaSqM);
           newSun = parseFloat(data.sunshineHours.toFixed(1));
       } else if (data.source === 'OPEN_METEO') {
           newSun = parseFloat(data.peakSunHoursPerDay.toFixed(2));
@@ -267,7 +271,7 @@ const SolvivaPartnerCalculator = () => {
     }
 
     // --- STEP C: TANK MATH ---
-    const requiredTotalVolume = Math.ceil(dailyLiters / 100) * 100;
+    const requiredTotalVolume = Math.round.ceil(dailyLiters / 100) * 100;
     
     let integratedTankVolume = selectedKarnot.tankVolume || 0;
     if (!integratedTankVolume) {
@@ -275,7 +279,7 @@ const SolvivaPartnerCalculator = () => {
         else if (selectedKarnot.name?.includes("300")) integratedTankVolume = 300;
     }
     
-    const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
+    const externalTankNeeded = Math.round.max(0, requiredTotalVolume - integratedTankVolume);
     const externalTankCost = externalTankNeeded * inputs.externalTankCostPerLiter;
 
     // --- STEP D: ELECTRICAL LOADS (SCENARIO A vs B) ---
@@ -401,6 +405,25 @@ const SolvivaPartnerCalculator = () => {
       ? loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
       : 0;
     
+    // STEP L: SOLVIVA MONTHLY PAYMENT MODEL
+  const getSolvivaMonthlyPayment = (principal, months) => {
+  const rate = 0.09 / 12;
+  if (months === 12) return principal * 1.05 / 12;
+  return principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+  };
+
+  const monthlyPayment_SolarOnly = getSolvivaMonthlyPayment(costA, inputs.solvivaFinancingTerm);
+  const monthlyPayment_Partner = getSolvivaMonthlyPayment(costB_Total, inputs.solvivaFinancingTerm);
+
+  const showerEnergyPerUse = inputs.showerPowerKW * 0.167;
+  const monthlyShowerCost = (showerEnergyPerUse * inputs.showers * 30 * inputs.electricityRate);
+  const residualBill_SolarOnly = monthlyShowerCost + (inputs.monthlyElectricBill * 0.15);
+  const residualBill_Partner = (hpDailyKWh * 30 * inputs.electricityRate * 0.30) + (inputs.monthlyElectricBill * 0.10);
+
+  const netMonthlyCost_SolarOnly = (monthlyPayment_SolarOnly * 58) + residualBill_SolarOnly;
+  const netMonthlyCost_Partner = (monthlyPayment_Partner * 58) + residualBill_Partner;
+  const monthlyAdvantage = netMonthlyCost_SolarOnly - netMonthlyCost_Partner;
+
     // Monthly savings in PHP
     const monthlySavings = (annualFuelSavings + annualSolarValue) / 12;
     // Monthly payment in PHP (convert from USD)
@@ -953,6 +976,27 @@ const SolvivaPartnerCalculator = () => {
             </div>
           </div>
 
+<div className="bg-white rounded-xl border-2 border-orange-200 p-6">
+  <h3 className="font-bold text-orange-900 mb-4">Solviva Monthly Payment Comparison</h3>
+  <div className="grid grid-cols-2 gap-4">
+    <div className="bg-red-50 border-2 border-red-300 p-4 rounded">
+      <div className="text-sm font-bold mb-2">Solar Only</div>
+      <div>Payment: ${Math.round(monthlyPayment_SolarOnly)}/mo</div>
+      <div>Grid: ₱{Math.round(residualBill_SolarOnly)}</div>
+      <div className="font-bold mt-2">Total: ₱{Math.round(netMonthlyCost_SolarOnly)}/mo</div>
+    </div>
+    <div className="bg-green-50 border-2 border-green-500 p-4 rounded">
+      <div className="text-sm font-bold mb-2">Partner Model</div>
+      <div>Payment: ${Math.round(monthlyPayment_Partner)}/mo</div>
+      <div>Grid: ₱{Math.round(residualBill_Partner)}</div>
+      <div className="font-bold mt-2">Total: ₱{Math.round(netMonthlyCost_Partner)}/mo</div>
+    </div>
+  </div>
+  <div className="bg-yellow-100 p-4 mt-4 rounded text-center">
+    <div className="text-2xl font-bold">₱{Math.round(monthlyAdvantage)}/month savings</div>
+  </div>
+</div>
+         
           {/* CUSTOMER BENEFITS */}
           <div className="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
             <button
