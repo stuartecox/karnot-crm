@@ -330,6 +330,13 @@ const SolvivaPartnerCalculator = () => {
     }
 
     // --- STEP C: TANK MATH (FROM DATABASE PRODUCT) ---
+    // NOTE: This is a simplified calculation
+    // In reality, tanks only need to cover NON-SUNSHINE hours since the heat pump
+    // continuously reheats throughout the day. A proper calculation would be:
+    // - Peak draw period (e.g., morning 6-9am before sun)
+    // - Recovery rate during sunshine hours
+    // - Thermal losses
+    // Current logic: Full daily demand / 100 (rounded to nearest 100L)
     const requiredTotalVolume = Math.round(dailyLiters / 100) * 100;
     
     // Get integrated tank volume from database product
@@ -1135,6 +1142,11 @@ const SolvivaPartnerCalculator = () => {
                     <div className="space-y-1 text-xs font-mono">
                       <div className="flex justify-between"><span>Heat Pump ({analysis.selectedKarnot.name}):</span><span className="font-bold">${analysis.costKarnot.toLocaleString()}</span></div>
                       <div className="flex justify-between"><span>External Tank ({analysis.externalTankNeeded}L @ $2.50/L):</span><span className="font-bold">${analysis.externalTankCost.toLocaleString()}</span></div>
+                      {analysis.externalTankNeeded > 0 && (
+                        <div className="text-[9px] text-amber-600 bg-amber-50 p-1 rounded mt-1">
+                          ⚠️ Tank sizing is conservative (full daily demand). Actual requirement may be lower since heat pump recovers continuously during sunshine hours.
+                        </div>
+                      )}
                       <div className="flex justify-between"><span>Installation:</span><span className="font-bold">${analysis.installationCost.toLocaleString()}</span></div>
                       <div className="flex justify-between border-t pt-1 mt-1"><span className="font-bold">Total:</span><span className="font-bold text-orange-600">${(analysis.costKarnot + analysis.externalTankCost + analysis.installationCost).toLocaleString()}</span></div>
                       <div className="flex justify-between text-[10px] text-slate-500 mt-2"><span>Financing: {inputs.solvivaFinancingTerm} months @ 9% APR</span><span className="font-bold">₱{analysis.monthlyPayment_HeatPump_PHP.toLocaleString()}/mo</span></div>
