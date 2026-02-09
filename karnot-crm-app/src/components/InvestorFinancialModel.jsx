@@ -161,7 +161,10 @@ const InvestorFinancialModel = () => {
     const heatPumpCOP = selectedKarnot.COP_DHW || CONFIG.COP_HEAT_PUMP;
 
     // --- STEP C: TANK SIZING ---
-    const requiredTotalVolume = Math.round(dailyLiters / 100) * 100;
+    // Tank only needs to cover NON-SUNSHINE hours (morning peak before solar recovery)
+    // Typically 40% of daily demand (6-9am peak before heat pump recovers during day)
+    const peakHoursDemand = Math.round(dailyLiters * 0.4); // 40% for non-sunshine hours
+    const requiredTotalVolume = Math.round(peakHoursDemand / 100) * 100; // Round to nearest 100L
     
     let integratedTankVolume = selectedKarnot.tankVolume || 0;
     if (!integratedTankVolume && selectedKarnot.name) {
@@ -502,11 +505,11 @@ const InvestorFinancialModel = () => {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">
-            <div className="text-3xl font-bold">{fmtUSD(calculations.utilityDebtPrincipal)}</div>
+            <div className="text-3xl font-bold">{fmtUSD(calculations.utilityCOGS)}</div>
             <div className="text-xs text-emerald-100">Utility Investment</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold">{fmtUSD(calculations.utilityGrossProfit)}</div>
+            <div className="text-3xl font-bold">{fmtUSD(calculations.upfrontEquipmentMargin)}</div>
             <div className="text-xs text-emerald-100">Upfront Margin</div>
           </div>
           <div className="text-center">
