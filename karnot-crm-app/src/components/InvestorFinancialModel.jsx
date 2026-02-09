@@ -3,43 +3,97 @@ import {
   TrendingUp, DollarSign, BarChart3, PieChart, Target, Award,
   Building, Users, Zap, Leaf, AlertCircle, CheckCircle, Info,
   ChevronDown, ChevronUp, Download, RefreshCw, Calculator,
-  Briefcase, LineChart, ArrowRight, Shield
+  Briefcase, LineChart, ArrowRight, Shield, Droplets
 } from 'lucide-react';
 import { Card, Button, Input, Section } from '../data/constants.jsx';
 
+// Firebase imports
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
 // ==========================================
-// SOLVIVA-STYLE INVESTOR FINANCIAL MODEL
-// For Karnot Heat Pump Rent-to-Own Portfolio
+// KARNOT INVESTOR MODEL - 1882 ENERGY PARTNERSHIP
+// Utility purchases heat pumps upfront, finances customer deployments
 // ==========================================
 
 const InvestorFinancialModel = () => {
+  // === DATABASE STATE ===
+  const [dbProducts, setDbProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [karnotProducts, setKarnotProducts] = useState([]);
+
+  // === FETCH PRODUCTS FROM DATABASE ===
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        setLoadingProducts(false);
+        return;
+      }
+
+      try {
+        const snapshot = await getDocs(collection(db, 'users', user.uid, 'products'));
+        const allProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Filter: R290 heat pumps only (natural refrigerant)
+        const heatPumps = allProds
+          .filter(p => {
+            const hasHeating = (p.kW_DHW_Nominal && p.kW_DHW_Nominal > 0) || 
+                              (p.kW_Heating_Nominal && p.kW_Heating_Nominal > 0);
+            const notSolar = p.category !== 'Competitor Solar';
+            const isR290 = (p.Refrigerant || p.refrigerant || '').toUpperCase().includes('R290');
+            return hasHeating && notSolar && isR290;
+          })
+          .sort((a, b) => (a.kW_DHW_Nominal || a.kW_Heating_Nominal || 0) - (b.kW_DHW_Nominal || b.kW_Heating_Nominal || 0));
+
+        setDbProducts(allProds);
+        setKarnotProducts(heatPumps);
+        console.log('Loaded R290 heat pumps:', heatPumps.length);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   // === INVESTOR INPUTS ===
   const [inputs, setInputs] = useState({
-    // Unit Economics
-    currency: 'PHP',
-    equipmentCostUSD: 3500,      // Heat pump system cost
-    installationCostUSD: 600,    // Installation cost
-    serviceReservePercent: 20,   // 5-year service reserve
-
     // Customer Profile
-    heatingType: 'lpg',          // What customer is replacing
-    lpgBottlesPerMonth: 28,      // LPG consumption (for SME)
-    lpgPricePerBottle: 950,      // PHP per 11kg bottle
-    dailyLitersHotWater: 1500,   // Daily hot water demand
-    electricityRate: 12.25,      // PHP per kWh
+    heatingType: 'lpg',          
+    lpgPricePerBottle: 950,      
+    dailyLitersHotWater: 1500,   
+    electricityRate: 12.25,      
+    recoveryHours: 10,           // Hours to heat full tank
+
+    // Utility Partnership Model (1882 Energy)
+    equipmentMarginPercent: 15,  // Utility's markup on equipment sale
+    electricityNetMargin: 25,    // Net margin on electricity sales (after generation, T&D)
+    installationCostPerUnit: 600,
+    annualServicePerUnit: 172,   
+    externalTankCostPerLiter: 2.50,
+
+    // Customer Financing (Utility finances customer)
+    customerFinancingTerm: 60,   // Months
+    customerAPR: 9,              // Annual interest rate
 
     // Revenue Model
-    monthlyEaaSFee: 23500,       // Monthly Energy-as-a-Service fee (PHP)
-    electricityMargin: 15,       // % margin on electricity sales
     carbonCreditPrice: 15,       // USD per ton CO2
-    contractYears: 5,            // Contract term
+    contractYears: 5,
 
-    // Financing
-    interestRate: 8,             // Annual interest rate
-    financingTerm: 5,            // Loan term years
+    // Utility Financing (Utility borrows to fund deployments)
+    utilityInterestRate: 8,      // Utility's cost of capital
+    utilityLoanTerm: 5,
 
     // Portfolio
     portfolioUnits: 250,
+    
+    // Solviva Solar Cross-Sell
+    solvivaConversionRate: 30,   // % of customers who add solar
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -48,140 +102,222 @@ const InvestorFinancialModel = () => {
 
   // === CONSTANTS ===
   const CONFIG = {
-    FX_RATE: 58.5,               // PHP to USD
-    COP_HEAT_PUMP: 4.2,          // Typical R290 COP in tropical climate
-    COP_ELECTRIC: 0.95,          // Electric heater efficiency
-    LPG_BURNER_EFFICIENCY: 0.85, // 85% typical LPG burner efficiency
-    KWH_PER_LITER_DELTA_T: 0.001163, // kWh to raise 1L by 1°C
-    DELTA_T: 30,                 // Typical temp rise (25°C to 55°C)
-    LPG_KWH_PER_KG: 13.8,        // Energy content of LPG
-    LPG_CO2_PER_KG: 3.0,         // kg CO2 per kg LPG
-    PEAK_REDUCTION_KW: 3.5,      // Peak demand reduction per unit
-    GRID_EMISSION_FACTOR: 0.7,   // kg CO2 per kWh (PH grid)
+    FX_RATE: 58.5,               
+    COP_HEAT_PUMP: 4.2,          
+    COP_ELECTRIC: 0.95,          
+    LPG_BURNER_EFFICIENCY: 0.85, 
+    KWH_PER_LITER_DELTA_T: 0.001163,
+    DELTA_T: 30,                 
+    LPG_KWH_PER_KG: 13.8,        
+    LPG_CO2_PER_KG: 3.0,         
+    PEAK_REDUCTION_KW: 3.5,      
+    GRID_EMISSION_FACTOR: 0.7,   
   };
 
   // === CURRENCY FORMATTING ===
-  const fxRate = inputs.currency === 'USD' ? 1 : CONFIG.FX_RATE;
-  const symbol = inputs.currency === 'USD' ? '$' : '₱';
   const fmt = (n, decimals = 0) => (+n || 0).toLocaleString(undefined, {
     maximumFractionDigits: decimals,
     minimumFractionDigits: decimals
   });
   const fmtUSD = (n) => `$${fmt(n)}`;
-  const fmtLocal = (n) => `${symbol}${fmt(n)}`;
+  const fmtPHP = (n) => `₱${fmt(n)}`;
 
   // === CORE CALCULATIONS ===
   const calculations = useMemo(() => {
-    // --- UNIT ECONOMICS ---
-    // Investment per unit
-    const equipmentCost = inputs.equipmentCostUSD;
-    const installationCost = inputs.installationCostUSD;
-    const baseInvestment = equipmentCost + installationCost;
-    const serviceReserve = baseInvestment * (inputs.serviceReservePercent / 100);
-    const netOutlay = baseInvestment + serviceReserve;
+    if (karnotProducts.length === 0) {
+      return {
+        error: 'No R290 heat pumps found in database. Please add products first.',
+        equipmentCost: 0,
+        totalInvestmentUSD: 0,
+      };
+    }
 
-    // Financing costs (simple interest for illustration)
-    const totalInterest = netOutlay * (inputs.interestRate / 100) * inputs.financingTerm;
-    const financingFees = netOutlay * 0.01; // 1% origination
-    const totalInvestmentUSD = netOutlay + totalInterest + financingFees;
+    // --- STEP A: CALCULATE THERMAL DEMAND ---
+    const dailyLiters = inputs.dailyLitersHotWater;
+    const dailyThermalKWh = dailyLiters * CONFIG.DELTA_T * CONFIG.KWH_PER_LITER_DELTA_T;
+    const requiredRecoveryKW = dailyThermalKWh / inputs.recoveryHours;
 
-    // --- THERMAL DEMAND (from water usage) ---
-    const dailyThermalKWh = inputs.dailyLitersHotWater * CONFIG.DELTA_T * CONFIG.KWH_PER_LITER_DELTA_T;
+    console.log('=== HEAT PUMP SELECTION ===');
+    console.log(`Daily: ${dailyLiters}L = ${dailyThermalKWh.toFixed(2)} kWh`);
+    console.log(`Required: ${requiredRecoveryKW.toFixed(2)} kW recovery`);
 
-    // --- CUSTOMER CURRENT COSTS (derived from water usage) ---
+    // --- STEP B: SELECT HEAT PUMP FROM DATABASE ---
+    let selectedKarnot = karnotProducts.find(p => 
+      (p.kW_DHW_Nominal || p.kW_Heating_Nominal || 0) >= requiredRecoveryKW
+    );
+
+    if (!selectedKarnot && karnotProducts.length > 0) {
+      selectedKarnot = karnotProducts[karnotProducts.length - 1];
+      console.log('⚠️ No product meets requirement, using largest');
+    }
+
+    if (!selectedKarnot) {
+      return { error: 'No suitable heat pump found' };
+    }
+
+    console.log('✅ Selected:', selectedKarnot.name, `$${selectedKarnot.salesPriceUSD}`);
+
+    const heatPumpPriceUSD = selectedKarnot.salesPriceUSD || 0;
+    const heatPumpCOP = selectedKarnot.COP_DHW || CONFIG.COP_HEAT_PUMP;
+
+    // --- STEP C: TANK SIZING ---
+    const requiredTotalVolume = Math.round(dailyLiters / 100) * 100;
+    
+    let integratedTankVolume = selectedKarnot.tankVolume || 0;
+    if (!integratedTankVolume && selectedKarnot.name) {
+      const name = selectedKarnot.name.toLowerCase();
+      if (name.includes('aquahero')) {
+        if (name.includes('200l')) integratedTankVolume = 200;
+        else if (name.includes('300l')) integratedTankVolume = 300;
+      }
+    }
+
+    const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
+    const externalTankCost = externalTankNeeded * inputs.externalTankCostPerLiter;
+
+    // --- STEP D: UTILITY INVESTMENT & PRICING ---
+    const equipmentCost = heatPumpPriceUSD;
+    const installationCost = inputs.installationCostPerUnit;
+    const tankCost = externalTankCost;
+    
+    // Karnot sells to 1882 at full price
+    const karnotSalePrice = equipmentCost + installationCost + tankCost;
+    
+    // 1882 marks up equipment by X% before financing to customer
+    const customerEquipmentPrice = karnotSalePrice * (1 + inputs.equipmentMarginPercent / 100);
+    const equipmentMarginUSD = customerEquipmentPrice - karnotSalePrice;
+    
+    // 1882's upfront cost (what they pay Karnot)
+    const utilityCOGS = karnotSalePrice;
+
+    console.log(`Karnot sale: $${karnotSalePrice}, 1882 markup: ${inputs.equipmentMarginPercent}%, Customer pays: $${customerEquipmentPrice}`);
+    console.log(`1882 equipment margin: $${equipmentMarginUSD}`);
+
+    // --- STEP E: CUSTOMER FINANCING ---
+    // Customer finances the equipment (with markup) over X months at Y% APR
+    const principal = customerEquipmentPrice * CONFIG.FX_RATE; // PHP
+    const monthlyRate = inputs.customerAPR / 100 / 12;
+    const numPayments = inputs.customerFinancingTerm;
+    
+    const customerMonthlyPayment = numPayments > 0 && monthlyRate > 0
+      ? (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+        (Math.pow(1 + monthlyRate, numPayments) - 1)
+      : 0;
+
+    const totalFinancingCost = (customerMonthlyPayment * numPayments) - principal;
+    const totalCustomerPays = customerMonthlyPayment * numPayments;
+
+    // --- STEP F: CUSTOMER CURRENT COSTS ---
     let customerCurrentMonthlyCost = 0;
     let lpgKgPerYear = 0;
-    let lpgBottlesPerMonth = 0;
 
     if (inputs.heatingType === 'lpg') {
-      // LPG customer - calculate from thermal demand
       const dailyLpgKg = dailyThermalKWh / (CONFIG.LPG_BURNER_EFFICIENCY * CONFIG.LPG_KWH_PER_KG);
       const lpgKgPerMonth = dailyLpgKg * 30;
       lpgKgPerYear = dailyLpgKg * 365;
-      lpgBottlesPerMonth = lpgKgPerMonth / 11; // 11kg bottles
+      const lpgBottlesPerMonth = lpgKgPerMonth / 11;
       customerCurrentMonthlyCost = lpgBottlesPerMonth * inputs.lpgPricePerBottle;
     } else {
-      // Electric customer - calculate from thermal demand
       const dailyKwh = dailyThermalKWh / CONFIG.COP_ELECTRIC;
       customerCurrentMonthlyCost = dailyKwh * 30 * inputs.electricityRate;
-      lpgKgPerYear = (dailyKwh * 365) / CONFIG.LPG_KWH_PER_KG; // Equivalent for carbon
+      lpgKgPerYear = (dailyKwh * 365) / CONFIG.LPG_KWH_PER_KG;
     }
-    const customerCurrentMonthlyUSD = customerCurrentMonthlyCost / CONFIG.FX_RATE;
 
-    // --- HEAT PUMP OPERATING COST ---
-    const dailyHeatPumpKwh = dailyThermalKWh / CONFIG.COP_HEAT_PUMP;
+    // --- STEP G: HEAT PUMP OPERATING COST (CUSTOMER PAYS MERALCO) ---
+    const dailyHeatPumpKwh = dailyThermalKWh / heatPumpCOP;
     const monthlyHeatPumpKwh = dailyHeatPumpKwh * 30;
     const heatPumpMonthlyCostPHP = monthlyHeatPumpKwh * inputs.electricityRate;
-    const heatPumpMonthlyCostUSD = heatPumpMonthlyCostPHP / CONFIG.FX_RATE;
 
-    // --- CUSTOMER VALUE PROPOSITION ---
-    const energySavingsPHP = customerCurrentMonthlyCost - heatPumpMonthlyCostPHP;
-    const energySavingsUSD = energySavingsPHP / CONFIG.FX_RATE;
-    const monthlyFeePHP = inputs.monthlyEaaSFee;
-    const monthlyFeeUSD = monthlyFeePHP / CONFIG.FX_RATE;
-    const customerNetPositionPHP = energySavingsPHP - monthlyFeePHP + heatPumpMonthlyCostPHP;
+    // Customer net position
+    const customerMonthlySavings = customerCurrentMonthlyCost - heatPumpMonthlyCostPHP;
+    const customerNetPosition = customerMonthlySavings - customerMonthlyPayment;
 
-    // --- REVENUE STREAMS (Per Unit, Annual) ---
-    // 1. Equipment Rental / EaaS Fee
-    const annualRentalUSD = monthlyFeeUSD * 12;
-
-    // 2. Carbon Credits (no electricity margin - customer pays Meralco directly)
+    // --- STEP H: UTILITY REVENUE STREAMS ---
+    // 1. Equipment margin (upfront)
+    const upfrontEquipmentMargin = equipmentMarginUSD;
+    
+    // 2. Electricity revenue (NEW demand from heat pump)
+    const monthlyHeatPumpKwh = dailyHeatPumpKwh * 30;
+    const annualHeatPumpKwh = dailyHeatPumpKwh * 365;
+    const annualElectricityRevenue = annualHeatPumpKwh * inputs.electricityRate; // PHP
+    const annualElectricityRevenueUSD = annualElectricityRevenue / CONFIG.FX_RATE;
+    
+    // Net margin on electricity (25% after generation, T&D, OPEX)
+    const annualElectricityProfitUSD = annualElectricityRevenueUSD * (inputs.electricityNetMargin / 100);
+    
+    // 3. Service revenue
+    const annualServiceRevenue = inputs.annualServicePerUnit;
+    
+    // 4. Carbon credits
     const annualCO2TonsAvoided = (lpgKgPerYear * CONFIG.LPG_CO2_PER_KG) / 1000;
     const annualCarbonRevenueUSD = annualCO2TonsAvoided * inputs.carbonCreditPrice;
 
-    // Total Revenue per Unit (EaaS + Carbon only)
-    const totalAnnualRevenueUSD = annualRentalUSD + annualCarbonRevenueUSD;
+    // Total annual ongoing revenue
+    const totalAnnualOngoingRevenue = annualElectricityProfitUSD + annualServiceRevenue + annualCarbonRevenueUSD;
 
-    // --- OPERATING COSTS (Per Unit, Annual) ---
-    const maintenanceCostUSD = baseInvestment * 0.02; // 2% of equipment
-    const insuranceCostUSD = baseInvestment * 0.01;   // 1% of equipment
-    const customerAcquisitionCostUSD = 150;           // CAC per unit
-    const totalOperatingCostsUSD = maintenanceCostUSD + insuranceCostUSD;
+    console.log(`Annual electricity: ${annualHeatPumpKwh.toFixed(0)} kWh = $${annualElectricityRevenueUSD.toFixed(0)} revenue, $${annualElectricityProfitUSD.toFixed(0)} profit (${inputs.electricityNetMargin}% margin)`);
 
-    // --- PROFITABILITY ---
-    const netAnnualCashFlowUSD = totalAnnualRevenueUSD - totalOperatingCostsUSD;
-    const total5YearRevenueUSD = totalAnnualRevenueUSD * inputs.contractYears;
-    const total5YearCostsUSD = totalOperatingCostsUSD * inputs.contractYears;
-    const netProfit5YearUSD = total5YearRevenueUSD - total5YearCostsUSD - totalInvestmentUSD;
+    // --- STEP I: UTILITY COSTS (ONGOING) ---
+    const annualMaintenanceCost = equipmentCost * 0.02; // 2%
+    const annualInsuranceCost = equipmentCost * 0.01; // 1%
+    const annualOperatingCosts = annualMaintenanceCost + annualInsuranceCost;
 
-    // --- KEY METRICS ---
-    // Payback Period (months)
-    const monthlyNetCashFlow = netAnnualCashFlowUSD / 12;
-    const paybackMonths = totalInvestmentUSD / monthlyNetCashFlow;
+    // --- STEP J: UTILITY CASH FLOWS ---
+    // Year 0: Upfront equipment margin
+    const year0CashFlow = upfrontEquipmentMargin;
 
-    // Simple ROI
-    const roi5Year = ((netProfit5YearUSD / totalInvestmentUSD) * 100);
+    // Year 1-5: Electricity profit + Service + Carbon - Operating costs
+    const annualNetCashFlow = totalAnnualOngoingRevenue - annualOperatingCosts;
+
+    // Total 5-year
+    const total5YearRevenue = year0CashFlow + (totalAnnualOngoingRevenue * inputs.contractYears);
+    const total5YearCosts = annualOperatingCosts * inputs.contractYears;
+    const netProfit5Year = total5YearRevenue - total5YearCosts;
+
+    // --- STEP K: UTILITY FINANCING COST ---
+    // If utility borrows to fund deployments
+    const utilityDebtPrincipal = utilityCOGS; // What utility actually pays
+    const utilityAnnualInterest = utilityDebtPrincipal * (inputs.utilityInterestRate / 100);
+    const utilityTotalInterest = utilityAnnualInterest * inputs.utilityLoanTerm;
+    const utilityTotalDebtCost = utilityDebtPrincipal + utilityTotalInterest;
+
+    // Net profit after financing
+    const netProfitAfterFinancing = netProfit5Year - utilityTotalInterest;
+
+    // --- STEP L: KEY METRICS ---
+    // Simple payback (months)
+    const monthlyNetCashFlow = annualNetCashFlow / 12;
+    const paybackMonths = utilityCOGS / (monthlyNetCashFlow + (year0CashFlow / 60)); // Spread upfront over term
+
+    // ROI
+    const roi5Year = (netProfitAfterFinancing / utilityDebtPrincipal) * 100;
     const roiAnnual = roi5Year / inputs.contractYears;
 
-    // IRR Calculation (Newton-Raphson approximation)
-    const calculateIRR = () => {
-      const cashFlows = [-totalInvestmentUSD];
-      for (let i = 0; i < inputs.contractYears; i++) {
-        cashFlows.push(netAnnualCashFlowUSD);
-      }
+    // IRR (simplified)
+    const cashFlows = [-utilityDebtPrincipal, year0CashFlow];
+    for (let i = 0; i < inputs.contractYears; i++) {
+      cashFlows.push(annualNetCashFlow);
+    }
 
-      let irr = 0.15; // Initial guess
-      for (let iter = 0; iter < 100; iter++) {
-        let npv = 0;
-        let derivative = 0;
-        for (let t = 0; t < cashFlows.length; t++) {
-          const factor = Math.pow(1 + irr, t);
-          npv += cashFlows[t] / factor;
-          if (t > 0) derivative -= t * cashFlows[t] / (factor * (1 + irr));
-        }
-        if (Math.abs(npv) < 0.01) break;
-        irr = irr - npv / derivative;
-        if (irr < -0.99 || irr > 10) irr = 0.15;
+    let irr = 0.15;
+    for (let iter = 0; iter < 100; iter++) {
+      let npv = 0, deriv = 0;
+      for (let t = 0; t < cashFlows.length; t++) {
+        const factor = Math.pow(1 + irr, t);
+        npv += cashFlows[t] / factor;
+        if (t > 0) deriv -= t * cashFlows[t] / (factor * (1 + irr));
       }
-      return irr * 100;
-    };
-    const irrPercent = calculateIRR();
+      if (Math.abs(npv) < 0.01) break;
+      irr = irr - npv / deriv;
+      if (irr < -0.99 || irr > 10) irr = 0.15;
+    }
+    const irrPercent = irr * 100;
 
-    // NPV at various discount rates
+    // NPV
     const calculateNPV = (rate) => {
-      let npv = -totalInvestmentUSD;
-      for (let t = 1; t <= inputs.contractYears; t++) {
-        npv += netAnnualCashFlowUSD / Math.pow(1 + rate, t);
+      let npv = 0;
+      for (let t = 0; t < cashFlows.length; t++) {
+        npv += cashFlows[t] / Math.pow(1 + rate, t);
       }
       return npv;
     };
@@ -190,102 +326,100 @@ const InvestorFinancialModel = () => {
     const npv10 = calculateNPV(0.10);
     const npv12 = calculateNPV(0.12);
 
-    // --- CASH FLOW SCHEDULE ---
+    // --- STEP M: CASH FLOW SCHEDULE ---
     const cashFlowSchedule = [];
-    let cumulativeCashFlow = -totalInvestmentUSD;
+    let cumulativeCashFlow = 0;
 
-    for (let year = 0; year <= inputs.contractYears; year++) {
-      if (year === 0) {
-        cashFlowSchedule.push({
-          year: 0,
-          investment: -totalInvestmentUSD,
-          revenue: 0,
-          opex: 0,
-          netCashFlow: -totalInvestmentUSD,
-          cumulative: cumulativeCashFlow
-        });
-      } else {
-        const netCF = netAnnualCashFlowUSD;
-        cumulativeCashFlow += netCF;
-        cashFlowSchedule.push({
-          year,
-          investment: 0,
-          revenue: totalAnnualRevenueUSD,
-          opex: -totalOperatingCostsUSD,
-          netCashFlow: netCF,
-          cumulative: cumulativeCashFlow
-        });
-      }
+    cashFlowSchedule.push({
+      year: 0,
+      upfrontMargin: year0CashFlow,
+      serviceRevenue: 0,
+      carbonRevenue: 0,
+      opex: 0,
+      financing: -utilityAnnualInterest,
+      netCashFlow: year0CashFlow - utilityAnnualInterest,
+      cumulative: year0CashFlow - utilityAnnualInterest
+    });
+
+    cumulativeCashFlow = year0CashFlow - utilityAnnualInterest;
+
+    for (let year = 1; year <= inputs.contractYears; year++) {
+      const netCF = annualNetCashFlow - utilityAnnualInterest;
+      cumulativeCashFlow += netCF;
+      cashFlowSchedule.push({
+        year,
+        upfrontMargin: 0,
+        serviceRevenue: annualServiceRevenue,
+        carbonRevenue: annualCarbonRevenueUSD,
+        opex: -annualOperatingCosts,
+        financing: -utilityAnnualInterest,
+        netCashFlow: netCF,
+        cumulative: cumulativeCashFlow
+      });
     }
 
-    // --- PORTFOLIO PROJECTIONS ---
+    // --- STEP N: PORTFOLIO METRICS ---
     const units = inputs.portfolioUnits;
-    const portfolioInvestment = totalInvestmentUSD * units;
-    const portfolioAnnualRevenue = totalAnnualRevenueUSD * units;
-    const portfolioNetProfit5Year = netProfit5YearUSD * units;
+    const portfolioInvestment = utilityDebtPrincipal * units;
+    const portfolioAnnualRevenue = totalAnnualOngoingRevenue * units;
+    const portfolioUpfrontMargin = year0CashFlow * units;
+    const portfolioNetProfit5Year = netProfitAfterFinancing * units;
     const portfolioCO2Reduction = annualCO2TonsAvoided * units;
     const portfolioPeakReduction = (CONFIG.PEAK_REDUCTION_KW * units) / 1000; // MW
-    const portfolioCarbonRevenue = annualCarbonRevenueUSD * units;
-
-    // --- SOLVIVA COMPARISON ---
-    const solvivaComparison = {
-      karnot: {
-        name: 'Karnot Heat Pumps',
-        assetType: 'Heat Pump Systems',
-        avgTicket: totalInvestmentUSD,
-        contractTerm: inputs.contractYears,
-        paybackMonths: Math.round(paybackMonths),
-        irr: irrPercent.toFixed(1),
-        revenueStreams: 3,
-        carbonImpact: annualCO2TonsAvoided.toFixed(1),
-      },
-      solviva: {
-        name: 'Solviva Solar',
-        assetType: 'Rooftop Solar Systems',
-        avgTicket: 4500,
-        contractTerm: 5,
-        paybackMonths: 24,
-        irr: '25-35',
-        revenueStreams: 2,
-        carbonImpact: 3.5,
-      }
-    };
+    const portfolioElectricityProfit = annualElectricityProfitUSD * units;
+    
+    // Solviva Solar Cross-Sell (sister company revenue)
+    const solvivaCustomers = units * (inputs.solvivaConversionRate / 100);
+    const solvivaAvgSystemUSD = 3500; // Approx 6.10 kWp system
+    const solvivaReferralFee = solvivaAvgSystemUSD * 0.05; // 5% referral to 1882
+    const solvivaReferralRevenue = solvivaCustomers * solvivaReferralFee;
 
     return {
-      // Unit Economics
+      // Product Selection
+      selectedKarnot,
+      heatPumpPriceUSD: equipmentCost,
+      integratedTankVolume,
+      externalTankNeeded,
+      externalTankCost: tankCost,
+      requiredRecoveryKW,
+      
+      // Costs
       equipmentCost,
       installationCost,
-      baseInvestment,
-      serviceReserve,
-      totalInvestmentUSD,
+      tankCost,
+      karnotSalePrice,
+      customerEquipmentPrice,
+      equipmentMarginUSD,
+      utilityCOGS,
+      utilityDebtPrincipal,
+      utilityTotalInterest,
+      utilityTotalDebtCost,
+
+      // Utility Revenue
+      upfrontEquipmentMargin,
+      year0CashFlow,
+      annualElectricityRevenueUSD,
+      annualElectricityProfitUSD,
+      annualServiceRevenue,
+      annualCarbonRevenueUSD,
+      totalAnnualOngoingRevenue,
+      annualOperatingCosts,
+      annualNetCashFlow,
+      total5YearRevenue,
+      netProfit5Year,
+      netProfitAfterFinancing,
 
       // Customer
       customerCurrentMonthlyCost,
-      customerCurrentMonthlyUSD,
       heatPumpMonthlyCostPHP,
-      heatPumpMonthlyCostUSD,
-      energySavingsPHP,
-      energySavingsUSD,
-      monthlyFeePHP,
-      monthlyFeeUSD,
-      customerNetPositionPHP,
+      customerMonthlySavings,
+      customerMonthlyPayment,
+      customerNetPosition,
+      totalFinancingCost,
+      customerAPR: inputs.customerAPR,
+      customerFinancingTerm: inputs.customerFinancingTerm,
 
-      // Revenue Streams
-      annualRentalUSD,
-      annualCarbonRevenueUSD,
-      totalAnnualRevenueUSD,
-
-      // Costs
-      totalOperatingCostsUSD,
-      maintenanceCostUSD,
-      insuranceCostUSD,
-
-      // Profitability
-      netAnnualCashFlowUSD,
-      total5YearRevenueUSD,
-      netProfit5YearUSD,
-
-      // Key Metrics
+      // Metrics
       paybackMonths,
       roi5Year,
       roiAnnual,
@@ -294,9 +428,8 @@ const InvestorFinancialModel = () => {
       npv10,
       npv12,
 
-      // Carbon/LPG
+      // Carbon
       lpgKgPerYear,
-      lpgBottlesPerMonth,
       annualCO2TonsAvoided,
 
       // Cash Flows
@@ -305,51 +438,43 @@ const InvestorFinancialModel = () => {
       // Portfolio
       portfolioInvestment,
       portfolioAnnualRevenue,
+      portfolioUpfrontMargin,
       portfolioNetProfit5Year,
       portfolioCO2Reduction,
       portfolioPeakReduction,
-      portfolioCarbonRevenue,
-
-      // Comparison
-      solvivaComparison,
+      portfolioElectricityProfit,
+      solvivaCustomers,
+      solvivaReferralRevenue,
     };
-  }, [inputs]);
+  }, [inputs, karnotProducts]);
 
   const handleChange = (field, isNumber = false) => (e) => {
     const val = isNumber ? parseFloat(e.target.value) || 0 : e.target.value;
     setInputs(prev => ({ ...prev, [field]: val }));
   };
 
-  // === SENSITIVITY ANALYSIS ===
-  const sensitivityData = useMemo(() => {
-    const scenarios = [];
-    const baseFee = inputs.monthlyEaaSFee;
+  if (loadingProducts) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="text-center py-20">
+          <RefreshCw className="animate-spin mx-auto mb-4 text-blue-600" size={48} />
+          <p className="text-gray-600 font-bold">Loading heat pump inventory...</p>
+        </div>
+      </div>
+    );
+  }
 
-    [-20, -10, 0, 10, 20].forEach(feeChange => {
-      const testFee = baseFee * (1 + feeChange / 100);
-      const testInputs = { ...inputs, monthlyEaaSFee: testFee };
-
-      // Recalculate key metrics
-      const monthlyFeeUSD = testFee / CONFIG.FX_RATE;
-      const annualRental = monthlyFeeUSD * 12;
-      const totalRevenue = annualRental + calculations.annualElectricityMarginUSD + calculations.annualCarbonRevenueUSD;
-      const netCashFlow = totalRevenue - calculations.totalOperatingCostsUSD;
-      const payback = calculations.totalInvestmentUSD / (netCashFlow / 12);
-
-      // Simple IRR approximation
-      let irr = ((netCashFlow * 5 - calculations.totalInvestmentUSD) / calculations.totalInvestmentUSD) / 5 * 100;
-      irr = Math.max(0, irr * 1.5); // Rough adjustment
-
-      scenarios.push({
-        feeChange,
-        fee: testFee,
-        paybackMonths: Math.round(payback),
-        irr: irr.toFixed(1),
-      });
-    });
-
-    return scenarios;
-  }, [inputs, calculations]);
+  if (calculations.error) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 text-center">
+          <AlertCircle className="mx-auto mb-4 text-red-600" size={48} />
+          <h2 className="text-xl font-bold text-red-900 mb-2">Error</h2>
+          <p className="text-red-700">{calculations.error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -360,13 +485,13 @@ const InvestorFinancialModel = () => {
             <Briefcase size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Karnot Energy Investment Model</h1>
-            <p className="text-blue-200">Heat Pump Rent-to-Own Portfolio | Solviva-Style EaaS</p>
+            <h1 className="text-3xl font-bold">Karnot Utility Partnership Model</h1>
+            <p className="text-blue-200">1882 Energy Ventures × AboitizPower | Heat Pump Deployment Fund</p>
           </div>
         </div>
         <p className="text-sm text-gray-300 max-w-3xl">
-          This model demonstrates Karnot's utility-partnership opportunity, mirroring Solviva Energy's proven
-          rent-to-own solar model but applied to commercial heat pump deployments for LPG replacement.
+          Utility purchases R290 heat pumps from Karnot, finances customer deployments, earns margin + service revenue + carbon credits.
+          Selected product: <strong>{calculations.selectedKarnot?.name}</strong>
         </p>
       </div>
 
@@ -377,16 +502,16 @@ const InvestorFinancialModel = () => {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">
-            <div className="text-3xl font-bold">{fmtUSD(calculations.totalInvestmentUSD)}</div>
-            <div className="text-xs text-emerald-100">Total Investment</div>
+            <div className="text-3xl font-bold">{fmtUSD(calculations.utilityDebtPrincipal)}</div>
+            <div className="text-xs text-emerald-100">Utility Investment</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold">{fmtUSD(calculations.total5YearRevenueUSD)}</div>
-            <div className="text-xs text-emerald-100">5-Year Revenue</div>
+            <div className="text-3xl font-bold">{fmtUSD(calculations.utilityGrossProfit)}</div>
+            <div className="text-xs text-emerald-100">Upfront Margin</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold">{fmtUSD(calculations.netProfit5YearUSD)}</div>
-            <div className="text-xs text-emerald-100">5-Year Net Profit</div>
+            <div className="text-3xl font-bold">{fmtUSD(calculations.netProfitAfterFinancing)}</div>
+            <div className="text-xs text-emerald-100">5-Yr Net Profit</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold">{calculations.irrPercent.toFixed(1)}%</div>
@@ -394,7 +519,7 @@ const InvestorFinancialModel = () => {
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold">{Math.round(calculations.paybackMonths)} mo</div>
-            <div className="text-xs text-emerald-100">Payback Period</div>
+            <div className="text-xs text-emerald-100">Payback</div>
           </div>
         </div>
       </div>
@@ -407,26 +532,9 @@ const InvestorFinancialModel = () => {
               <Calculator size={20} className="text-blue-600" /> Model Inputs
             </h3>
 
-            {/* Currency Toggle */}
-            <div className="flex gap-2 mb-4">
-              {['PHP', 'USD'].map(curr => (
-                <button
-                  key={curr}
-                  onClick={() => setInputs(prev => ({ ...prev, currency: curr }))}
-                  className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${
-                    inputs.currency === curr
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {curr === 'PHP' ? '₱ PHP' : '$ USD'}
-                </button>
-              ))}
-            </div>
-
             {/* Customer Profile */}
             <div className="mb-4">
-              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Customer Heating Source</label>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Customer Type</label>
               <select
                 value={inputs.heatingType}
                 onChange={handleChange('heatingType')}
@@ -437,23 +545,6 @@ const InvestorFinancialModel = () => {
               </select>
             </div>
 
-            {inputs.heatingType === 'lpg' && (
-              <div className="mb-4">
-                <Input
-                  label={`LPG Price/Bottle (${symbol})`}
-                  type="number"
-                  value={inputs.lpgPricePerBottle}
-                  onChange={handleChange('lpgPricePerBottle', true)}
-                />
-                <div className="mt-2 p-2 bg-orange-50 rounded-lg text-sm">
-                  <span className="text-orange-600 font-bold">
-                    {calculations.lpgBottlesPerMonth?.toFixed(1)} bottles/month
-                  </span>
-                  <span className="text-gray-500"> (calculated from water usage)</span>
-                </div>
-              </div>
-            )}
-
             <Input
               label="Daily Hot Water (Liters)"
               type="number"
@@ -462,11 +553,21 @@ const InvestorFinancialModel = () => {
               className="mb-4"
             />
 
+            {inputs.heatingType === 'lpg' && (
+              <Input
+                label="LPG Price/Bottle (PHP)"
+                type="number"
+                value={inputs.lpgPricePerBottle}
+                onChange={handleChange('lpgPricePerBottle', true)}
+                className="mb-4"
+              />
+            )}
+
             <Input
-              label={`Monthly EaaS Fee (${symbol})`}
+              label="Electricity Rate (PHP/kWh)"
               type="number"
-              value={inputs.monthlyEaaSFee}
-              onChange={handleChange('monthlyEaaSFee', true)}
+              value={inputs.electricityRate}
+              onChange={handleChange('electricityRate', true)}
               className="mb-4"
             />
 
@@ -482,22 +583,28 @@ const InvestorFinancialModel = () => {
             {showAdvanced && (
               <div className="space-y-3 mb-4 p-3 bg-gray-50 rounded-lg">
                 <Input
-                  label="Equipment Cost (USD)"
+                  label="Utility Margin (%)"
                   type="number"
-                  value={inputs.equipmentCostUSD}
-                  onChange={handleChange('equipmentCostUSD', true)}
+                  value={inputs.utilityMarginPercent}
+                  onChange={handleChange('utilityMarginPercent', true)}
                 />
                 <Input
-                  label="Installation Cost (USD)"
+                  label="Customer APR (%)"
                   type="number"
-                  value={inputs.installationCostUSD}
-                  onChange={handleChange('installationCostUSD', true)}
+                  value={inputs.customerAPR}
+                  onChange={handleChange('customerAPR', true)}
                 />
                 <Input
-                  label="Interest Rate (%)"
+                  label="Customer Term (months)"
                   type="number"
-                  value={inputs.interestRate}
-                  onChange={handleChange('interestRate', true)}
+                  value={inputs.customerFinancingTerm}
+                  onChange={handleChange('customerFinancingTerm', true)}
+                />
+                <Input
+                  label="Utility Interest Rate (%)"
+                  type="number"
+                  value={inputs.utilityInterestRate}
+                  onChange={handleChange('utilityInterestRate', true)}
                 />
                 <Input
                   label="Carbon Credit ($/ton)"
@@ -534,6 +641,34 @@ const InvestorFinancialModel = () => {
 
         {/* === RESULTS PANEL === */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Product Selection */}
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200">
+            <h3 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
+              <Droplets size={20} /> Selected Heat Pump
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-orange-700 mb-1">Product</div>
+                <div className="font-bold text-lg text-orange-900">{calculations.selectedKarnot.name}</div>
+              </div>
+              <div>
+                <div className="text-sm text-orange-700 mb-1">Heating Capacity</div>
+                <div className="font-bold text-lg text-orange-900">{calculations.requiredRecoveryKW.toFixed(1)} kW required / {(calculations.selectedKarnot.kW_DHW_Nominal || 0).toFixed(1)} kW rated</div>
+              </div>
+              <div>
+                <div className="text-sm text-orange-700 mb-1">Equipment Price</div>
+                <div className="font-bold text-lg text-orange-900">{fmtUSD(calculations.equipmentCost)}</div>
+              </div>
+              <div>
+                <div className="text-sm text-orange-700 mb-1">Tank Configuration</div>
+                <div className="font-bold text-lg text-orange-900">
+                  {calculations.integratedTankVolume > 0 ? `${calculations.integratedTankVolume}L integrated` : 'No tank'}
+                  {calculations.externalTankNeeded > 0 && ` + ${calculations.externalTankNeeded}L external`}
+                </div>
+              </div>
+            </div>
+          </Card>
+
           {/* Unit Economics */}
           <Card>
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -541,12 +676,12 @@ const InvestorFinancialModel = () => {
             </h3>
 
             <div className="grid grid-cols-2 gap-6">
-              {/* Investment Breakdown */}
+              {/* Costs */}
               <div>
-                <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Investment Per Unit</h4>
+                <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Utility Investment</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Equipment</span>
+                    <span className="text-gray-600">Heat Pump</span>
                     <span className="font-semibold">{fmtUSD(calculations.equipmentCost)}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b">
@@ -554,16 +689,28 @@ const InvestorFinancialModel = () => {
                     <span className="font-semibold">{fmtUSD(calculations.installationCost)}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Service Reserve (5yr)</span>
-                    <span className="font-semibold">{fmtUSD(calculations.serviceReserve)}</span>
+                    <span className="text-gray-600">External Tank</span>
+                    <span className="font-semibold">{fmtUSD(calculations.tankCost)}</span>
+                  </div>
+                  <div className="flex justify-between py-3 bg-purple-50 rounded-lg px-3 -mx-3">
+                    <span className="font-bold text-gray-800">Karnot Sale Price</span>
+                    <span className="font-bold text-purple-600 text-lg">{fmtUSD(calculations.karnotSalePrice)}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Financing Costs</span>
-                    <span className="font-semibold">{fmtUSD(calculations.totalInvestmentUSD - calculations.baseInvestment - calculations.serviceReserve)}</span>
+                    <span className="text-gray-600">1882 Markup ({inputs.equipmentMarginPercent}%)</span>
+                    <span className="font-semibold text-green-600">{fmtUSD(calculations.equipmentMarginUSD)}</span>
                   </div>
                   <div className="flex justify-between py-3 bg-blue-50 rounded-lg px-3 -mx-3">
-                    <span className="font-bold text-gray-800">Total Investment</span>
-                    <span className="font-bold text-blue-600 text-lg">{fmtUSD(calculations.totalInvestmentUSD)}</span>
+                    <span className="font-bold text-gray-800">Customer Pays</span>
+                    <span className="font-bold text-blue-600 text-lg">{fmtUSD(calculations.customerEquipmentPrice)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">1882 COGS (upfront)</span>
+                    <span className="font-semibold text-red-600">{fmtUSD(calculations.utilityCOGS)}</span>
+                  </div>
+                  <div className="flex justify-between py-3 bg-green-50 rounded-lg px-3 -mx-3 mt-2">
+                    <span className="font-bold text-gray-800">Equipment Margin</span>
+                    <span className="font-bold text-green-600 text-lg">{fmtUSD(calculations.upfrontEquipmentMargin)}</span>
                   </div>
                 </div>
               </div>
@@ -573,66 +720,75 @@ const InvestorFinancialModel = () => {
                 <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Annual Revenue Per Unit</h4>
                 <div className="space-y-2">
                   <div className="p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border-l-4 border-blue-500">
-                    <div className="text-xs font-bold text-blue-600 uppercase">1. Equipment Rental (EaaS)</div>
-                    <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualRentalUSD)}<span className="text-sm text-gray-500">/year</span></div>
+                    <div className="text-xs font-bold text-blue-600 uppercase">1. Electricity Profit</div>
+                    <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualElectricityProfitUSD)}<span className="text-sm text-gray-500">/year ({inputs.electricityNetMargin}%)</span></div>
                   </div>
-                  <div className="p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border-l-4 border-green-500">
-                    <div className="text-xs font-bold text-green-600 uppercase">2. Electricity Margin</div>
-                    <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualElectricityMarginUSD)}<span className="text-sm text-gray-500">/year</span></div>
+                  <div className="p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border-l-4 border-purple-500">
+                    <div className="text-xs font-bold text-purple-600 uppercase">2. Service Revenue</div>
+                    <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualServiceRevenue)}<span className="text-sm text-gray-500">/year</span></div>
                   </div>
                   <div className="p-3 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-lg border-l-4 border-emerald-500">
                     <div className="text-xs font-bold text-emerald-600 uppercase">3. Carbon Credits</div>
                     <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualCarbonRevenueUSD)}<span className="text-sm text-gray-500">/year</span></div>
                   </div>
+                  <div className="p-3 bg-gradient-to-r from-red-50 to-red-100 rounded-lg border-l-4 border-red-500">
+                    <div className="text-xs font-bold text-red-600 uppercase">Operating Costs</div>
+                    <div className="text-xl font-bold text-gray-800">({fmtUSD(calculations.annualOperatingCosts)})<span className="text-sm text-gray-500">/year</span></div>
+                  </div>
                   <div className="p-3 bg-gradient-to-r from-purple-100 to-purple-200 rounded-lg">
-                    <div className="text-xs font-bold text-purple-600 uppercase">Total Annual Revenue</div>
-                    <div className="text-2xl font-bold text-purple-700">{fmtUSD(calculations.totalAnnualRevenueUSD)}</div>
+                    <div className="text-xs font-bold text-purple-600 uppercase">Net Annual CF</div>
+                    <div className="text-2xl font-bold text-purple-700">{fmtUSD(calculations.annualNetCashFlow)}</div>
                   </div>
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Customer Value Proposition */}
+          {/* Customer Value */}
           <Card>
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <Users size={20} className="text-orange-600" /> Customer Value Proposition
             </h3>
 
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-4 gap-4 mb-4">
               <div className="p-4 bg-red-50 rounded-lg text-center">
-                <div className="text-xs font-bold text-red-600 uppercase mb-1">Current Monthly Cost</div>
-                <div className="text-2xl font-bold text-red-700">{fmtLocal(calculations.customerCurrentMonthlyCost)}</div>
+                <div className="text-xs font-bold text-red-600 uppercase mb-1">Current Cost</div>
+                <div className="text-2xl font-bold text-red-700">{fmtPHP(calculations.customerCurrentMonthlyCost)}</div>
                 <div className="text-xs text-gray-500">{inputs.heatingType === 'lpg' ? 'LPG' : 'Electric'}</div>
               </div>
-              <div className="p-4 bg-green-50 rounded-lg text-center">
-                <div className="text-xs font-bold text-green-600 uppercase mb-1">With Karnot</div>
-                <div className="text-2xl font-bold text-green-700">{fmtLocal(calculations.monthlyFeePHP)}</div>
-                <div className="text-xs text-gray-500">EaaS Fee</div>
-              </div>
               <div className="p-4 bg-blue-50 rounded-lg text-center">
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Customer Saves</div>
-                <div className="text-2xl font-bold text-blue-700">{fmtLocal(calculations.energySavingsPHP - calculations.monthlyFeePHP)}/mo</div>
-                <div className="text-xs text-gray-500">Net Savings</div>
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Heat Pump Elec</div>
+                <div className="text-2xl font-bold text-blue-700">{fmtPHP(calculations.heatPumpMonthlyCostPHP)}</div>
+                <div className="text-xs text-gray-500">Paid to Meralco</div>
+              </div>
+              <div className="p-4 bg-purple-50 rounded-lg text-center">
+                <div className="text-xs font-bold text-purple-600 uppercase mb-1">Equipment Payment</div>
+                <div className="text-2xl font-bold text-purple-700">{fmtPHP(calculations.customerMonthlyPayment)}</div>
+                <div className="text-xs text-gray-500">{inputs.customerFinancingTerm}mo @ {inputs.customerAPR}%</div>
+              </div>
+              <div className="p-4 bg-green-50 rounded-lg text-center">
+                <div className="text-xs font-bold text-green-600 uppercase mb-1">Net Savings</div>
+                <div className="text-2xl font-bold text-green-700">{fmtPHP(calculations.customerNetPosition)}</div>
+                <div className="text-xs text-gray-500">Per month</div>
               </div>
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h4 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
-                <Award size={16} /> Customer Gets (Zero CAPEX):
+                <Award size={16} /> Customer Benefits:
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div className="flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-500" />
-                  <span>Zero upfront cost</span>
+                  <span>Lower monthly cost</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={16} className="text-green-500" />
+                  <span>No upfront CAPEX</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-500" />
                   <span>Free maintenance</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-green-500" />
-                  <span>No LPG fire risk</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-500" />
@@ -642,7 +798,7 @@ const InvestorFinancialModel = () => {
             </div>
           </Card>
 
-          {/* Key Investment Metrics */}
+          {/* Key Metrics */}
           <Card>
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <TrendingUp size={20} className="text-green-600" /> Investment Returns
@@ -705,9 +861,11 @@ const InvestorFinancialModel = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-3 py-2 text-left">Year</th>
-                      <th className="px-3 py-2 text-right">Investment</th>
-                      <th className="px-3 py-2 text-right">Revenue</th>
+                      <th className="px-3 py-2 text-right">Upfront Margin</th>
+                      <th className="px-3 py-2 text-right">Service</th>
+                      <th className="px-3 py-2 text-right">Carbon</th>
                       <th className="px-3 py-2 text-right">OPEX</th>
+                      <th className="px-3 py-2 text-right">Financing</th>
                       <th className="px-3 py-2 text-right">Net CF</th>
                       <th className="px-3 py-2 text-right">Cumulative</th>
                     </tr>
@@ -716,9 +874,11 @@ const InvestorFinancialModel = () => {
                     {calculations.cashFlowSchedule.map(row => (
                       <tr key={row.year} className="border-b">
                         <td className="px-3 py-2 font-bold">{row.year}</td>
-                        <td className="px-3 py-2 text-right text-red-600">{row.investment < 0 ? `(${fmtUSD(Math.abs(row.investment))})` : '-'}</td>
-                        <td className="px-3 py-2 text-right text-green-600">{row.revenue > 0 ? fmtUSD(row.revenue) : '-'}</td>
+                        <td className="px-3 py-2 text-right text-green-600">{row.upfrontMargin > 0 ? fmtUSD(row.upfrontMargin) : '-'}</td>
+                        <td className="px-3 py-2 text-right text-blue-600">{row.serviceRevenue > 0 ? fmtUSD(row.serviceRevenue) : '-'}</td>
+                        <td className="px-3 py-2 text-right text-emerald-600">{row.carbonRevenue > 0 ? fmtUSD(row.carbonRevenue) : '-'}</td>
                         <td className="px-3 py-2 text-right text-orange-600">{row.opex < 0 ? `(${fmtUSD(Math.abs(row.opex))})` : '-'}</td>
+                        <td className="px-3 py-2 text-right text-red-600">{row.financing < 0 ? `(${fmtUSD(Math.abs(row.financing))})` : '-'}</td>
                         <td className={`px-3 py-2 text-right font-bold ${row.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {row.netCashFlow >= 0 ? fmtUSD(row.netCashFlow) : `(${fmtUSD(Math.abs(row.netCashFlow))})`}
                         </td>
@@ -732,36 +892,6 @@ const InvestorFinancialModel = () => {
               </div>
             )}
           </Card>
-
-          {/* Sensitivity Analysis */}
-          <Card>
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <LineChart size={20} className="text-purple-600" /> Sensitivity Analysis
-            </h3>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Fee Change</th>
-                    <th className="px-4 py-2 text-right">Monthly Fee</th>
-                    <th className="px-4 py-2 text-right">Payback (mo)</th>
-                    <th className="px-4 py-2 text-right">IRR</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sensitivityData.map(row => (
-                    <tr key={row.feeChange} className={`border-b ${row.feeChange === 0 ? 'bg-blue-50 font-bold' : ''}`}>
-                      <td className="px-4 py-2">{row.feeChange >= 0 ? '+' : ''}{row.feeChange}%</td>
-                      <td className="px-4 py-2 text-right">{fmtLocal(row.fee)}</td>
-                      <td className="px-4 py-2 text-right">{row.paybackMonths}</td>
-                      <td className="px-4 py-2 text-right">{row.irr}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
         </div>
       </div>
 
@@ -774,19 +904,19 @@ const InvestorFinancialModel = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-gradient-to-br from-slate-700 to-slate-900 text-white p-6 rounded-xl text-center">
             <div className="text-3xl font-bold">${(calculations.portfolioInvestment / 1000000).toFixed(1)}M</div>
-            <div className="text-sm text-gray-300">Total Investment</div>
+            <div className="text-sm text-gray-300">Utility Investment</div>
+          </div>
+          <div className="bg-gradient-to-br from-green-600 to-green-800 text-white p-6 rounded-xl text-center">
+            <div className="text-3xl font-bold">${(calculations.portfolioUpfrontMargin / 1000000).toFixed(1)}M</div>
+            <div className="text-sm text-green-200">Upfront Margin</div>
           </div>
           <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-6 rounded-xl text-center">
             <div className="text-3xl font-bold">${(calculations.portfolioAnnualRevenue / 1000000).toFixed(1)}M</div>
             <div className="text-sm text-blue-200">Annual Revenue</div>
           </div>
-          <div className="bg-gradient-to-br from-green-600 to-green-800 text-white p-6 rounded-xl text-center">
-            <div className="text-3xl font-bold">${(calculations.portfolioNetProfit5Year / 1000000).toFixed(1)}M</div>
-            <div className="text-sm text-green-200">5-Year Net Profit</div>
-          </div>
           <div className="bg-gradient-to-br from-purple-600 to-purple-800 text-white p-6 rounded-xl text-center">
-            <div className="text-3xl font-bold">{calculations.roi5Year.toFixed(0)}%</div>
-            <div className="text-sm text-purple-200">5-Year ROI</div>
+            <div className="text-3xl font-bold">${(calculations.portfolioNetProfit5Year / 1000000).toFixed(1)}M</div>
+            <div className="text-sm text-purple-200">5-Year Net Profit</div>
           </div>
         </div>
 
@@ -801,145 +931,44 @@ const InvestorFinancialModel = () => {
             <div className="text-2xl font-bold text-blue-700">{calculations.portfolioPeakReduction.toFixed(1)} MW</div>
             <div className="text-xs text-gray-600">Peak Demand Reduction</div>
           </div>
+          <div className="bg-purple-50 p-4 rounded-lg text-center border border-purple-200">
+            <DollarSign className="mx-auto text-purple-600 mb-2" size={24} />
+            <div className="text-2xl font-bold text-purple-700">${(calculations.portfolioElectricityProfit / 1000).toFixed(0)}K</div>
+            <div className="text-xs text-gray-600">Annual Electricity Profit</div>
+          </div>
           <div className="bg-orange-50 p-4 rounded-lg text-center border border-orange-200">
             <Users className="mx-auto text-orange-600 mb-2" size={24} />
             <div className="text-2xl font-bold text-orange-700">{inputs.portfolioUnits}</div>
-            <div className="text-xs text-gray-600">Customers Locked-In</div>
-          </div>
-          <div className="bg-teal-50 p-4 rounded-lg text-center border border-teal-200">
-            <Award className="mx-auto text-teal-600 mb-2" size={24} />
-            <div className="text-2xl font-bold text-teal-700">${fmt(calculations.portfolioCarbonRevenue)}</div>
-            <div className="text-xs text-gray-600">Annual Carbon Revenue</div>
+            <div className="text-xs text-gray-600">Customer Deployments</div>
           </div>
         </div>
-      </Card>
 
-      {/* === SOLVIVA COMPARISON === */}
-      <Card className="mb-8 border-2 border-yellow-300">
-        <button
-          onClick={() => setShowComparison(!showComparison)}
-          className="w-full flex items-center justify-between mb-4"
-        >
-          <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Shield size={24} className="text-yellow-600" /> Solviva Model Comparison
-          </h3>
-          {showComparison ? <ChevronUp /> : <ChevronDown />}
-        </button>
-
-        {showComparison && (
-          <>
-            <p className="text-gray-600 mb-6">
-              Karnot's heat pump rent-to-own model mirrors <strong>Solviva Energy's</strong> proven approach
-              (backed by AboitizPower) but applies it to commercial hot water, offering <strong>similar or better returns</strong>.
-            </p>
-
-            <div className="grid grid-cols-2 gap-6">
-              {/* Karnot */}
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl border-2 border-orange-300">
-                <h4 className="text-lg font-bold text-orange-700 mb-4 flex items-center gap-2">
-                  <Zap size={20} /> Karnot Heat Pumps
-                </h4>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Asset Type</span>
-                    <span className="font-bold">Heat Pump Systems</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Avg Investment</span>
-                    <span className="font-bold">{fmtUSD(calculations.solvivaComparison.karnot.avgTicket)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Contract Term</span>
-                    <span className="font-bold">{calculations.solvivaComparison.karnot.contractTerm} years</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Payback</span>
-                    <span className="font-bold text-green-600">{calculations.solvivaComparison.karnot.paybackMonths} months</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">IRR</span>
-                    <span className="font-bold text-green-600">{calculations.solvivaComparison.karnot.irr}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Revenue Streams</span>
-                    <span className="font-bold">{calculations.solvivaComparison.karnot.revenueStreams}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">CO₂/unit/year</span>
-                    <span className="font-bold text-emerald-600">{calculations.solvivaComparison.karnot.carbonImpact} tons</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Solviva */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border-2 border-blue-300">
-                <h4 className="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
-                  <Building size={20} /> Solviva Solar (AboitizPower)
-                </h4>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Asset Type</span>
-                    <span className="font-bold">Rooftop Solar</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Avg Investment</span>
-                    <span className="font-bold">{fmtUSD(calculations.solvivaComparison.solviva.avgTicket)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Contract Term</span>
-                    <span className="font-bold">{calculations.solvivaComparison.solviva.contractTerm} years</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Payback</span>
-                    <span className="font-bold">{calculations.solvivaComparison.solviva.paybackMonths} months</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">IRR</span>
-                    <span className="font-bold">{calculations.solvivaComparison.solviva.irr}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Revenue Streams</span>
-                    <span className="font-bold">{calculations.solvivaComparison.solviva.revenueStreams}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">CO₂/unit/year</span>
-                    <span className="font-bold">{calculations.solvivaComparison.solviva.carbonImpact} tons</span>
-                  </div>
-                </div>
-              </div>
+        {/* Solviva Cross-Sell */}
+        <div className="mt-6 bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-lg p-4">
+          <h4 className="font-bold text-yellow-800 mb-3 flex items-center gap-2">
+            <Zap size={18} /> Solviva Solar Cross-Sell Opportunity
+          </h4>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-800">{Math.round(calculations.solvivaCustomers)}</div>
+              <div className="text-xs text-gray-600">Customers ({inputs.solvivaConversionRate}% conversion)</div>
             </div>
-
-            <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-bold text-green-800 mb-2 flex items-center gap-2">
-                <CheckCircle size={18} /> Why Karnot Competes Favorably
-              </h4>
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li className="flex items-start gap-2">
-                  <ArrowRight size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
-                  <span><strong>Higher carbon impact:</strong> LPG replacement yields 3x more CO₂ reduction per unit than solar</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <ArrowRight size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
-                  <span><strong>Triple revenue:</strong> Equipment rental + electricity margin + carbon credits (vs. 2 for solar)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <ArrowRight size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
-                  <span><strong>Grid relief:</strong> 3.5kW peak reduction per unit helps utilities defer infrastructure</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <ArrowRight size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
-                  <span><strong>Proven model:</strong> Same EaaS structure that AboitizPower validated with Solviva</span>
-                </li>
-              </ul>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-800">${fmt(calculations.solvivaReferralRevenue)}</div>
+              <div className="text-xs text-gray-600">Referral Revenue (5%)</div>
             </div>
-          </>
-        )}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-800">Group Synergy</div>
+              <div className="text-xs text-gray-600">AboitizPower Portfolio</div>
+            </div>
+          </div>
+        </div>
       </Card>
 
       {/* === INVESTMENT THESIS === */}
       <Card className="bg-gradient-to-br from-slate-800 to-slate-900 text-white">
         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Briefcase size={24} /> Investment Thesis Summary
+          <Briefcase size={24} /> Investment Thesis for 1882 Energy / AboitizPower
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -948,40 +977,56 @@ const InvestorFinancialModel = () => {
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>$2B+ commercial water heating market in Philippines (mostly LPG)</span>
+                <span>1882 buys heat pumps from Karnot at full price, marks up {inputs.equipmentMarginPercent}% to customer</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>Proven rent-to-own model (Solviva/AboitizPower) adapted for heat pumps</span>
+                <span>Customer finances equipment over {inputs.customerFinancingTerm} months @ {inputs.customerAPR}% (still saves money vs LPG)</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>R290 natural refrigerant meets 2026 global HFC phasedown</span>
+                <span><strong>NEW electricity demand:</strong> Customer now uses heat pump instead of LPG</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>Triple revenue stream: rental + electricity + carbon</span>
+                <span>1882 earns {inputs.electricityNetMargin}% net margin on new electricity sales (based on AboitizPower margins)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                <span>Recurring service + carbon revenue for {inputs.contractYears} years</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                <span><strong>Cross-sell Solviva solar</strong> to {inputs.solvivaConversionRate}% of customers (group synergy)</span>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-green-300 mb-3">Returns Profile</h4>
+            <h4 className="font-bold text-green-300 mb-3">Revenue Streams</h4>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>{calculations.irrPercent.toFixed(0)}% IRR</strong> per unit (vs 20-25% typical infrastructure)</span>
+                <span><strong>Equipment margin:</strong> {fmtUSD(calculations.upfrontEquipmentMargin)} upfront</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>{Math.round(calculations.paybackMonths)} month</strong> payback on deployed capital</span>
+                <span><strong>Electricity profit:</strong> {fmtUSD(calculations.annualElectricityProfitUSD)}/year ({inputs.electricityNetMargin}% margin)</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>5-year contracts</strong> provide predictable, recurring revenue</span>
+                <span><strong>Service revenue:</strong> {fmtUSD(calculations.annualServiceRevenue)}/year</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Asset-backed:</strong> Equipment remains Karnot property</span>
+                <span><strong>Carbon credits:</strong> {fmtUSD(calculations.annualCarbonRevenueUSD)}/year</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                <span><strong>{calculations.irrPercent.toFixed(0)}% IRR</strong> | <strong>{Math.round(calculations.paybackMonths)} month</strong> payback</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                <span>Peak demand reduction defers grid infrastructure capex</span>
               </li>
             </ul>
           </div>
@@ -990,11 +1035,11 @@ const InvestorFinancialModel = () => {
         <div className="mt-6 pt-6 border-t border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-400">Portfolio Investment</div>
+              <div className="text-sm text-gray-400">Portfolio Target</div>
               <div className="text-2xl font-bold">${(calculations.portfolioInvestment / 1000000).toFixed(1)}M for {inputs.portfolioUnits} units</div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-400">5-Year Projected Return</div>
+              <div className="text-sm text-gray-400">5-Year Return</div>
               <div className="text-2xl font-bold text-green-400">${(calculations.portfolioNetProfit5Year / 1000000).toFixed(1)}M ({calculations.roi5Year.toFixed(0)}% ROI)</div>
             </div>
           </div>
