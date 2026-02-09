@@ -15,6 +15,47 @@ import {
   Award, BarChart3, Flame
 } from 'lucide-react';
 
+// === SOLVIVA PRICING TABLES (ACTUAL DATA) ===
+const SOLVIVA_PRICING = {
+  hybrid: {
+    12: { 5.49: 35200, 6.10: 38000, 8.54: 49300, 10.37: 55700, 12.20: 64100, 16.47: 84200, 20.13: 96500 },
+    24: { 5.49: 19900, 6.10: 21600, 8.54: 27800, 10.37: 31500, 12.20: 36200, 16.47: 47600, 20.13: 54500 },
+    36: { 5.49: 15000, 6.10: 16200, 8.54: 21000, 10.37: 23700, 12.20: 27200, 16.47: 35800, 20.13: 41000 },
+    48: { 5.49: 12700, 6.10: 13800, 8.54: 17800, 10.37: 20100, 12.20: 23100, 16.47: 30400, 20.13: 34800 },
+    60: { 5.49: 11500, 6.10: 12400, 8.54: 16000, 10.37: 18100, 12.20: 20900, 16.47: 27400, 20.13: 31400 }
+  },
+  ready: {
+    12: { 5.49: 24000, 6.10: 27000, 8.54: 38083, 10.37: 44500, 12.20: 52833, 16.47: 73737, 20.13: 85250 },
+    24: { 5.49: 13560, 6.10: 15255, 8.54: 21517, 10.37: 25142, 12.20: 29850, 16.47: 41245, 20.13: 48166 },
+    36: { 5.49: 10215, 6.10: 11492, 8.54: 16209, 10.37: 18940, 12.20: 22487, 16.47: 31071, 20.13: 36285 },
+    48: { 5.49: 8657, 6.10: 9739, 8.54: 13737, 10.37: 16052, 12.20: 19058, 16.47: 26332, 20.13: 30751 },
+    60: { 5.49: 7826, 6.10: 8804, 8.54: 12418, 10.37: 14511, 12.20: 17228, 16.47: 23804, 20.13: 27799 }
+  }
+};
+
+// System sizes available (kWp)
+const SYSTEM_SIZES = [5.49, 6.10, 8.54, 10.37, 12.20, 16.47, 20.13];
+
+// Helper: Find nearest Solviva system size
+const findNearestSystem = (requiredKW) => {
+  // requiredKW is the inverter capacity needed
+  // We need to find the system size (kWp) that can support this
+  return SYSTEM_SIZES.find(size => size >= requiredKW) || SYSTEM_SIZES[SYSTEM_SIZES.length - 1];
+};
+
+// Helper: Get Solviva monthly payment
+const getSolvivaPayment = (systemSize, productType, term) => {
+  const pricing = SOLVIVA_PRICING[productType][term];
+  return pricing[systemSize] || 0;
+};
+
+// Helper: Calculate heat pump financing (separate from Solviva)
+const getHeatPumpFinancing = (principal, months) => {
+  const rate = 0.09 / 12; // 9% APR
+  if (months === 12) return principal * 1.05 / 12;
+  return principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+};
+
 // --- HELPER: ADDRESS SEARCH ---
 const GeocoderControl = ({ address, onLocationFound }) => {
   const map = useMap();
@@ -135,11 +176,12 @@ const SolvivaPartnerCalculator = () => {
     panelWattage: 550,
     recoveryHours: 10,
     
-    // Add to your inputs state:
-    solvivaFinancingTerm: 60, // 12, 36, or 60 months
+    // Solviva Financing
+    solvivaProductType: 'hybrid', // 'hybrid' or 'ready'
+    solvivaFinancingTerm: 60, // 12, 24, 36, 48, or 60 months
     monthlyElectricBill: 8000, // PHP
     
-// Cost Assumptions
+    // Cost Assumptions
     externalTankCostPerLiter: 2.5, // USD per liter
     installationCostPerUnit: 600, // USD per heat pump installation
     annualServicePerUnit: 172, // USD per unit per year (Luzon rate)
@@ -251,15 +293,12 @@ const SolvivaPartnerCalculator = () => {
     const requiredRecoveryKW = dailyThermalKWh / inputs.recoveryHours;
 
     // --- STEP B: SELECT THE MACHINE ---
-    // Find the smallest Karnot unit that meets the required Recovery KW
     let selectedKarnot = karnotProducts.find(p => (p.kW_DHW_Nominal || p.kW || 0) >= requiredRecoveryKW);
     
-    // If no product meets requirement, use the largest available
     if (!selectedKarnot && karnotProducts.length > 0) {
       selectedKarnot = karnotProducts[karnotProducts.length - 1];
     }
     
-    // If still no products (empty database), show error state
     if (!selectedKarnot) {
       return {
         error: true,
@@ -294,35 +333,34 @@ const SolvivaPartnerCalculator = () => {
     const hpInputKW = (selectedKarnot.kW_DHW_Nominal || 3.5) / (selectedKarnot.cop || 4.2);
     const peakLoad_B = inputs.baseLoadKW + acTotalKW + hpInputKW;         
     
-    // --- STEP E: SELECT SOLVIVA SYSTEMS ---
+    // --- STEP E: SELECT SOLVIVA SYSTEMS USING PRICING TABLES ---
     const targetInverterA = peakLoad_A * 1.2;
     const targetInverterB = peakLoad_B * 1.2;
 
-    let planA = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= targetInverterA);
-    if (!planA && solvivaProducts.length > 0) {
-      planA = solvivaProducts[solvivaProducts.length - 1]; // Use largest if none fit
-    }
-    if (!planA) {
+    const systemSize_A = findNearestSystem(targetInverterA);
+    const systemSize_B = findNearestSystem(targetInverterB);
+    
+    // Get Solviva monthly payments from pricing tables
+    const solvivaPayment_A = getSolvivaPayment(systemSize_A, inputs.solvivaProductType, inputs.solvivaFinancingTerm);
+    const solvivaPayment_B = getSolvivaPayment(systemSize_B, inputs.solvivaProductType, inputs.solvivaFinancingTerm);
+
+    // Find actual product objects for display
+    const planA = solvivaProducts.find(p => Math.abs((p.kW_Cooling_Nominal || 0) - systemSize_A) < 0.1);
+    const planB = solvivaProducts.find(p => Math.abs((p.kW_Cooling_Nominal || 0) - systemSize_B) < 0.1);
+
+    if (!planA || !planB) {
       return {
         error: true,
-        message: "No Solviva solar products found in database. Please add Competitor Solar products in Product Manager.",
+        message: "Solviva products not found in database. Ensure kW_Cooling_Nominal matches: 5.49, 6.10, 8.54, 10.37, 12.20, 16.47, 20.13",
         dailyLiters,
         dailyThermalKWh,
         selectedKarnot
       };
     }
-               
-    let planB = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= targetInverterB);
-    if (!planB && solvivaProducts.length > 0) {
-      planB = solvivaProducts[0]; // Use smallest available
-    }
-    if (!planB) {
-      planB = planA; // Fallback to planA if nothing else available
-    }
 
     // --- STEP F: PANEL COUNTS ---
-    const panelsA = Math.ceil((planA?.kW_Cooling_Nominal || 0) * 1000 / inputs.panelWattage);
-    const panelsB = Math.ceil((planB?.kW_Cooling_Nominal || 0) * 1000 / inputs.panelWattage);
+    const panelsA = Math.ceil(systemSize_A * 1000 / inputs.panelWattage);
+    const panelsB = Math.ceil(systemSize_B * 1000 / inputs.panelWattage);
     const panelsSaved = Math.max(0, panelsA - panelsB);
 
     // --- STEP G: TOTAL PROJECT COSTS ---
@@ -335,68 +373,55 @@ const SolvivaPartnerCalculator = () => {
     // CAPEX Comparison
     const capexSavings = costA - costB_Total;
     
-    // --- STEP H: FUEL COST COMPARISONS (CURRENT vs HEAT PUMP) ---
-    // Calculate current annual fuel cost in PHP
+    // --- STEP H: FUEL COST COMPARISONS ---
     let currentAnnualFuelCost = 0;
     
     if (inputs.currentHeating === 'electric') {
-      // Electric shower: 3.5kW × 10 min (0.167 hrs) per shower
       const showerEnergyPerUse = inputs.showerPowerKW * 0.167;
       const dailyShowerKWh = showerEnergyPerUse * inputs.showers;
       const annualShowerKWh = dailyShowerKWh * 365;
-      currentAnnualFuelCost = annualShowerKWh * inputs.electricityRate; // PHP
+      currentAnnualFuelCost = annualShowerKWh * inputs.electricityRate;
     } else if (inputs.currentHeating === 'lpg') {
-      // LPG: ~13.6 kWh per kg, efficiency ~80%
       const kWhPerKg = 13.6 * 0.80;
       const kgNeededDaily = dailyThermalKWh / kWhPerKg;
       const kgNeededAnnual = kgNeededDaily * 365;
       const tanksNeededAnnual = kgNeededAnnual / inputs.lpgSize;
-      currentAnnualFuelCost = tanksNeededAnnual * inputs.lpgPrice; // PHP
+      currentAnnualFuelCost = tanksNeededAnnual * inputs.lpgPrice;
     } else if (inputs.currentHeating === 'diesel') {
-      // Diesel: ~10 kWh per liter, efficiency ~85%
       const kWhPerLiter = 10 * 0.85;
       const litersDaily = dailyThermalKWh / kWhPerLiter;
       const litersAnnual = litersDaily * 365;
-      currentAnnualFuelCost = litersAnnual * inputs.dieselPrice; // PHP
+      currentAnnualFuelCost = litersAnnual * inputs.dieselPrice;
     }
     
-    // 2. Heat Pump Annual Operating Cost (electricity only)
     const hpDailyKWh = dailyThermalKWh / (selectedKarnot.cop || 4.2);
     const hpMonthlyKWh = hpDailyKWh * 30;
     const hpAnnualKWh = hpDailyKWh * 365;
     
-    // Solar covers heat pump during daylight hours (~70% of demand)
-    // Remaining 30% comes from grid
     const solarCoveragePercent = 0.70;
     const gridKWh = hpAnnualKWh * (1 - solarCoveragePercent);
-    const hpAnnualCost = gridKWh * inputs.electricityRate; // PHP
+    const hpAnnualCost = gridKWh * inputs.electricityRate;
     
-    // Fuel Savings = What you SAVE by switching from electric/LPG to heat pump
-    const annualFuelSavings = currentAnnualFuelCost - hpAnnualCost; // PHP
+    const annualFuelSavings = currentAnnualFuelCost - hpAnnualCost;
     const fiveYearFuelSavings = annualFuelSavings * 5;
     
     // --- STEP I: SOLAR GENERATION VALUE ---
-    // This is the value of electricity the solar system produces
-    // All household loads (AC + base + heat pump) use solar during day
-    const totalDailyLoad = (inputs.baseLoadKW + acTotalKW) * inputs.acHoursNight / 24; // Average daily usage
+    const totalDailyLoad = (inputs.baseLoadKW + acTotalKW) * inputs.acHoursNight / 24;
     const heatPumpLoad = hpDailyKWh;
     const totalDailyKWh = (totalDailyLoad * 24) + heatPumpLoad;
     
-    // Solar generation per month (kW × sun hours × days)
-    const monthlyGenB_kWh = (planB?.kW_Cooling_Nominal || 0) * inputs.manualSunHours * 30;
+    const monthlyGenB_kWh = systemSize_B * inputs.manualSunHours * 30;
     const annualGenB_kWh = monthlyGenB_kWh * 12;
     
-    // Solar value = amount of grid electricity REPLACED by solar
-    const solarOffsetKWh = Math.min(annualGenB_kWh, totalDailyKWh * 365); // Can't offset more than you use
-    const annualSolarValue = solarOffsetKWh * inputs.electricityRate; // PHP
+    const solarOffsetKWh = Math.min(annualGenB_kWh, totalDailyKWh * 365);
+    const annualSolarValue = solarOffsetKWh * inputs.electricityRate;
     const fiveYearSolarValue = annualSolarValue * 5;
     
     // --- STEP J: TOTAL VALUE PROPOSITION ---
-    // CAPEX savings (USD) + Operating savings (PHP converted to USD)
-    const fiveYearOperatingSavings = (fiveYearFuelSavings + fiveYearSolarValue) / 58; // Convert PHP to USD
+    const fiveYearOperatingSavings = (fiveYearFuelSavings + fiveYearSolarValue) / 58;
     const fiveYearTotalSavings = capexSavings + fiveYearOperatingSavings;
     
-    // --- STEP K: FINANCING CALCULATIONS ---
+    // --- STEP K: TRADITIONAL FINANCING ---
     const downPaymentAmount = costB_Total * (inputs.downPayment / 100);
     const loanAmount = costB_Total - downPaymentAmount;
     const monthlyRate = inputs.interestRate / 100 / 12;
@@ -405,105 +430,113 @@ const SolvivaPartnerCalculator = () => {
       ? loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
       : 0;
 
-    // STEP L: SOLVIVA MONTHLY PAYMENT MODEL
-const getSolvivaMonthlyPayment = (principal, months) => {
-  const rate = 0.09 / 12;
-  if (months === 12) return principal * 1.05 / 12;
-  return principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
-};
+    // --- STEP L: SOLVIVA MONTHLY PAYMENT MODEL (NEW) ---
+    // Scenario A: Solar Only - direct lookup from pricing table
+    const monthlyPayment_SolarOnly_PHP = solvivaPayment_A;
+    const monthlyPayment_SolarOnly_USD = Math.round(monthlyPayment_SolarOnly_PHP / 58);
 
-const monthlyPayment_SolarOnly = getSolvivaMonthlyPayment(costA, inputs.solvivaFinancingTerm);
-const monthlyPayment_Partner_Solar = getSolvivaMonthlyPayment(costB_Solar, inputs.solvivaFinancingTerm);
-const monthlyPayment_Partner_Karnot = getSolvivaMonthlyPayment(costKarnot + installationCost, inputs.solvivaFinancingTerm);
-const monthlyPayment_Partner_Total = monthlyPayment_Partner_Solar + monthlyPayment_Partner_Karnot;
+    // Scenario B: Partner Model - Solar + Heat Pump financing
+    const monthlyPayment_Solar_PHP = solvivaPayment_B;
+    const heatPumpTotal = costKarnot + externalTankCost + installationCost;
+    const monthlyPayment_HeatPump_USD = getHeatPumpFinancing(heatPumpTotal, inputs.solvivaFinancingTerm);
+    const monthlyPayment_HeatPump_PHP = Math.round(monthlyPayment_HeatPump_USD * 58);
+    const monthlyPayment_Partner_Total_PHP = monthlyPayment_Solar_PHP + monthlyPayment_HeatPump_PHP;
+    const monthlyPayment_Partner_Total_USD = Math.round(monthlyPayment_Partner_Total_PHP / 58);
 
-const showerEnergyPerUse = inputs.showerPowerKW * 0.167;
-const dailyShowerKWh = showerEnergyPerUse * inputs.showers;
-const monthlyShowerCost = dailyShowerKWh * 30 * inputs.electricityRate;
-const residualBill_SolarOnly = monthlyShowerCost + (inputs.monthlyElectricBill * 0.15);
+    // Residual grid bills
+    const showerEnergyPerUse = inputs.showerPowerKW * 0.167;
+    const dailyShowerKWh = showerEnergyPerUse * inputs.showers;
+    const monthlyShowerCost = dailyShowerKWh * 30 * inputs.electricityRate;
+    const residualBill_SolarOnly = monthlyShowerCost + (inputs.monthlyElectricBill * 0.15);
 
-const hpMonthlyCost = hpDailyKWh * 30 * inputs.electricityRate * 0.30;
-const residualBill_Partner = hpMonthlyCost + (inputs.monthlyElectricBill * 0.10);
+    const hpMonthlyCost = hpDailyKWh * 30 * inputs.electricityRate * 0.30;
+    const residualBill_Partner = hpMonthlyCost + (inputs.monthlyElectricBill * 0.10);
 
-const netMonthlyCost_SolarOnly = (monthlyPayment_SolarOnly * 58) + residualBill_SolarOnly;
-const netMonthlyCost_Partner = (monthlyPayment_Partner_Total * 58) + residualBill_Partner;
-const monthlyAdvantage_Customer = netMonthlyCost_SolarOnly - netMonthlyCost_Partner;
+    // Net monthly costs (payment in PHP + grid bill in PHP)
+    const netMonthlyCost_SolarOnly = monthlyPayment_SolarOnly_PHP + residualBill_SolarOnly;
+    const netMonthlyCost_Partner = monthlyPayment_Partner_Total_PHP + residualBill_Partner;
+    const monthlyAdvantage_Customer = netMonthlyCost_SolarOnly - netMonthlyCost_Partner;
 
-// THEN your return statement
-return {
-  // Thermal
-  dailyLiters: Math.round(dailyLiters), 
-  dailyThermalKWh: Math.round(dailyThermalKWh * 10) / 10, 
-  requiredRecoveryKW: Math.round(requiredRecoveryKW * 10) / 10,
-  // Machine
-  selectedKarnot, 
-  hpInputKW: Math.round(hpInputKW * 100) / 100,
-  hpDailyKWh: Math.round(hpDailyKWh * 10) / 10,
-  hpMonthlyKWh: Math.round(hpMonthlyKWh),
-  hpAnnualKWh: Math.round(hpAnnualKWh),
-  // Tank
-  requiredTotalVolume, 
-  integratedTankVolume, 
-  externalTankNeeded,
-  externalTankCost: Math.round(externalTankCost),
-  // Electrical
-  peakLoad_A: Math.round(peakLoad_A * 10) / 10, 
-  peakLoad_B: Math.round(peakLoad_B * 10) / 10,
-  showerPeakKW: Math.round(showerPeakKW * 10) / 10,
-  // Solar
-  planA, 
-  planB, 
-  panelsA, 
-  panelsB, 
-  panelsSaved,
-  // Costs
-  costA: Math.round(costA), 
-  costB_Total: Math.round(costB_Total), 
-  costKarnot: Math.round(costKarnot),
-  installationCost: Math.round(installationCost),
-  capexSavings: Math.round(capexSavings),
-  // Fuel Economics
-  currentAnnualFuelCost: Math.round(currentAnnualFuelCost),
-  hpAnnualCost: Math.round(hpAnnualCost),
-  annualFuelSavings: Math.round(annualFuelSavings),
-  fiveYearFuelSavings: Math.round(fiveYearFuelSavings),
-  // Solar Value
-  monthlyGenB_kWh: Math.round(monthlyGenB_kWh),
-  annualGenB_kWh: Math.round(annualGenB_kWh),
-  solarOffsetKWh: Math.round(solarOffsetKWh),
-  annualSolarValue: Math.round(annualSolarValue),
-  fiveYearSolarValue: Math.round(fiveYearSolarValue),
-  // Total Value
-  fiveYearOperatingSavings: Math.round(fiveYearOperatingSavings),
-  fiveYearTotalSavings: Math.round(fiveYearTotalSavings),
-  // Traditional Financing
-  downPaymentAmount: Math.round(downPaymentAmount),
-  loanAmount: Math.round(loanAmount),
-  monthlyPayment: Math.round(monthlyPayment),
-  monthlyPaymentPHP: Math.round(monthlyPayment * 58),
-  monthlySavings: Math.round((annualFuelSavings + annualSolarValue) / 12),
-  netMonthlyCashFlow: Math.round(((annualFuelSavings + annualSolarValue) / 12) - (monthlyPayment * 58)),
-  simplePayback: Math.round((costB_Total * 58) / (annualFuelSavings + annualSolarValue) * 10) / 10,
-  // Solviva Business Metrics
-  solvivaUnitMargin: Math.round(costB_Solar * 0.35),
-  karnotCommission: Math.round(costKarnot * 0.15),
-  installationRevenue: Math.round(installationCost * 0.20),
-  annualServiceRevenue: Math.round(inputs.annualServicePerUnit),
-  fiveYearServiceRevenue: Math.round(inputs.annualServicePerUnit * 5),
-  totalPartnerRevenueUpfront: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)),
-  totalPartnerRevenueFiveYear: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20) + (inputs.annualServicePerUnit * 5)),
-  revenueIncrease: Math.round(((((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)) / (costA * 0.35)) - 1) * 100),
-  // Solviva Monthly Payments
-  monthlyPayment_SolarOnly: Math.round(monthlyPayment_SolarOnly),
-  monthlyPayment_Partner_Total: Math.round(monthlyPayment_Partner_Total),
-  residualBill_SolarOnly: Math.round(residualBill_SolarOnly),
-  residualBill_Partner: Math.round(residualBill_Partner),
-  netMonthlyCost_SolarOnly: Math.round(netMonthlyCost_SolarOnly),
-  netMonthlyCost_Partner: Math.round(netMonthlyCost_Partner),
-  monthlyAdvantage_Customer: Math.round(monthlyAdvantage_Customer),
-};
-  
-}, [inputs, solvivaProducts, karnotProducts]); 
+    return {
+      // Thermal
+      dailyLiters: Math.round(dailyLiters), 
+      dailyThermalKWh: Math.round(dailyThermalKWh * 10) / 10, 
+      requiredRecoveryKW: Math.round(requiredRecoveryKW * 10) / 10,
+      // Machine
+      selectedKarnot, 
+      hpInputKW: Math.round(hpInputKW * 100) / 100,
+      hpDailyKWh: Math.round(hpDailyKWh * 10) / 10,
+      hpMonthlyKWh: Math.round(hpMonthlyKWh),
+      hpAnnualKWh: Math.round(hpAnnualKWh),
+      // Tank
+      requiredTotalVolume, 
+      integratedTankVolume, 
+      externalTankNeeded,
+      externalTankCost: Math.round(externalTankCost),
+      // Electrical
+      peakLoad_A: Math.round(peakLoad_A * 10) / 10, 
+      peakLoad_B: Math.round(peakLoad_B * 10) / 10,
+      showerPeakKW: Math.round(showerPeakKW * 10) / 10,
+      // Solar
+      systemSize_A,
+      systemSize_B,
+      planA, 
+      planB, 
+      panelsA, 
+      panelsB, 
+      panelsSaved,
+      // Costs
+      costA: Math.round(costA), 
+      costB_Total: Math.round(costB_Total), 
+      costKarnot: Math.round(costKarnot),
+      installationCost: Math.round(installationCost),
+      capexSavings: Math.round(capexSavings),
+      // Fuel Economics
+      currentAnnualFuelCost: Math.round(currentAnnualFuelCost),
+      hpAnnualCost: Math.round(hpAnnualCost),
+      annualFuelSavings: Math.round(annualFuelSavings),
+      fiveYearFuelSavings: Math.round(fiveYearFuelSavings),
+      // Solar Value
+      monthlyGenB_kWh: Math.round(monthlyGenB_kWh),
+      annualGenB_kWh: Math.round(annualGenB_kWh),
+      solarOffsetKWh: Math.round(solarOffsetKWh),
+      annualSolarValue: Math.round(annualSolarValue),
+      fiveYearSolarValue: Math.round(fiveYearSolarValue),
+      // Total Value
+      fiveYearOperatingSavings: Math.round(fiveYearOperatingSavings),
+      fiveYearTotalSavings: Math.round(fiveYearTotalSavings),
+      // Traditional Financing
+      downPaymentAmount: Math.round(downPaymentAmount),
+      loanAmount: Math.round(loanAmount),
+      monthlyPayment: Math.round(monthlyPayment),
+      monthlyPaymentPHP: Math.round(monthlyPayment * 58),
+      monthlySavings: Math.round((annualFuelSavings + annualSolarValue) / 12),
+      netMonthlyCashFlow: Math.round(((annualFuelSavings + annualSolarValue) / 12) - (monthlyPayment * 58)),
+      simplePayback: Math.round((costB_Total * 58) / (annualFuelSavings + annualSolarValue) * 10) / 10,
+      // Solviva Business Metrics
+      solvivaUnitMargin: Math.round(costB_Solar * 0.35),
+      karnotCommission: Math.round(costKarnot * 0.15),
+      installationRevenue: Math.round(installationCost * 0.20),
+      annualServiceRevenue: Math.round(inputs.annualServicePerUnit),
+      fiveYearServiceRevenue: Math.round(inputs.annualServicePerUnit * 5),
+      totalPartnerRevenueUpfront: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)),
+      totalPartnerRevenueFiveYear: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20) + (inputs.annualServicePerUnit * 5)),
+      revenueIncrease: Math.round(((((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)) / (costA * 0.35)) - 1) * 100),
+      // Solviva Monthly Payments (ACTUAL PRICING)
+      monthlyPayment_SolarOnly_PHP: Math.round(monthlyPayment_SolarOnly_PHP),
+      monthlyPayment_SolarOnly_USD: monthlyPayment_SolarOnly_USD,
+      monthlyPayment_Solar_PHP: Math.round(monthlyPayment_Solar_PHP),
+      monthlyPayment_HeatPump_PHP: monthlyPayment_HeatPump_PHP,
+      monthlyPayment_HeatPump_USD: Math.round(monthlyPayment_HeatPump_USD),
+      monthlyPayment_Partner_Total_PHP: Math.round(monthlyPayment_Partner_Total_PHP),
+      monthlyPayment_Partner_Total_USD: monthlyPayment_Partner_Total_USD,
+      residualBill_SolarOnly: Math.round(residualBill_SolarOnly),
+      residualBill_Partner: Math.round(residualBill_Partner),
+      netMonthlyCost_SolarOnly: Math.round(netMonthlyCost_SolarOnly),
+      netMonthlyCost_Partner: Math.round(netMonthlyCost_Partner),
+      monthlyAdvantage_Customer: Math.round(monthlyAdvantage_Customer),
+    };
+  }, [inputs, solvivaProducts, karnotProducts]); 
 
   // === 4. ENHANCED PDF GENERATOR ===
   const generatePDFReport = () => {
@@ -572,19 +605,28 @@ return {
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
         <div style="background: #fff5f5; padding: 12px; border-radius: 6px; border: 2px solid #dc3545;">
           <div style="font-size: 14px; font-weight: bold; color: #dc3545; margin-bottom: 8px;">Scenario A: Solar Only</div>
-          <div style="font-size: 10px; margin-bottom: 4px;"><strong>${analysis.planA?.name}</strong></div>
+          <div style="font-size: 10px; margin-bottom: 4px;"><strong>${analysis.systemSize_A} kWp Solviva ${inputs.solvivaProductType === 'hybrid' ? 'Hybrid' : 'Ready'}</strong></div>
           <div style="font-size: 10px; margin-bottom: 4px;">Peak Load: <strong>${analysis.peakLoad_A.toFixed(1)} kW</strong></div>
           <div style="font-size: 10px; margin-bottom: 10px;">Solar Panels: <strong>${analysis.panelsA} × 550W</strong></div>
-          <div style="font-size: 20px; font-weight: bold; color: #dc3545;">$${analysis.costA.toLocaleString()}</div>
+          <div style="font-size: 20px; font-weight: bold; color: #dc3545;">₱${analysis.monthlyPayment_SolarOnly_PHP.toLocaleString()}/mo</div>
+          <div style="font-size: 9px; color: #666; margin-top: 4px;">${inputs.solvivaFinancingTerm} months • CAPEX: $${analysis.costA.toLocaleString()}</div>
         </div>
 
         <div style="background: #f0fff4; padding: 12px; border-radius: 6px; border: 2px solid #28a745;">
           <div style="font-size: 14px; font-weight: bold; color: #28a745; margin-bottom: 8px;">Scenario B: Optimized Partner Model</div>
-          <div style="font-size: 10px; margin-bottom: 4px;"><strong>${analysis.planB?.name}</strong> + ${analysis.selectedKarnot.name}</div>
+          <div style="font-size: 10px; margin-bottom: 4px;"><strong>${analysis.systemSize_B} kWp + ${analysis.selectedKarnot.name}</strong></div>
           <div style="font-size: 10px; margin-bottom: 4px;">Peak Load: <strong>${analysis.peakLoad_B.toFixed(1)} kW</strong> (${((1 - analysis.peakLoad_B/analysis.peakLoad_A) * 100).toFixed(0)}% reduction)</div>
           <div style="font-size: 10px; margin-bottom: 10px;">Solar Panels: <strong>${analysis.panelsB} × 550W</strong> (Saved ${analysis.panelsSaved})</div>
-          <div style="font-size: 20px; font-weight: bold; color: #28a745;">$${analysis.costB_Total.toLocaleString()}</div>
-          <div style="font-size: 9px; color: #28a745; margin-top: 4px;">CAPEX Savings: <strong>$${analysis.capexSavings.toLocaleString()}</strong></div>
+          <div style="font-size: 20px; font-weight: bold; color: #28a745;">₱${analysis.monthlyPayment_Partner_Total_PHP.toLocaleString()}/mo</div>
+          <div style="font-size: 9px; color: #666; margin-top: 4px;">${inputs.solvivaFinancingTerm} months • Solar: ₱${analysis.monthlyPayment_Solar_PHP.toLocaleString()} + HP: ₱${analysis.monthlyPayment_HeatPump_PHP.toLocaleString()}</div>
+        </div>
+      </div>
+
+      <div style="background: #fffbeb; padding: 12px; border-radius: 6px; border: 2px solid #f59e0b; margin-bottom: 15px;">
+        <h3 style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #92400e;">Customer Monthly Savings</h3>
+        <div style="text-align: center;">
+          <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">₱${analysis.monthlyAdvantage_Customer.toLocaleString()}/month</div>
+          <div style="font-size: 10px; color: #78350f; margin-top: 4px;">Partner model costs less per month than solar-only</div>
         </div>
       </div>
 
@@ -597,31 +639,15 @@ return {
           </div>
           <div>
             <div style="color: #94a3b8; margin-bottom: 3px;">Fuel Savings</div>
-            <div style="font-size: 16px; font-weight: bold; color: #fbbf24;">₱${(analysis.fiveYearFuelSavings * 58).toLocaleString()}</div>
+            <div style="font-size: 16px; font-weight: bold; color: #fbbf24;">₱${analysis.fiveYearFuelSavings.toLocaleString()}</div>
           </div>
           <div>
             <div style="color: #94a3b8; margin-bottom: 3px;">Solar Value</div>
-            <div style="font-size: 16px; font-weight: bold; color: #fbbf24;">₱${(analysis.fiveYearSolarValue * 58).toLocaleString()}</div>
+            <div style="font-size: 16px; font-weight: bold; color: #fbbf24;">₱${analysis.fiveYearSolarValue.toLocaleString()}</div>
           </div>
           <div style="text-align: right;">
             <div style="color: #94a3b8; margin-bottom: 3px;">Total Benefit</div>
             <div style="font-size: 20px; font-weight: bold; color: #10b981;">₱${(analysis.fiveYearTotalSavings * 58).toLocaleString()}</div>
-          </div>
-        </div>
-        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #475569; font-size: 10px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-            <div>
-              <div style="color: #94a3b8;">Monthly Savings:</div>
-              <div style="font-weight: bold;">₱${(analysis.monthlySavings * 58).toLocaleString()}</div>
-            </div>
-            <div>
-              <div style="color: #94a3b8;">Simple Payback:</div>
-              <div style="font-weight: bold;">${analysis.simplePayback.toFixed(1)} years</div>
-            </div>
-            <div>
-              <div style="color: #94a3b8;">Net Cash Flow:</div>
-              <div style="font-weight: bold; color: ${analysis.netMonthlyCashFlow > 0 ? '#10b981' : '#fbbf24'}">₱${(analysis.netMonthlyCashFlow * 58).toLocaleString()}/mo</div>
-            </div>
           </div>
         </div>
       </div>
@@ -816,15 +842,27 @@ return {
                </div>
                
                <div className="border-t pt-3 mt-3">
-                 <label className="text-xs font-bold text-slate-600 mb-2 block">Current Heating Method</label>
+                 <label className="text-xs font-bold text-slate-600 mb-2 block">Solviva Product Type</label>
                  <select 
-                   value={inputs.currentHeating}
-                   onChange={(e) => setInputs({...inputs, currentHeating: e.target.value})}
+                   value={inputs.solvivaProductType}
+                   onChange={(e) => setInputs({...inputs, solvivaProductType: e.target.value})}
+                   className="w-full p-2 border border-slate-300 rounded text-sm mb-3"
+                 >
+                   <option value="hybrid">Hybrid (with battery)</option>
+                   <option value="ready">Hybrid-Ready (no battery)</option>
+                 </select>
+
+                 <label className="text-xs font-bold text-slate-600 mb-2 block">Financing Term</label>
+                 <select 
+                   value={inputs.solvivaFinancingTerm}
+                   onChange={(e) => setInputs({...inputs, solvivaFinancingTerm: +e.target.value})}
                    className="w-full p-2 border border-slate-300 rounded text-sm"
                  >
-                   <option value="electric">Electric Shower</option>
-                   <option value="lpg">LPG Heater</option>
-                   <option value="diesel">Diesel Heater</option>
+                   <option value="12">12 months</option>
+                   <option value="24">24 months</option>
+                   <option value="36">36 months</option>
+                   <option value="48">48 months</option>
+                   <option value="60">60 months</option>
                  </select>
                </div>
                
@@ -895,7 +933,7 @@ return {
                               <span>Load:</span> <span>{analysis.peakLoad_A.toFixed(1)} kW</span>
                            </div>
                            <div className="flex justify-between font-mono text-xs font-bold">
-                              <span>Panels:</span> <span>{analysis.panelsA} × 550W</span>
+                              <span>System:</span> <span>{analysis.systemSize_A} kWp</span>
                            </div>
                         </div>
                         <div className="border-t border-slate-100 pt-1">
@@ -904,7 +942,7 @@ return {
                               <span>Load:</span> <span>{analysis.peakLoad_B.toFixed(1)} kW</span>
                            </div>
                            <div className="flex justify-between font-mono text-xs font-bold">
-                              <span>Panels:</span> <span>{analysis.panelsB} × 550W</span>
+                              <span>System:</span> <span>{analysis.systemSize_B} kWp</span>
                            </div>
                         </div>
                      </div>
@@ -924,17 +962,17 @@ return {
               </div>
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs uppercase text-slate-500 font-bold">Required Inverter</p>
-                  <p className="text-2xl font-bold text-red-600">{analysis.peakLoad_A.toFixed(1)} kW</p>
+                  <p className="text-xs uppercase text-slate-500 font-bold">Required System</p>
+                  <p className="text-2xl font-bold text-red-600">{analysis.systemSize_A} kWp</p>
                   <p className="text-xs text-slate-600 mt-1">
                     <Flame size={12} className="inline"/> {analysis.showerPeakKW.toFixed(1)} kW shower spike
                   </p>
                   <p className="text-xs text-slate-500 mt-1">{analysis.panelsA}× Solar Panels</p>
                 </div>
                 <div className="pt-4 border-t border-red-200">
-                  <p className="text-xs uppercase text-slate-500 font-bold">Solviva System Cost</p>
-                  <p className="text-2xl font-bold text-slate-800">${analysis.costA.toLocaleString()}</p>
-                  <p className="text-[10px] text-slate-500">{analysis.planA?.name}</p>
+                  <p className="text-xs uppercase text-slate-500 font-bold">Monthly Payment</p>
+                  <p className="text-2xl font-bold text-slate-800">₱{analysis.monthlyPayment_SolarOnly_PHP.toLocaleString()}</p>
+                  <p className="text-[10px] text-slate-500">{inputs.solvivaFinancingTerm} months • CAPEX: ${analysis.costA.toLocaleString()}</p>
                 </div>
               </div>
             </div>
@@ -947,8 +985,8 @@ return {
               </div>
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs uppercase text-green-700 font-bold">Optimized Inverter</p>
-                  <p className="text-2xl font-bold text-green-700">{analysis.peakLoad_B.toFixed(1)} kW</p>
+                  <p className="text-xs uppercase text-green-700 font-bold">Optimized System</p>
+                  <p className="text-2xl font-bold text-green-700">{analysis.systemSize_B} kWp + HP</p>
                   <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                     <CheckCircle size={12}/> {((1 - analysis.peakLoad_B/analysis.peakLoad_A) * 100).toFixed(0)}% load reduction
                   </p>
@@ -957,35 +995,71 @@ return {
                   </p>
                 </div>
                 <div className="pt-4 border-t border-green-200">
-                  <p className="text-xs uppercase text-green-700 font-bold">Total System Cost</p>
-                  <p className="text-2xl font-bold text-green-900">${analysis.costB_Total.toLocaleString()}</p>
-                  <p className="text-[10px] text-green-700">{analysis.planB?.name} + {analysis.selectedKarnot.name}</p>
-                  <p className="text-xs font-bold text-green-600 mt-2">CAPEX Savings: ${analysis.capexSavings.toLocaleString()}</p>
+                  <p className="text-xs uppercase text-green-700 font-bold">Monthly Payment</p>
+                  <p className="text-2xl font-bold text-green-900">₱{analysis.monthlyPayment_Partner_Total_PHP.toLocaleString()}</p>
+                  <p className="text-[10px] text-green-700">Solar: ₱{analysis.monthlyPayment_Solar_PHP.toLocaleString()} + HP: ₱{analysis.monthlyPayment_HeatPump_PHP.toLocaleString()}</p>
                 </div>
               </div>
             </div>
           </div>
 
-<div className="bg-white rounded-xl border-2 border-orange-200 p-6">
-  <h3 className="font-bold text-orange-900 mb-4">Solviva Monthly Payment Comparison</h3>
-  <div className="grid grid-cols-2 gap-4">
-    <div className="bg-red-50 border-2 border-red-300 p-4 rounded">
-      <div className="text-sm font-bold mb-2">Solar Only</div>
-      <div>Payment: ${Math.round(analysis.monthlyPayment_SolarOnly)}/mo</div>
-<div>Grid: ₱{Math.round(analysis.residualBill_SolarOnly)}</div>
-<div className="font-bold mt-2">Total: ₱{Math.round(analysis.netMonthlyCost_SolarOnly)}/mo</div>
-    </div>
-    <div className="bg-green-50 border-2 border-green-500 p-4 rounded">
-      <div className="text-sm font-bold mb-2">Partner Model</div>
-      <div>Payment: ${Math.round(analysis.monthlyPayment_Partner_Total)}/mo</div>
-<div>Grid: ₱{Math.round(analysis.residualBill_Partner)}</div>
-<div className="font-bold mt-2">Total: ₱{Math.round(analysis.netMonthlyCost_Partner)}/mo</div>
-    </div>
-  </div>
-  <div className="bg-yellow-100 p-4 mt-4 rounded text-center">
-    <div className="text-2xl font-bold">₱{Math.round(analysis.monthlyAdvantage_Customer)}/month savings</div>
-  </div>
-</div>
+          {/* MONTHLY PAYMENT COMPARISON */}
+          <div className="bg-white rounded-xl border-2 border-orange-200 p-6">
+            <h3 className="font-bold text-orange-900 mb-4 flex items-center gap-2">
+              <DollarSign size={18}/> Monthly Payment Breakdown
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg">
+                <div className="text-sm font-bold mb-3 text-red-900">Solar Only</div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Solviva Payment:</span>
+                    <span className="font-bold">₱{analysis.monthlyPayment_SolarOnly_PHP.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Grid Bill:</span>
+                    <span className="font-bold">₱{analysis.residualBill_SolarOnly.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t-2 border-red-300 pt-2 mt-2">
+                    <div className="flex justify-between">
+                      <span className="font-bold text-red-900">Total/Month:</span>
+                      <span className="font-bold text-xl text-red-900">₱{analysis.netMonthlyCost_SolarOnly.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-green-50 border-2 border-green-500 p-4 rounded-lg">
+                <div className="text-sm font-bold mb-3 text-green-900">Partner Model</div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Solar Payment:</span>
+                    <span className="font-bold">₱{analysis.monthlyPayment_Solar_PHP.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Heat Pump:</span>
+                    <span className="font-bold">₱{analysis.monthlyPayment_HeatPump_PHP.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Grid Bill:</span>
+                    <span className="font-bold">₱{analysis.residualBill_Partner.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t-2 border-green-500 pt-2 mt-2">
+                    <div className="flex justify-between">
+                      <span className="font-bold text-green-900">Total/Month:</span>
+                      <span className="font-bold text-xl text-green-900">₱{analysis.netMonthlyCost_Partner.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 border-2 border-yellow-400 p-4 mt-4 rounded-lg text-center">
+              <div className="text-sm text-yellow-800 mb-1">Customer Monthly Advantage</div>
+              <div className="text-3xl font-bold text-yellow-900">₱{analysis.monthlyAdvantage_Customer.toLocaleString()}/month</div>
+              <div className="text-xs text-yellow-700 mt-1">Partner model saves money every month vs solar-only</div>
+            </div>
+          </div>
          
           {/* CUSTOMER BENEFITS */}
           <div className="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
@@ -1032,15 +1106,11 @@ return {
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle size={16} className="text-green-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Positive Cash Flow:</strong> Monthly savings (₱{analysis.monthlySavings.toLocaleString()}) exceed loan payment (₱{analysis.monthlyPaymentPHP.toLocaleString()})</span>
+                      <span><strong>Positive Cash Flow:</strong> Save ₱{analysis.monthlyAdvantage_Customer.toLocaleString()}/month vs solar-only</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle size={16} className="text-green-600 mt-0.5 flex-shrink-0"/>
                       <span><strong>Fast Payback:</strong> {analysis.simplePayback.toFixed(1)} year simple payback period</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle size={16} className="text-green-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Energy Independence:</strong> Reduce grid reliance by {((analysis.monthlyGenB_kWh + analysis.hpMonthlyKWh * 0.7) / (analysis.monthlyGenB_kWh + analysis.hpMonthlyKWh) * 100).toFixed(0)}%</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle size={16} className="text-green-600 mt-0.5 flex-shrink-0"/>
@@ -1116,7 +1186,7 @@ return {
                     </li>
                     <li className="flex items-start gap-2">
                       <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Easier Customer Acquisition:</strong> Lower CAPEX means more customers can afford your solution</span>
+                      <span><strong>Easier Customer Acquisition:</strong> Lower monthly payment means more customers can afford your solution</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
@@ -1124,19 +1194,7 @@ return {
                     </li>
                     <li className="flex items-start gap-2">
                       <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Reduced System Size:</strong> Sell smaller inverters ({analysis.peakLoad_B.toFixed(1)} vs {analysis.peakLoad_A.toFixed(1)} kW) at higher margins</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Customer Loyalty:</strong> Integrated solution creates long-term relationship</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Risk Sharing:</strong> Karnot handles heat pump installation & warranty</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Financing Edge:</strong> Positive cash flow makes customer financing approval easier</span>
+                      <span><strong>Reduced System Size:</strong> Sell smaller systems ({analysis.systemSize_B} vs {analysis.systemSize_A} kWp) at higher margins</span>
                     </li>
                   </ul>
                 </div>
