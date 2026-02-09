@@ -3,7 +3,8 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { fetchSolarPotential } from '../utils/googleSolar';
-import { calculateFixtureDemand } from '../utils/heatPumpLogic'; // Import Fixture Logic
+// Note: Ensure calculateFixtureDemand is exported from your utils
+import { calculateFixtureDemand } from '../utils/heatPumpLogic'; 
 import html2pdf from 'html2pdf.js';
 import { APIProvider, Map, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Card, Input, Button } from '../data/constants.jsx';
@@ -13,7 +14,7 @@ import {
   Layers, Edit3, RefreshCw, Save, MousePointer2, Locate, Calculator, Info, X
 } from 'lucide-react';
 
-// --- COMPONENT: ADDRESS SEARCH ---
+// --- HELPER: ADDRESS SEARCH ---
 const GeocoderControl = ({ address, onLocationFound }) => {
   const map = useMap();
   const geocodingLib = useMapsLibrary('geocoding');
@@ -50,7 +51,7 @@ const GeocoderControl = ({ address, onLocationFound }) => {
   );
 };
 
-// --- COMPONENT: MOVES MAP WHEN LAT/LNG INPUTS CHANGE ---
+// --- HELPER: MAP CENTER UPDATE ---
 const RecenterMap = ({ lat, lng }) => {
   const map = useMap();
   useEffect(() => {
@@ -61,7 +62,7 @@ const RecenterMap = ({ lat, lng }) => {
   return null;
 };
 
-// --- COMPONENT: UPDATES INPUTS WHEN MAP IS DRAGGED ---
+// --- HELPER: DRAG EVENT LISTENER ---
 const MapEvents = ({ onDragEnd }) => {
   const map = useMap();
   useEffect(() => {
@@ -81,6 +82,7 @@ const MapEvents = ({ onDragEnd }) => {
 const SolvivaPartnerCalculator = () => {
   // === STATE ===
   const [solvivaProducts, setSolvivaProducts] = useState([]);
+  const [karnotProducts, setKarnotProducts] = useState([]); // Store Heat Pumps separately
   const [loading, setLoading] = useState(true);
   const [showMath, setShowMath] = useState(false); // TOGGLE FOR DETAILS
   const [showFixtureModal, setShowFixtureModal] = useState(false); // FIXTURE MODAL
@@ -93,12 +95,12 @@ const SolvivaPartnerCalculator = () => {
   
   // Inputs
   const [inputs, setInputs] = useState({
-    // Water Heating
+    // Water Heating Demand
     showers: 3,
     people: 4,
-    showerPowerKW: 3.5, 
+    showerPowerKW: 3.5, // Standard electric shower rating
     
-    // Cooling
+    // Cooling Load
     acCount: 3,
     acHorsePower: 1.5, 
     acHoursNight: 8,
@@ -106,26 +108,26 @@ const SolvivaPartnerCalculator = () => {
     // Base Load
     baseLoadKW: 0.5,
     
-    // Commercials
-    eaasFee: 4500, // Retail Price of Karnot Unit
+    // Financials
     electricityRate: 12.50, 
-    lpgPrice: 1100, // For comparison logic
+    lpgPrice: 1100, 
 
-    // Manual Override Defaults
+    // Manual Override Defaults (Solar)
     manualRoofArea: 100, 
     manualSunHours: 5.5,
     
-    // Hidden Engineering Assumptions (Exposed in Show Math)
+    // Engineering Physics
     inletTemp: 25,
     targetTemp: 55,
-    heatPumpCOP: 4.2
+    panelWattage: 550, // Standard 550W panel
+    recoveryHours: 10, // Target recovery time for sizing
   });
 
   const [fixtureInputs, setFixtureInputs] = useState({ 
     showers: 0, basins: 0, sinks: 0, people: 0, hours: 8 
   });
 
-  // === 1. LOAD DATA ===
+  // === 1. LOAD DATA (FETCH BOTH CATALOGS) ===
   useEffect(() => {
     const loadData = async () => {
       const user = getAuth().currentUser;
@@ -133,15 +135,26 @@ const SolvivaPartnerCalculator = () => {
       
       try {
         const snap = await getDocs(collection(db, 'users', user.uid, 'products'));
-        const prods = snap.docs.map(doc => doc.data());
+        const allProds = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        const competitors = prods
+        // Filter 1: Solviva Solar Kits
+        const competitors = allProds
           .filter(p => p.category === 'Competitor Solar')
           .sort((a, b) => (a.kW_Cooling_Nominal || 0) - (b.kW_Cooling_Nominal || 0));
           
+        // Filter 2: Karnot Heat Pumps (Look for AquaHERO/Heat Pumps)
+        const heatPumps = allProds
+          .filter(p => {
+             const cat = (p.category || '').toLowerCase();
+             const name = (p.name || '').toLowerCase();
+             return (cat.includes('heat pump') || cat.includes('heater') || name.includes('aquahero')) && !name.includes('ivolt');
+          })
+          .sort((a, b) => (a.kW_DHW_Nominal || 0) - (b.kW_DHW_Nominal || 0));
+
         setSolvivaProducts(competitors);
+        setKarnotProducts(heatPumps);
       } catch (err) {
-        console.error("Error loading Solviva products:", err);
+        console.error("Error loading products:", err);
       } finally {
         setLoading(false);
       }
@@ -197,88 +210,111 @@ const SolvivaPartnerCalculator = () => {
   };
 
   const applyFixtureCalculation = () => {
-    // Basic estimation based on fixture inputs if needed
-    // For this simplified calculator, we might just update "occupants" or infer showers
-    // But let's just close the modal for now as the main inputs are direct
+    const liters = calculateFixtureDemand(fixtureInputs);
+    // Simple logic: update 'people' equivalent or just use liters directly in future updates
+    // For now, let's just close modal as this calculator relies on direct inputs
     setShowFixtureModal(false);
   };
 
-  // === 3. ANALYSIS LOGIC ===
+  // === 3. ANALYSIS LOGIC (THE CORE) ===
   const analysis = useMemo(() => {
-    // --- 1. Thermal Physics (Added for transparency) ---
-    // Estimate daily liters based on inputs
-    const litersPerPerson = 50;
-    const litersPerShower = 60; // 10 mins @ 6L/min (eco)
-    const dailyLiters = (inputs.people * litersPerPerson) + (inputs.showers * litersPerShower);
+    // --- STEP A: SIZE THE THERMAL LOAD ---
+    // 1. Calculate Daily Hot Water Demand (Liters)
+    // Estimation: 50L/person + 60L/shower event (conservative commercial)
+    const dailyLiters = (inputs.people * 50) + (inputs.showers * 60);
     
+    // 2. Calculate Thermal Energy Required (kWh)
+    // Formula: Liters * DeltaT * 1.163 / 1000
     const deltaT = inputs.targetTemp - inputs.inletTemp;
     const dailyThermalKWh = (dailyLiters * deltaT * 1.163) / 1000;
     
-    // Tank Sizing (Simplified for this calculator)
-    const recommendedTank = Math.ceil(dailyLiters / 100) * 100;
+    // 3. Required Recovery Rate (kW)
+    // We want to recover the full daily load within X hours (e.g. 10 hours for solar day)
+    const requiredRecoveryKW = dailyThermalKWh / inputs.recoveryHours;
 
-    // --- 2. Solar Sizing ---
-    const roofMaxKwp = (inputs.manualRoofArea * 0.180); 
-    const sunHours = inputs.manualSunHours;
+    // --- STEP B: SELECT THE MACHINE ---
+    // Find the smallest Karnot unit that meets the required Recovery KW
+    const selectedKarnot = karnotProducts.find(p => (p.kW_DHW_Nominal || p.kW) >= requiredRecoveryKW)
+                        || karnotProducts[karnotProducts.length - 1] // Fallback to largest
+                        || { name: "Manual Est.", salesPriceUSD: 4500, kW_DHW_Nominal: 3.5, tankVolume: 0 };
 
+    // --- STEP C: TANK MATH ---
+    // 1. Total Volume Needed (Peak Buffer method ~ 100% of daily demand for safety)
+    const requiredTotalVolume = Math.ceil(dailyLiters / 100) * 100;
+    
+    // 2. Check Integrated Tank (e.g. AquaHERO 200)
+    let integratedTankVolume = selectedKarnot.tankVolume || 0;
+    // Fallback: Check name string if DB field missing
+    if (!integratedTankVolume) {
+        if (selectedKarnot.name?.includes("200")) integratedTankVolume = 200;
+        else if (selectedKarnot.name?.includes("300")) integratedTankVolume = 300;
+    }
+    
+    // 3. Calculate External Tank Need
+    const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
+
+    // --- STEP D: ELECTRICAL LOADS (SCENARIO A vs B) ---
     const kwPerHP = 0.85; 
     const acTotalKW = inputs.acCount * inputs.acHorsePower * kwPerHP;
-    const acNightKWh = acTotalKW * inputs.acHoursNight;
-    const baseNightKWh = inputs.baseLoadKW * inputs.acHoursNight;
-    const totalSteadyNightLoad = acNightKWh + baseNightKWh;
-
+    
+    // Scenario A: Solar Only (Must support Electric Showers)
     const showerPeakKW = inputs.showers * inputs.showerPowerKW;
     const peakLoad_A = inputs.baseLoadKW + acTotalKW + showerPeakKW; 
-    const peakLoad_B = inputs.baseLoadKW + acTotalKW + 0.69;         
     
-    const planA = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= peakLoad_A) 
+    // Scenario B: Partner Model (Showers replaced by Heat Pump)
+    // Heat Pump Input Power = Output / COP
+    const hpInputKW = (selectedKarnot.kW_DHW_Nominal || 3.5) / (selectedKarnot.cop || 4.2);
+    const peakLoad_B = inputs.baseLoadKW + acTotalKW + hpInputKW;         
+    
+    // --- STEP E: SELECT SOLVIVA SYSTEMS ---
+    // 20% Safety Factor on Inverter Sizing
+    const targetInverterA = peakLoad_A * 1.2;
+    const targetInverterB = peakLoad_B * 1.2;
+
+    const planA = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= targetInverterA) 
                || solvivaProducts[solvivaProducts.length - 1];
                
-    const planB = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= peakLoad_B) 
+    const planB = solvivaProducts.find(p => (p.kW_Cooling_Nominal || 0) >= targetInverterB) 
                || solvivaProducts[0];
 
-    const planAFits = roofMaxKwp > 0 ? (planA?.kW_Cooling_Nominal <= roofMaxKwp) : true;
-    const planBFits = roofMaxKwp > 0 ? (planB?.kW_Cooling_Nominal <= roofMaxKwp) : true;
+    // --- STEP F: PANEL COUNTS ---
+    // Calculate panels needed for each system size
+    // Assuming Solviva Kit KW is the Inverter size, and we match PV to Inverter 1:1 ratio
+    // Standard Panel: 550W
+    const panelsA = Math.ceil((planA?.kW_Cooling_Nominal || 0) * 1000 / inputs.panelWattage);
+    const panelsB = Math.ceil((planB?.kW_Cooling_Nominal || 0) * 1000 / inputs.panelWattage);
+    const panelsSaved = Math.max(0, panelsA - panelsB);
 
+    // --- STEP G: FINANCIALS ---
     const costA = planA?.salesPriceUSD || 0;
     const costB_Solar = planB?.salesPriceUSD || 0;
-    const costB_Total = costB_Solar + inputs.eaasFee;
+    const costKarnot = selectedKarnot.salesPriceUSD || 4500;
+    const costB_Total = costB_Solar + costKarnot;
     
-    const systemSizeA = Math.min(planA?.kW_Cooling_Nominal || 0, roofMaxKwp);
-    const systemSizeB = Math.min(planB?.kW_Cooling_Nominal || 0, roofMaxKwp);
-
-    const monthlyGenA_kWh = systemSizeA * sunHours * 30;
-    const monthlyGenB_kWh = systemSizeB * sunHours * 30;
-
-    const monthlyBillSavingsA = monthlyGenA_kWh * inputs.electricityRate;
+    // Monthly Savings (vs Grid)
+    // Gen B is usually smaller, but we are comparing Total Project Value
+    const monthlyGenB_kWh = (planB?.kW_Cooling_Nominal || 0) * inputs.manualSunHours * 30;
     const monthlyBillSavingsB = monthlyGenB_kWh * inputs.electricityRate;
 
-    const monthlyAdvantage = costA - costB_Total; 
+    const monthlyAdvantage = costA - costB_Total; // CAPEX Savings
     const fiveYearSavings = (monthlyAdvantage * 60) + (monthlyBillSavingsB * 60);
 
     return {
-      dailyLiters,
-      dailyThermalKWh,
-      recommendedTank,
-      acTotalKW,
-      totalSteadyNightLoad,
-      peakLoad_A,
-      peakLoad_B,
-      planA,
-      planB,
-      costA,
-      costB_Total,
-      planAFits,
-      planBFits,
-      inverterSaved: (peakLoad_A - peakLoad_B).toFixed(1),
-      maxKwp: roofMaxKwp,
-      sunHours,
-      monthlyGenB_kWh,
-      monthlyBillSavingsB,
-      monthlyAdvantage,
-      fiveYearSavings
+      // Thermal
+      dailyLiters, dailyThermalKWh, requiredRecoveryKW,
+      // Machine
+      selectedKarnot, hpInputKW,
+      // Tank
+      requiredTotalVolume, integratedTankVolume, externalTankNeeded,
+      // Electrical
+      peakLoad_A, peakLoad_B,
+      // Solar
+      planA, planB, panelsA, panelsB, panelsSaved,
+      // Financials
+      costA, costB_Total, costKarnot,
+      monthlyBillSavingsB, fiveYearSavings, monthlyAdvantage
     };
-  }, [inputs, solvivaProducts, solarData]); 
+  }, [inputs, solvivaProducts, karnotProducts, solarData]); 
 
   // === 4. PDF GENERATOR ===
   const generatePDFReport = () => {
@@ -290,60 +326,57 @@ const SolvivaPartnerCalculator = () => {
     element.innerHTML = `
       <div style="border-bottom: 4px solid #F56600; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h1 style="margin: 0; color: #131B28; font-size: 28px;">Optimization Proposal</h1>
-          <h2 style="margin: 5px 0 0; color: #666; font-size: 16px; font-weight: normal;">Solviva Solar + Karnot Thermal Battery</h2>
+          <h1 style="margin: 0; color: #131B28; font-size: 28px;">Solviva + Karnot Proposal</h1>
+          <h2 style="margin: 5px 0 0; color: #666; font-size: 16px; font-weight: normal;">Optimized Engineering Solution</h2>
         </div>
         <div style="text-align: right;">
           <div>${new Date().toLocaleDateString()}</div>
-          <div style="font-weight: bold; color: #F56600;">INTEGRATED SOLUTION</div>
+          <div style="font-weight: bold; color: #F56600;">CONFIDENTIAL</div>
         </div>
       </div>
 
       <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; height: 250px;">
         <img src="${mapImgUrl}" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
-      <div style="text-align: center; font-size: 10px; color: #666; margin-bottom: 30px;">
-        Location: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)} 
+
+      <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #334155;">Engineering Sizing</h3>
+        <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 4px; color: #64748b;">Daily Load:</td>
+                <td style="padding: 4px; font-weight: bold;">${analysis.dailyLiters.toLocaleString()} Liters</td>
+                <td style="padding: 4px; color: #64748b;">Thermal Energy:</td>
+                <td style="padding: 4px; font-weight: bold;">${analysis.dailyThermalKWh.toFixed(1)} kWh</td>
+            </tr>
+            <tr>
+                <td style="padding: 4px; color: #64748b;">Selected Unit:</td>
+                <td style="padding: 4px; font-weight: bold; color: #F56600;">${analysis.selectedKarnot.name}</td>
+                <td style="padding: 4px; color: #64748b;">Recovery Rate:</td>
+                <td style="padding: 4px; font-weight: bold;">${analysis.selectedKarnot.kW_DHW_Nominal} kW</td>
+            </tr>
+            <tr>
+                <td style="padding: 4px; color: #64748b;">Integrated Tank:</td>
+                <td style="padding: 4px; font-weight: bold;">${analysis.integratedTankVolume} Liters</td>
+                <td style="padding: 4px; color: #64748b;">External Needed:</td>
+                <td style="padding: 4px; font-weight: bold;">${analysis.externalTankNeeded > 0 ? analysis.externalTankNeeded + ' L' : 'None'}</td>
+            </tr>
+        </table>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
         <div style="background: #fff5f5; padding: 15px; border-radius: 6px; border: 2px solid #dc3545;">
-          <div style="font-size: 18px; font-weight: bold; color: #dc3545; margin-bottom: 15px;">Scenario A: Solar Only</div>
-          <div style="margin-bottom: 10px;">
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Required Peak Load</div>
-            <div style="font-size: 20px; font-weight: bold; color: #dc3545;">${analysis.peakLoad_A.toFixed(1)} kW</div>
-          </div>
-          <div style="margin-bottom: 10px;">
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Required System</div>
-            <div style="font-size: 16px; font-weight: bold;">${analysis.planA?.name || 'Custom Build'}</div>
-          </div>
-          <div>
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Hardware Cost (60mo)</div>
-            <div style="font-size: 20px; font-weight: bold; color: #dc3545;">₱${analysis.costA.toLocaleString()}</div>
-          </div>
+          <div style="font-size: 16px; font-weight: bold; color: #dc3545; margin-bottom: 10px;">Scenario A: Solar Only</div>
+          <div style="font-size: 12px; margin-bottom: 5px;"><strong>${analysis.planA?.name}</strong></div>
+          <div style="font-size: 12px; margin-bottom: 15px;">Panels: <strong>${analysis.panelsA}</strong> (@550W)</div>
+          <div style="font-size: 24px; font-weight: bold; color: #dc3545;">$${analysis.costA.toLocaleString()}</div>
         </div>
 
         <div style="background: #f0fff4; padding: 15px; border-radius: 6px; border: 2px solid #28a745;">
-          <div style="font-size: 18px; font-weight: bold; color: #28a745; margin-bottom: 15px;">Scenario B: Partner Model</div>
-          <div style="margin-bottom: 10px;">
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Optimized Peak Load</div>
-            <div style="font-size: 20px; font-weight: bold; color: #28a745;">${analysis.peakLoad_B.toFixed(1)} kW</div>
-          </div>
-          <div style="margin-bottom: 10px;">
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Required System</div>
-            <div style="font-size: 16px; font-weight: bold;">${analysis.planB?.name}</div>
-          </div>
-          <div>
-            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold;">Hardware Cost (w/ Karnot)</div>
-            <div style="font-size: 20px; font-weight: bold; color: #28a745;">₱${analysis.costB_Total.toLocaleString()}</div>
-          </div>
+          <div style="font-size: 16px; font-weight: bold; color: #28a745; margin-bottom: 10px;">Scenario B: Partner Model</div>
+          <div style="font-size: 12px; margin-bottom: 5px;"><strong>${analysis.planB?.name}</strong> + Karnot</div>
+          <div style="font-size: 12px; margin-bottom: 15px;">Panels: <strong>${analysis.panelsB}</strong> (Saved ${analysis.panelsSaved})</div>
+          <div style="font-size: 24px; font-weight: bold; color: #28a745;">$${analysis.costB_Total.toLocaleString()}</div>
         </div>
-      </div>
-
-      <div style="background: #131B28; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-top: 40px;">
-        <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">TOTAL VALUE (5 YEARS)</div>
-        <div style="font-size: 36px; font-weight: bold; color: #F56600; margin: 10px 0;">₱${analysis.fiveYearSavings.toLocaleString()}</div>
-        <div style="font-size: 12px; opacity: 0.8;">Includes hardware savings + solar electricity generation.</div>
       </div>
     `;
 
@@ -372,9 +405,9 @@ const SolvivaPartnerCalculator = () => {
           </p>
         </div>
         <div className="text-right">
-          <div className="text-xs font-bold text-slate-400 uppercase">Pricing Source</div>
+          <div className="text-xs font-bold text-slate-400 uppercase">Live Database</div>
           <div className="text-green-600 font-bold flex items-center gap-1 justify-end">
-            <CheckCircle size={16}/> {solvivaProducts.length} CSV Records
+            <CheckCircle size={16}/> {karnotProducts.length} Karnot / {solvivaProducts.length} Solviva
           </div>
         </div>
       </div>
@@ -459,63 +492,68 @@ const SolvivaPartnerCalculator = () => {
         {/* === RIGHT COLUMN: FINANCIALS === */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* --- NEW: MATH & PRICING BREAKDOWN --- */}
+          {/* --- DETAILED ENGINEERING BREAKDOWN --- */}
           {showMath && (
             <div className="bg-slate-100 p-4 rounded-xl border border-slate-300 text-sm animate-in fade-in slide-in-from-top-4">
                <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
-                 <Calculator size={16}/> Engineering & Pricing Breakdown
+                 <Calculator size={16}/> Detailed Engineering Calculations
                </h4>
                <div className="grid grid-cols-3 gap-4">
                   
-                  {/* COL 1: ASSUMPTIONS */}
+                  {/* COL 1: THERMAL LOAD & TANK */}
                   <div className="bg-white p-3 rounded border border-slate-200">
-                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">Cost Assumptions</div>
+                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">1. Load Sizing</div>
                      <div className="flex justify-between border-b border-slate-100 py-1">
-                        <span>Elec Rate:</span> <span className="font-mono">₱{inputs.electricityRate.toFixed(2)}</span>
+                        <span>Daily Usage:</span> <span className="font-mono">{analysis.dailyLiters.toFixed(0)} L</span>
                      </div>
                      <div className="flex justify-between border-b border-slate-100 py-1">
-                        <span>LPG Price:</span> <span className="font-mono">₱{inputs.lpgPrice}</span>
-                     </div>
-                     <div className="flex justify-between py-1">
-                        <span>Karnot Unit:</span> <span className="font-mono">₱{inputs.eaasFee.toLocaleString()}</span>
-                     </div>
-                  </div>
-
-                  {/* COL 2: THERMAL PHYSICS */}
-                  <div className="bg-white p-3 rounded border border-slate-200">
-                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">Thermal Load</div>
-                     <div className="flex justify-between border-b border-slate-100 py-1">
-                        <span>Est. Liters:</span> <span className="font-mono">{analysis.dailyLiters.toFixed(0)} L/day</span>
-                     </div>
-                     <div className="flex justify-between border-b border-slate-100 py-1">
-                        <span>Temp Lift:</span> <span className="font-mono">{inputs.targetTemp - inputs.inletTemp}°C</span>
+                        <span>Delta T:</span> <span className="font-mono">{inputs.targetTemp - inputs.inletTemp}°C</span>
                      </div>
                      <div className="flex justify-between border-b border-slate-100 py-1">
                         <span>Energy:</span> <span className="font-mono">{analysis.dailyThermalKWh.toFixed(1)} kWh</span>
                      </div>
                      <div className="flex justify-between py-1 font-bold text-blue-600">
-                        <span>Tank Rec:</span> <span className="font-mono">{analysis.recommendedTank} L</span>
+                        <span>Req. KW:</span> <span className="font-mono">{analysis.requiredRecoveryKW.toFixed(1)} kW</span>
                      </div>
                   </div>
 
-                  {/* COL 3: SOLVIVA DB LOOKUP */}
+                  {/* COL 2: MACHINE SELECTION */}
                   <div className="bg-white p-3 rounded border border-slate-200">
-                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">Solviva Database</div>
+                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">2. Karnot Selection</div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>Model:</span> <span className="font-mono truncate w-20">{analysis.karnotUnit.name}</span>
+                     </div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>Output:</span> <span className="font-mono">{analysis.karnotUnit.kW_DHW_Nominal} kW</span>
+                     </div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>Int. Tank:</span> <span className="font-mono">{analysis.integratedTankVolume} L</span>
+                     </div>
+                     <div className="flex justify-between py-1 font-bold text-orange-600">
+                        <span>Ext. Tank:</span> <span className="font-mono">{analysis.externalTankNeeded > 0 ? analysis.externalTankNeeded + " L" : "None"}</span>
+                     </div>
+                  </div>
+
+                  {/* COL 3: SOLAR MATH */}
+                  <div className="bg-white p-3 rounded border border-slate-200">
+                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">3. Solar Sizing (@550W)</div>
                      <div className="space-y-2">
                         <div>
-                           <div className="text-[10px] text-red-500 font-bold">PLAN A (Large)</div>
-                           <div className="truncate text-xs">{analysis.planA?.name}</div>
+                           <div className="text-[10px] text-red-500 font-bold">SOLAR ONLY</div>
                            <div className="flex justify-between font-mono text-xs">
-                              <span>{analysis.planA?.kW_Cooling_Nominal} kW</span>
-                              <span>₱{analysis.planA?.salesPriceUSD?.toLocaleString()}</span>
+                              <span>Load:</span> <span>{analysis.peakLoad_A.toFixed(1)} kW</span>
+                           </div>
+                           <div className="flex justify-between font-mono text-xs font-bold">
+                              <span>Panels:</span> <span>{analysis.panelsA} units</span>
                            </div>
                         </div>
                         <div className="border-t border-slate-100 pt-1">
-                           <div className="text-[10px] text-green-600 font-bold">PLAN B (Optimized)</div>
-                           <div className="truncate text-xs">{analysis.planB?.name}</div>
+                           <div className="text-[10px] text-green-600 font-bold">PARTNER MODEL</div>
                            <div className="flex justify-between font-mono text-xs">
-                              <span>{analysis.planB?.kW_Cooling_Nominal} kW</span>
-                              <span>₱{analysis.planB?.salesPriceUSD?.toLocaleString()}</span>
+                              <span>Load:</span> <span>{analysis.peakLoad_B.toFixed(1)} kW</span>
+                           </div>
+                           <div className="flex justify-between font-mono text-xs font-bold">
+                              <span>Panels:</span> <span>{analysis.panelsB} units</span>
                            </div>
                         </div>
                      </div>
@@ -530,23 +568,19 @@ const SolvivaPartnerCalculator = () => {
             {/* SCENARIO A: SOLAR ONLY */}
             <div className={`p-6 rounded-xl border-2 ${analysis.planAFits ? 'border-red-200 bg-red-50' : 'border-red-500 bg-red-100'}`}>
               <div className="flex justify-between mb-4">
-                <h3 className="font-bold text-slate-700">Scenario A: Status Quo</h3>
-                <span className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-200">Solar Only</span>
+                <h3 className="font-bold text-slate-700">Scenario A: Solar Only</h3>
+                <span className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-200">High Load</span>
               </div>
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs uppercase text-slate-500 font-bold">Required Peak Inverter</p>
+                  <p className="text-xs uppercase text-slate-500 font-bold">Required Inverter</p>
                   <p className="text-2xl font-bold text-red-600">{analysis.peakLoad_A.toFixed(1)} kW</p>
+                  <p className="text-xs text-slate-500 mt-1">{analysis.panelsA}x Solar Panels</p>
                 </div>
                 <div className="pt-4 border-t border-red-200">
-                  <p className="text-xs uppercase text-slate-500 font-bold">Required Solviva Plan</p>
-                  <p className="text-lg font-bold text-slate-800">{analysis.planA?.name || 'N/A'}</p>
-                  {!analysis.planAFits && (
-                    <div className="mt-2 flex items-start gap-2 text-red-700 bg-white p-2 rounded text-xs border border-red-300">
-                      <AlertTriangle size={14}/>
-                      <strong>Roof Fail:</strong> Needs {analysis.planA?.kW_Cooling_Nominal}kW, roof fits {analysis.maxKwp.toFixed(1)}kW.
-                    </div>
-                  )}
+                  <p className="text-xs uppercase text-slate-500 font-bold">Solviva System Cost</p>
+                  <p className="text-2xl font-bold text-slate-800">${analysis.costA.toLocaleString()}</p>
+                  <p className="text-[10px] text-slate-500">{analysis.planA?.name}</p>
                 </div>
               </div>
             </div>
@@ -555,18 +589,20 @@ const SolvivaPartnerCalculator = () => {
             <div className="p-6 rounded-xl border-2 border-green-500 bg-green-50">
               <div className="flex justify-between mb-4">
                 <h3 className="font-bold text-green-800">Scenario B: Partner Model</h3>
-                <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold">Solviva + Karnot</span>
+                <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold">Optimized</span>
               </div>
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs uppercase text-green-700 font-bold">Optimized Peak Load</p>
+                  <p className="text-xs uppercase text-green-700 font-bold">Optimized Inverter</p>
                   <p className="text-2xl font-bold text-green-700">{analysis.peakLoad_B.toFixed(1)} kW</p>
-                  <p className="text-xs text-green-600"><ArrowRight size={12} className="inline"/> Downsized by {analysis.inverterSaved} kW</p>
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <ArrowRight size={12}/> Saved {analysis.panelsSaved} Solar Panels!
+                  </p>
                 </div>
                 <div className="pt-4 border-t border-green-200">
-                  <p className="text-xs uppercase text-green-700 font-bold">Required Solviva Plan</p>
-                  <p className="text-lg font-bold text-green-900">{analysis.planB?.name}</p>
-                  <p className="text-xs text-green-700">Fits easily on roof</p>
+                  <p className="text-xs uppercase text-green-700 font-bold">Total System Cost</p>
+                  <p className="text-2xl font-bold text-green-900">${analysis.costB_Total.toLocaleString()}</p>
+                  <p className="text-[10px] text-green-700">Includes {analysis.karnotUnit.name}</p>
                 </div>
               </div>
             </div>
@@ -576,11 +612,11 @@ const SolvivaPartnerCalculator = () => {
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Financial Impact Analysis</h3>
             <div className="grid grid-cols-3 gap-4 items-end">
               <div>
-                <p className="text-sm text-slate-400 mb-1">Hardware Savings</p>
-                <p className="text-2xl font-bold text-white">₱{analysis.monthlyAdvantage.toLocaleString()} <span className="text-sm text-slate-500">/mo</span></p>
+                <p className="text-sm text-slate-400 mb-1">CAPEX Savings</p>
+                <p className="text-2xl font-bold text-white">₱{(analysis.monthlyAdvantage * 58).toLocaleString()} <span className="text-xs text-slate-500">Upfront</span></p>
               </div>
               <div className="text-center pb-2">
-                 <div className="text-sm text-slate-400 mb-1">Solar Electricity Value</div>
+                 <div className="text-sm text-slate-400 mb-1">Solar Gen Value</div>
                  <div className="text-xl font-bold text-yellow-400">
                     ₱{analysis.monthlyBillSavingsB.toLocaleString()} /mo
                  </div>
@@ -611,54 +647,17 @@ const SolvivaPartnerCalculator = () => {
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-800">Estimate via Fixtures</h3>
-              <button 
-                onClick={() => setShowFixtureModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={() => setShowFixtureModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={24}/>
               </button>
             </div>
-
             <div className="space-y-4">
-              <Input 
-                label="Number of Showers" 
-                type="number" 
-                value={fixtureInputs.showers} 
-                onChange={handleFixtureChange('showers')} 
-              />
-              <Input 
-                label="Lavatory Basins" 
-                type="number" 
-                value={fixtureInputs.basins} 
-                onChange={handleFixtureChange('basins')} 
-              />
-              <Input 
-                label="Kitchen Sinks" 
-                type="number" 
-                value={fixtureInputs.sinks} 
-                onChange={handleFixtureChange('sinks')} 
-              />
-              <Input 
-                label="Number of Occupants" 
-                type="number" 
-                value={fixtureInputs.people} 
-                onChange={handleFixtureChange('people')} 
-              />
-              <Input 
-                label="Hours per Day" 
-                type="number" 
-                value={fixtureInputs.hours} 
-                onChange={handleFixtureChange('hours')} 
-              />
+              <Input label="Number of Showers" type="number" value={fixtureInputs.showers} onChange={handleFixtureChange('showers')} />
+              <Input label="Occupants" type="number" value={fixtureInputs.people} onChange={handleFixtureChange('people')} />
             </div>
-
             <div className="flex gap-3 mt-6">
-              <Button variant="secondary" onClick={() => setShowFixtureModal(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={applyFixtureCalculation} className="flex-1">
-                Use These Values
-              </Button>
+              <Button variant="secondary" onClick={() => setShowFixtureModal(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={applyFixtureCalculation} className="flex-1">Apply</Button>
             </div>
           </div>
         </div>
