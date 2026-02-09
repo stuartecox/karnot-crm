@@ -404,52 +404,33 @@ const SolvivaPartnerCalculator = () => {
     const monthlyPayment = loanAmount > 0 
       ? loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
       : 0;
-    
+
     // STEP L: SOLVIVA MONTHLY PAYMENT MODEL
-  const getSolvivaMonthlyPayment = (principal, months) => {
+const getSolvivaMonthlyPayment = (principal, months) => {
   const rate = 0.09 / 12;
   if (months === 12) return principal * 1.05 / 12;
   return principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
-  };
+};
 
-  const monthlyPayment_SolarOnly = getSolvivaMonthlyPayment(costA, inputs.solvivaFinancingTerm);
-  const monthlyPayment_Partner = getSolvivaMonthlyPayment(costB_Total, inputs.solvivaFinancingTerm);
+const monthlyPayment_SolarOnly = getSolvivaMonthlyPayment(costA, inputs.solvivaFinancingTerm);
+const monthlyPayment_Partner_Solar = getSolvivaMonthlyPayment(costB_Solar, inputs.solvivaFinancingTerm);
+const monthlyPayment_Partner_Karnot = getSolvivaMonthlyPayment(costKarnot + installationCost, inputs.solvivaFinancingTerm);
+const monthlyPayment_Partner_Total = monthlyPayment_Partner_Solar + monthlyPayment_Partner_Karnot;
 
-  const showerEnergyPerUse = inputs.showerPowerKW * 0.167;
-  const monthlyShowerCost = (showerEnergyPerUse * inputs.showers * 30 * inputs.electricityRate);
-  const residualBill_SolarOnly = monthlyShowerCost + (inputs.monthlyElectricBill * 0.15);
-  const residualBill_Partner = (hpDailyKWh * 30 * inputs.electricityRate * 0.30) + (inputs.monthlyElectricBill * 0.10);
+const showerEnergyPerUse = inputs.showerPowerKW * 0.167;
+const dailyShowerKWh = showerEnergyPerUse * inputs.showers;
+const monthlyShowerCost = dailyShowerKWh * 30 * inputs.electricityRate;
+const residualBill_SolarOnly = monthlyShowerCost + (inputs.monthlyElectricBill * 0.15);
 
-  const netMonthlyCost_SolarOnly = (monthlyPayment_SolarOnly * 58) + residualBill_SolarOnly;
-  const netMonthlyCost_Partner = (monthlyPayment_Partner * 58) + residualBill_Partner;
-  const monthlyAdvantage = netMonthlyCost_SolarOnly - netMonthlyCost_Partner;
+const hpMonthlyCost = hpDailyKWh * 30 * inputs.electricityRate * 0.30;
+const residualBill_Partner = hpMonthlyCost + (inputs.monthlyElectricBill * 0.10);
 
-    // Monthly savings in PHP
-    const monthlySavings = (annualFuelSavings + annualSolarValue) / 12;
-    // Monthly payment in PHP (convert from USD)
-    const monthlyPaymentPHP = monthlyPayment * 58;
-    const netMonthlyCashFlow = monthlySavings - monthlyPaymentPHP;
-    
-    // Simple Payback (in years)
-    const totalAnnualSavings = annualFuelSavings + annualSolarValue; // PHP
-    const totalSystemCostPHP = costB_Total * 58; // Convert USD to PHP
-    const simplePayback = totalAnnualSavings > 0 ? totalSystemCostPHP / totalAnnualSavings : 999;
+const netMonthlyCost_SolarOnly = (monthlyPayment_SolarOnly * 58) + residualBill_SolarOnly;
+const netMonthlyCost_Partner = (monthlyPayment_Partner_Total * 58) + residualBill_Partner;
+const monthlyAdvantage_Customer = netMonthlyCost_SolarOnly - netMonthlyCost_Partner;
 
-    // --- STEP L: SOLVIVA BUSINESS METRICS ---
-    // Using actual database pricing
-    const karnotCostPrice = selectedKarnot.costPriceUSD || (costKarnot * 0.67); // Fallback to 67% if cost not in DB
-    
-    const solvivaUnitMargin = (costB_Solar * 0.35); // Assume 35% margin on solar kit
-    const karnotCommission = costKarnot * 0.15; // 15% commission on Karnot sales price
-    const installationRevenue = installationCost * 0.20; // 20% margin on installation coordination
-    const annualServiceRevenue = inputs.annualServicePerUnit; // Annual service contract revenue
-    const fiveYearServiceRevenue = annualServiceRevenue * 5;
-    
-    const totalPartnerRevenueUpfront = solvivaUnitMargin + karnotCommission + installationRevenue;
-    const totalPartnerRevenueFiveYear = totalPartnerRevenueUpfront + fiveYearServiceRevenue;
-    const revenueIncrease = costA > 0 ? ((totalPartnerRevenueUpfront) / (costA * 0.35) - 1) * 100 : 0;
-
-    return {
+// THEN your return statement
+return {
       // Thermal
       dailyLiters, 
       dailyThermalKWh, 
@@ -512,7 +493,15 @@ const SolvivaPartnerCalculator = () => {
       totalPartnerRevenueUpfront,
       totalPartnerRevenueFiveYear,
       revenueIncrease
-    };
+      // Solviva Monthly Payments
+  monthlyPayment_SolarOnly: Math.round(monthlyPayment_SolarOnly),
+  monthlyPayment_Partner_Total: Math.round(monthlyPayment_Partner_Total),
+  residualBill_SolarOnly: Math.round(residualBill_SolarOnly),
+  residualBill_Partner: Math.round(residualBill_Partner),
+  netMonthlyCost_SolarOnly: Math.round(netMonthlyCost_SolarOnly),
+  netMonthlyCost_Partner: Math.round(netMonthlyCost_Partner),
+  monthlyAdvantage_Customer: Math.round(monthlyAdvantage_Customer),
+};
   }, [inputs, solvivaProducts, karnotProducts]); 
 
   // === 4. ENHANCED PDF GENERATOR ===
