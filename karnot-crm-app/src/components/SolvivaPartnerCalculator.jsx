@@ -337,21 +337,29 @@ const SolvivaPartnerCalculator = () => {
     
     // Fallback: parse from product name if tankVolume field not set
     if (!integratedTankVolume && selectedKarnot.name) {
-        if (selectedKarnot.name.includes("200L") || selectedKarnot.name.includes("200 L")) {
-          integratedTankVolume = 200;
-        } else if (selectedKarnot.name.includes("300L") || selectedKarnot.name.includes("300 L")) {
-          integratedTankVolume = 300;
+        const name = selectedKarnot.name.toLowerCase();
+        // AquaHERO units have integrated tanks
+        if (name.includes("aquahero")) {
+          if (name.includes("200l") || name.includes("200 l")) {
+            integratedTankVolume = 200;
+          } else if (name.includes("300l") || name.includes("300 l")) {
+            integratedTankVolume = 300;
+          }
         }
+        // iHEAT units typically have NO integrated tank (external required)
     }
     
+    // Calculate external tank needed (only if integrated tank is insufficient)
     const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
     const externalTankCost = externalTankNeeded * inputs.externalTankCostPerLiter;
 
     console.log("✅ SELECTED:", selectedKarnot.name);
     console.log(`   Price: $${selectedKarnot.salesPriceUSD}`);
     console.log(`   Capacity: ${selectedKarnot.kW_DHW_Nominal || selectedKarnot.kW || 0} kW`);
-    console.log(`   Tank: ${integratedTankVolume}L integrated, ${externalTankNeeded}L external`);
-    console.log(`   Total cost: $${selectedKarnot.salesPriceUSD + externalTankCost + inputs.installationCostPerUnit}`);
+    console.log(`   Required total volume: ${requiredTotalVolume}L`);
+    console.log(`   Integrated tank: ${integratedTankVolume}L`);
+    console.log(`   External tank needed: ${externalTankNeeded}L (${externalTankNeeded > 0 ? `$${externalTankCost}` : 'None'})`);
+    console.log(`   Total package cost: $${selectedKarnot.salesPriceUSD + externalTankCost + inputs.installationCostPerUnit}`);
 
     // --- STEP D: ELECTRICAL LOADS (SCENARIO A vs B) ---
     const kwPerHP = 0.85; 
@@ -545,15 +553,15 @@ const SolvivaPartnerCalculator = () => {
       monthlySavings: Math.round((annualFuelSavings + annualSolarValue) / 12),
       netMonthlyCashFlow: Math.round(((annualFuelSavings + annualSolarValue) / 12) - (monthlyPayment * 58)),
       simplePayback: Math.round((costB_Total * 58) / (annualFuelSavings + annualSolarValue) * 10) / 10,
-      // Solviva Business Metrics
-      solvivaUnitMargin: Math.round(costB_Solar * 0.35),
-      karnotCommission: Math.round(costKarnot * 0.15),
-      installationRevenue: Math.round(installationCost * 0.20),
+      // Solviva Business Metrics - INCREMENTAL REVENUE FROM HEAT PUMP PARTNERSHIP
+      heatPumpRevenue: Math.round(costKarnot), // Full heat pump sale
+      installationRevenue: Math.round(installationCost * 0.20), // 20% installation margin
       annualServiceRevenue: Math.round(inputs.annualServicePerUnit),
       fiveYearServiceRevenue: Math.round(inputs.annualServicePerUnit * 5),
-      totalPartnerRevenueUpfront: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)),
-      totalPartnerRevenueFiveYear: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20) + (inputs.annualServicePerUnit * 5)),
-      revenueIncrease: Math.round(((((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)) / (costA * 0.35)) - 1) * 100),
+      totalPartnerRevenueUpfront: Math.round(costKarnot + (installationCost * 0.20)),
+      totalPartnerRevenueFiveYear: Math.round(costKarnot + (installationCost * 0.20) + (inputs.annualServicePerUnit * 5)),
+      // Compare to solar-only deal (no extra revenue)
+      revenueIncrease: Infinity, // Infinite increase since solar-only = $0 extra revenue
       // Solviva Monthly Payments (ACTUAL PRICING)
       monthlyPayment_SolarOnly_PHP: Math.round(monthlyPayment_SolarOnly_PHP),
       monthlyPayment_SolarOnly_USD: monthlyPayment_SolarOnly_USD,
@@ -685,20 +693,23 @@ const SolvivaPartnerCalculator = () => {
       </div>
 
       <div style="background: #fffbeb; padding: 15px; border-radius: 6px; border: 2px solid #f59e0b;">
-        <h3 style="font-size: 12px; font-weight: bold; margin-bottom: 10px; color: #92400e;">Solviva Partnership Benefits</h3>
+        <h3 style="font-size: 12px; font-weight: bold; margin-bottom: 10px; color: #92400e;">Solviva Incremental Revenue (Per Customer)</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 10px;">
           <div>
-            <div style="color: #78350f;">Solar Kit Margin:</div>
-            <div style="font-weight: bold; font-size: 14px;">$${analysis.solvivaUnitMargin.toLocaleString()}</div>
+            <div style="color: #78350f;">Heat Pump Sale:</div>
+            <div style="font-weight: bold; font-size: 14px;">$${analysis.heatPumpRevenue.toLocaleString()}</div>
           </div>
           <div>
-            <div style="color: #78350f;">Karnot Referral:</div>
-            <div style="font-weight: bold; font-size: 14px;">$${analysis.karnotCommission.toLocaleString()}</div>
+            <div style="color: #78350f;">Installation Fee:</div>
+            <div style="font-weight: bold; font-size: 14px;">$${analysis.installationRevenue.toLocaleString()}</div>
           </div>
           <div style="text-align: right;">
-            <div style="color: #78350f;">Total per Deal:</div>
+            <div style="color: #78350f;">Extra Revenue:</div>
             <div style="font-weight: bold; font-size: 16px; color: #f59e0b;">$${analysis.totalPartnerRevenueUpfront.toLocaleString()}</div>
           </div>
+        </div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #f59e0b; text-align: center; font-size: 11px; color: #78350f;">
+          <strong>5-Year Total:</strong> $${analysis.totalPartnerRevenueFiveYear.toLocaleString()} (includes $${analysis.fiveYearServiceRevenue.toLocaleString()} service revenue)
         </div>
       </div>
     `;
@@ -1229,33 +1240,33 @@ const SolvivaPartnerCalculator = () => {
             </button>
             {showSolvivaBenefits && (
               <div className="p-6 space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-                    <div className="text-xs text-blue-700 mb-1">Solar Margin</div>
-                    <div className="text-xl font-bold text-blue-900">${analysis.solvivaUnitMargin.toLocaleString()}</div>
-                    <div className="text-xs text-blue-600">Your core business</div>
-                  </div>
+                <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-lg mb-4">
+                  <h4 className="font-bold text-blue-900 mb-2 text-sm">💡 Key Insight</h4>
+                  <p className="text-sm text-blue-800">This shows the <strong>EXTRA revenue</strong> Solviva earns by adding Karnot heat pumps to their solar deals. Solar-only = $0 extra revenue.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
-                    <div className="text-xs text-purple-700 mb-1">Karnot Commission</div>
-                    <div className="text-xl font-bold text-purple-900">${analysis.karnotCommission.toLocaleString()}</div>
-                    <div className="text-xs text-purple-600">15% referral fee</div>
+                    <div className="text-xs text-purple-700 mb-1">Heat Pump Sale</div>
+                    <div className="text-xl font-bold text-purple-900">${analysis.heatPumpRevenue.toLocaleString()}</div>
+                    <div className="text-xs text-purple-600">Incremental revenue</div>
                   </div>
                   <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
-                    <div className="text-xs text-orange-700 mb-1">Install + Service</div>
+                    <div className="text-xs text-orange-700 mb-1">Install + Service (Yr 1)</div>
                     <div className="text-xl font-bold text-orange-900">${(analysis.installationRevenue + analysis.annualServiceRevenue).toLocaleString()}</div>
-                    <div className="text-xs text-orange-600">Year 1 revenue</div>
+                    <div className="text-xs text-orange-600">Ongoing revenue</div>
                   </div>
                 </div>
                 
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-300">
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                      <div className="text-xs text-green-700 mb-1">Upfront Revenue</div>
+                      <div className="text-xs text-green-700 mb-1">Incremental Revenue (Upfront)</div>
                       <div className="text-2xl font-bold text-green-900">${analysis.totalPartnerRevenueUpfront.toLocaleString()}</div>
-                      <div className="text-xs text-green-600">At installation</div>
+                      <div className="text-xs text-green-600">Extra per deal</div>
                     </div>
                     <div>
-                      <div className="text-xs text-emerald-700 mb-1">5-Year Total</div>
+                      <div className="text-xs text-emerald-700 mb-1">5-Year Incremental</div>
                       <div className="text-2xl font-bold text-emerald-900">${analysis.totalPartnerRevenueFiveYear.toLocaleString()}</div>
                       <div className="text-xs text-emerald-600">Inc. service revenue</div>
                     </div>
@@ -1267,7 +1278,7 @@ const SolvivaPartnerCalculator = () => {
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
                       <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Higher Revenue per Deal:</strong> Earn ${analysis.totalPartnerRevenueUpfront.toLocaleString()} upfront + ${analysis.fiveYearServiceRevenue.toLocaleString()} service revenue (5yr) vs ${analysis.solvivaUnitMargin.toLocaleString()} (solar only)</span>
+                      <span><strong>Additional Revenue Stream:</strong> Earn ${analysis.totalPartnerRevenueUpfront.toLocaleString()} extra per deal + ${analysis.fiveYearServiceRevenue.toLocaleString()} over 5 years (vs $0 for solar-only)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <TrendingUp size={16} className="text-orange-600 mt-0.5 flex-shrink-0"/>
