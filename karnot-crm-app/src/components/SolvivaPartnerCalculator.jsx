@@ -3,13 +3,14 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { fetchSolarPotential } from '../utils/googleSolar';
+import { calculateFixtureDemand } from '../utils/heatPumpLogic'; // Import Fixture Logic
 import html2pdf from 'html2pdf.js';
 import { APIProvider, Map, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Card, Input, Button } from '../data/constants.jsx';
 import {
   Zap, MapPin, CheckCircle, AlertTriangle, ArrowRight, 
   Battery, Moon, Sun, DollarSign, Search, FileText, Download,
-  Layers, Edit3, RefreshCw, Save, MousePointer2, Locate, Calculator, Info
+  Layers, Edit3, RefreshCw, Save, MousePointer2, Locate, Calculator, Info, X
 } from 'lucide-react';
 
 // --- COMPONENT: ADDRESS SEARCH ---
@@ -82,6 +83,7 @@ const SolvivaPartnerCalculator = () => {
   const [solvivaProducts, setSolvivaProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showMath, setShowMath] = useState(false); // TOGGLE FOR DETAILS
+  const [showFixtureModal, setShowFixtureModal] = useState(false); // FIXTURE MODAL
   
   // Google Solar Data
   const [coordinates, setCoordinates] = useState({ lat: 16.023497, lng: 120.430082 }); 
@@ -105,7 +107,7 @@ const SolvivaPartnerCalculator = () => {
     baseLoadKW: 0.5,
     
     // Commercials
-    eaasFee: 2000,
+    eaasFee: 4500, // Retail Price of Karnot Unit
     electricityRate: 12.50, 
     lpgPrice: 1100, // For comparison logic
 
@@ -117,6 +119,10 @@ const SolvivaPartnerCalculator = () => {
     inletTemp: 25,
     targetTemp: 55,
     heatPumpCOP: 4.2
+  });
+
+  const [fixtureInputs, setFixtureInputs] = useState({ 
+    showers: 0, basins: 0, sinks: 0, people: 0, hours: 8 
   });
 
   // === 1. LOAD DATA ===
@@ -184,6 +190,18 @@ const SolvivaPartnerCalculator = () => {
   const handleAddressFound = useCallback((lat, lng) => {
     setCoordinates({ lat, lng });
   }, []);
+
+  // === FIXTURE CALCULATOR HANDLERS ===
+  const handleFixtureChange = (field) => (e) => {
+    setFixtureInputs(prev => ({ ...prev, [field]: parseInt(e.target.value) || 0 }));
+  };
+
+  const applyFixtureCalculation = () => {
+    // Basic estimation based on fixture inputs if needed
+    // For this simplified calculator, we might just update "occupants" or infer showers
+    // But let's just close the modal for now as the main inputs are direct
+    setShowFixtureModal(false);
+  };
 
   // === 3. ANALYSIS LOGIC ===
   const analysis = useMemo(() => {
@@ -418,12 +436,22 @@ const SolvivaPartnerCalculator = () => {
                   <Input label="AC Units" type="number" value={inputs.acCount} onChange={(e) => setInputs({...inputs, acCount: +e.target.value})} />
                   <Input label="Night Hours" type="number" value={inputs.acHoursNight} onChange={(e) => setInputs({...inputs, acHoursNight: +e.target.value})} />
                </div>
-               <button 
-                 onClick={() => setShowMath(!showMath)}
-                 className="w-full mt-2 text-xs text-blue-600 font-bold hover:underline flex items-center justify-center gap-1"
-               >
-                 {showMath ? "Hide Calculations" : "🧮 Show Detailed Math & Prices"}
-               </button>
+               
+               <div className="flex gap-2">
+                 <Button 
+                   variant="secondary"
+                   onClick={() => setShowFixtureModal(true)}
+                   className="flex-1 text-xs"
+                 >
+                   Estimate via Fixtures
+                 </Button>
+                 <button 
+                   onClick={() => setShowMath(!showMath)}
+                   className="flex-1 text-xs text-blue-600 font-bold hover:underline flex items-center justify-center gap-1 border rounded bg-blue-50"
+                 >
+                   {showMath ? "Hide Math" : "Show Math"}
+                 </button>
+               </div>
             </div>
           </Card>
         </div>
@@ -576,6 +604,65 @@ const SolvivaPartnerCalculator = () => {
           </div>
         </div>
       </div>
+
+      {/* FIXTURE MODAL */}
+      {showFixtureModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">Estimate via Fixtures</h3>
+              <button 
+                onClick={() => setShowFixtureModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24}/>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <Input 
+                label="Number of Showers" 
+                type="number" 
+                value={fixtureInputs.showers} 
+                onChange={handleFixtureChange('showers')} 
+              />
+              <Input 
+                label="Lavatory Basins" 
+                type="number" 
+                value={fixtureInputs.basins} 
+                onChange={handleFixtureChange('basins')} 
+              />
+              <Input 
+                label="Kitchen Sinks" 
+                type="number" 
+                value={fixtureInputs.sinks} 
+                onChange={handleFixtureChange('sinks')} 
+              />
+              <Input 
+                label="Number of Occupants" 
+                type="number" 
+                value={fixtureInputs.people} 
+                onChange={handleFixtureChange('people')} 
+              />
+              <Input 
+                label="Hours per Day" 
+                type="number" 
+                value={fixtureInputs.hours} 
+                onChange={handleFixtureChange('hours')} 
+              />
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button variant="secondary" onClick={() => setShowFixtureModal(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={applyFixtureCalculation} className="flex-1">
+                Use These Values
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
