@@ -332,64 +332,85 @@ const SolvivaPartnerCalculator = () => {
     const capexSavings = costA - costB_Total;
     
     // --- STEP H: FUEL COST COMPARISONS (CURRENT vs HEAT PUMP) ---
-    // 1. Calculate current annual fuel cost
+    // Calculate current annual fuel cost in PHP
     let currentAnnualFuelCost = 0;
     
     if (inputs.currentHeating === 'electric') {
-      // Electric shower: 3.5kW * shower duration
-      // Assume 10 min shower = 0.167 hours
+      // Electric shower: 3.5kW × 10 min (0.167 hrs) per shower
       const showerEnergyPerUse = inputs.showerPowerKW * 0.167;
       const dailyShowerKWh = showerEnergyPerUse * inputs.showers;
-      const monthlyShowerKWh = dailyShowerKWh * 30;
-      currentAnnualFuelCost = monthlyShowerKWh * 12 * inputs.electricityRate;
+      const annualShowerKWh = dailyShowerKWh * 365;
+      currentAnnualFuelCost = annualShowerKWh * inputs.electricityRate; // PHP
     } else if (inputs.currentHeating === 'lpg') {
       // LPG: ~13.6 kWh per kg, efficiency ~80%
       const kWhPerKg = 13.6 * 0.80;
       const kgNeededDaily = dailyThermalKWh / kWhPerKg;
-      const tanksPerMonth = (kgNeededDaily * 30) / inputs.lpgSize;
-      currentAnnualFuelCost = tanksPerMonth * 12 * inputs.lpgPrice;
+      const kgNeededAnnual = kgNeededDaily * 365;
+      const tanksNeededAnnual = kgNeededAnnual / inputs.lpgSize;
+      currentAnnualFuelCost = tanksNeededAnnual * inputs.lpgPrice; // PHP
     } else if (inputs.currentHeating === 'diesel') {
       // Diesel: ~10 kWh per liter, efficiency ~85%
       const kWhPerLiter = 10 * 0.85;
       const litersDaily = dailyThermalKWh / kWhPerLiter;
-      currentAnnualFuelCost = litersDaily * 365 * inputs.dieselPrice;
+      const litersAnnual = litersDaily * 365;
+      currentAnnualFuelCost = litersAnnual * inputs.dieselPrice; // PHP
     }
     
-    // 2. Heat Pump Annual Cost (Grid + Solar scenario)
+    // 2. Heat Pump Annual Operating Cost (electricity only)
     const hpDailyKWh = dailyThermalKWh / (selectedKarnot.cop || 4.2);
     const hpMonthlyKWh = hpDailyKWh * 30;
     const hpAnnualKWh = hpDailyKWh * 365;
     
-    // Assume solar covers during day, grid at night (conservative)
-    const solarCoveragePercent = 0.70; // 70% solar, 30% grid
+    // Solar covers heat pump during daylight hours (~70% of demand)
+    // Remaining 30% comes from grid
+    const solarCoveragePercent = 0.70;
     const gridKWh = hpAnnualKWh * (1 - solarCoveragePercent);
-    const hpAnnualCost = gridKWh * inputs.electricityRate;
+    const hpAnnualCost = gridKWh * inputs.electricityRate; // PHP
     
-    const annualFuelSavings = currentAnnualFuelCost - hpAnnualCost;
+    // Fuel Savings = What you SAVE by switching from electric/LPG to heat pump
+    const annualFuelSavings = currentAnnualFuelCost - hpAnnualCost; // PHP
     const fiveYearFuelSavings = annualFuelSavings * 5;
     
     // --- STEP I: SOLAR GENERATION VALUE ---
+    // This is the value of electricity the solar system produces
+    // All household loads (AC + base + heat pump) use solar during day
+    const totalDailyLoad = (inputs.baseLoadKW + acTotalKW) * inputs.acHoursNight / 24; // Average daily usage
+    const heatPumpLoad = hpDailyKWh;
+    const totalDailyKWh = (totalDailyLoad * 24) + heatPumpLoad;
+    
+    // Solar generation per month (kW × sun hours × days)
     const monthlyGenB_kWh = (planB?.kW_Cooling_Nominal || 0) * inputs.manualSunHours * 30;
     const annualGenB_kWh = monthlyGenB_kWh * 12;
-    const annualSolarValue = annualGenB_kWh * inputs.electricityRate;
+    
+    // Solar value = amount of grid electricity REPLACED by solar
+    const solarOffsetKWh = Math.min(annualGenB_kWh, totalDailyKWh * 365); // Can't offset more than you use
+    const annualSolarValue = solarOffsetKWh * inputs.electricityRate; // PHP
     const fiveYearSolarValue = annualSolarValue * 5;
     
     // --- STEP J: TOTAL VALUE PROPOSITION ---
-    const fiveYearTotalSavings = capexSavings + fiveYearFuelSavings + fiveYearSolarValue;
+    // CAPEX savings (USD) + Operating savings (PHP converted to USD)
+    const fiveYearOperatingSavings = (fiveYearFuelSavings + fiveYearSolarValue) / 58; // Convert PHP to USD
+    const fiveYearTotalSavings = capexSavings + fiveYearOperatingSavings;
     
     // --- STEP K: FINANCING CALCULATIONS ---
     const downPaymentAmount = costB_Total * (inputs.downPayment / 100);
     const loanAmount = costB_Total - downPaymentAmount;
     const monthlyRate = inputs.interestRate / 100 / 12;
     const numPayments = inputs.loanTermYears * 12;
-    const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
-                          (Math.pow(1 + monthlyRate, numPayments) - 1);
+    const monthlyPayment = loanAmount > 0 
+      ? loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
+      : 0;
     
+    // Monthly savings in PHP
     const monthlySavings = (annualFuelSavings + annualSolarValue) / 12;
-    const netMonthlyCashFlow = monthlySavings - monthlyPayment;
+    // Monthly payment in PHP (convert from USD)
+    const monthlyPaymentPHP = monthlyPayment * 58;
+    const netMonthlyCashFlow = monthlySavings - monthlyPaymentPHP;
     
-    // Simple Payback
-    const simplePayback = costB_Total / (annualFuelSavings + annualSolarValue);
+    // Simple Payback (in years)
+    const totalAnnualSavings = annualFuelSavings + annualSolarValue; // PHP
+    const totalSystemCostPHP = costB_Total * 58; // Convert USD to PHP
+    const simplePayback = totalAnnualSavings > 0 ? totalSystemCostPHP / totalAnnualSavings : 999;
 
     // --- STEP L: SOLVIVA BUSINESS METRICS ---
     // Using actual database pricing
@@ -445,14 +466,17 @@ const SolvivaPartnerCalculator = () => {
       // Solar Value
       monthlyGenB_kWh,
       annualGenB_kWh,
+      solarOffsetKWh,
       annualSolarValue,
       fiveYearSolarValue,
       // Total Value
+      fiveYearOperatingSavings,
       fiveYearTotalSavings,
       // Financing
       downPaymentAmount,
       loanAmount,
       monthlyPayment,
+      monthlyPaymentPHP,
       monthlySavings,
       netMonthlyCashFlow,
       simplePayback,
@@ -955,12 +979,12 @@ const SolvivaPartnerCalculator = () => {
                   </div>
                   <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
                     <div className="text-xs text-yellow-700 mb-1">Fuel Savings</div>
-                    <div className="text-xl font-bold text-yellow-900">₱{(analysis.fiveYearFuelSavings * 58 / 1000).toFixed(0)}K</div>
+                    <div className="text-xl font-bold text-yellow-900">₱{(analysis.fiveYearFuelSavings / 1000).toFixed(0)}K</div>
                     <div className="text-xs text-yellow-600">5 years vs {inputs.currentHeating}</div>
                   </div>
                   <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
                     <div className="text-xs text-orange-700 mb-1">Solar Value</div>
-                    <div className="text-xl font-bold text-orange-900">₱{(analysis.fiveYearSolarValue * 58 / 1000).toFixed(0)}K</div>
+                    <div className="text-xl font-bold text-orange-900">₱{(analysis.fiveYearSolarValue / 1000).toFixed(0)}K</div>
                     <div className="text-xs text-orange-600">Electricity offset</div>
                   </div>
                 </div>
@@ -974,7 +998,7 @@ const SolvivaPartnerCalculator = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle size={16} className="text-green-600 mt-0.5 flex-shrink-0"/>
-                      <span><strong>Positive Cash Flow:</strong> Monthly savings ({(analysis.monthlySavings * 58).toLocaleString()} PHP) exceed loan payment</span>
+                      <span><strong>Positive Cash Flow:</strong> Monthly savings (₱{analysis.monthlySavings.toLocaleString()}) exceed loan payment (₱{analysis.monthlyPaymentPHP.toLocaleString()})</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle size={16} className="text-green-600 mt-0.5 flex-shrink-0"/>
