@@ -9,7 +9,7 @@ import { Card, Input, Button } from '../data/constants.jsx';
 import {
   Zap, MapPin, CheckCircle, AlertTriangle, ArrowRight, 
   Battery, Moon, Sun, DollarSign, Search, FileText, Download,
-  Layers, Edit3, RefreshCw, Save, MousePointer2, Locate
+  Layers, Edit3, RefreshCw, Save, MousePointer2, Locate, Calculator, Info
 } from 'lucide-react';
 
 // --- COMPONENT: ADDRESS SEARCH ---
@@ -65,18 +65,14 @@ const MapEvents = ({ onDragEnd }) => {
   const map = useMap();
   useEffect(() => {
     if (!map) return;
-    
-    // Using 'idle' event ensures we capture the final position after drag OR zoom
     const listener = map.addListener('idle', () => {
       const center = map.getCenter();
       if (center) {
         onDragEnd(center.lat(), center.lng());
       }
     });
-
     return () => google.maps.event.removeListener(listener);
   }, [map, onDragEnd]);
-
   return null;
 };
 
@@ -85,14 +81,14 @@ const SolvivaPartnerCalculator = () => {
   // === STATE ===
   const [solvivaProducts, setSolvivaProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showMath, setShowMath] = useState(false); // TOGGLE FOR DETAILS
   
   // Google Solar Data
   const [coordinates, setCoordinates] = useState({ lat: 16.023497, lng: 120.430082 }); 
   const [addressSearch, setAddressSearch] = useState("Cosmos Farm, Pangasinan"); 
   const [solarData, setSolarData] = useState(null);
   const [fetchingSolar, setFetchingSolar] = useState(false);
-  const [manualMode, setManualMode] = useState(true); 
-
+  
   // Inputs
   const [inputs, setInputs] = useState({
     // Water Heating
@@ -111,10 +107,16 @@ const SolvivaPartnerCalculator = () => {
     // Commercials
     eaasFee: 2000,
     electricityRate: 12.50, 
+    lpgPrice: 1100, // For comparison logic
 
     // Manual Override Defaults
     manualRoofArea: 100, 
-    manualSunHours: 5.5 
+    manualSunHours: 5.5,
+    
+    // Hidden Engineering Assumptions (Exposed in Show Math)
+    inletTemp: 25,
+    targetTemp: 55,
+    heatPumpCOP: 4.2
   });
 
   // === 1. LOAD DATA ===
@@ -149,7 +151,6 @@ const SolvivaPartnerCalculator = () => {
     
     if (data) {
       setSolarData(data);
-      
       let newArea = inputs.manualRoofArea;
       let newSun = inputs.manualSunHours;
 
@@ -165,11 +166,8 @@ const SolvivaPartnerCalculator = () => {
         manualRoofArea: newArea,
         manualSunHours: newSun
       }));
-      setManualMode(true);
-
     } else {
       console.warn("No Data Found.");
-      setManualMode(true);
     }
     setFetchingSolar(false);
   };
@@ -179,20 +177,29 @@ const SolvivaPartnerCalculator = () => {
     return `https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.lat},${coordinates.lng}&zoom=20&size=600x400&maptype=satellite&key=${key}`;
   };
 
-  // Called when Map STOPS moving (Drag End)
   const handleMapIdle = useCallback((lat, lng) => {
-    // Only update if the difference is significant to prevent loops
-    // (Optional optimization, but simple setCoordinates is usually fine here)
     setCoordinates({ lat, lng });
   }, []);
 
-  // Called when Address Search Finds a Location
   const handleAddressFound = useCallback((lat, lng) => {
     setCoordinates({ lat, lng });
   }, []);
 
   // === 3. ANALYSIS LOGIC ===
   const analysis = useMemo(() => {
+    // --- 1. Thermal Physics (Added for transparency) ---
+    // Estimate daily liters based on inputs
+    const litersPerPerson = 50;
+    const litersPerShower = 60; // 10 mins @ 6L/min (eco)
+    const dailyLiters = (inputs.people * litersPerPerson) + (inputs.showers * litersPerShower);
+    
+    const deltaT = inputs.targetTemp - inputs.inletTemp;
+    const dailyThermalKWh = (dailyLiters * deltaT * 1.163) / 1000;
+    
+    // Tank Sizing (Simplified for this calculator)
+    const recommendedTank = Math.ceil(dailyLiters / 100) * 100;
+
+    // --- 2. Solar Sizing ---
     const roofMaxKwp = (inputs.manualRoofArea * 0.180); 
     const sunHours = inputs.manualSunHours;
 
@@ -228,13 +235,13 @@ const SolvivaPartnerCalculator = () => {
     const monthlyBillSavingsA = monthlyGenA_kWh * inputs.electricityRate;
     const monthlyBillSavingsB = monthlyGenB_kWh * inputs.electricityRate;
 
-    const netValueA = monthlyBillSavingsA - costA;
-    const netValueB = monthlyBillSavingsB - costB_Total;
-
     const monthlyAdvantage = costA - costB_Total; 
     const fiveYearSavings = (monthlyAdvantage * 60) + (monthlyBillSavingsB * 60);
 
     return {
+      dailyLiters,
+      dailyThermalKWh,
+      recommendedTank,
       acTotalKW,
       totalSteadyNightLoad,
       peakLoad_A,
@@ -356,120 +363,143 @@ const SolvivaPartnerCalculator = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-6">
+          
+          {/* --- MAP CARD --- */}
           <Card className="bg-white p-5 rounded-xl border border-slate-200">
             <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-              <Moon size={18} className="text-indigo-500"/> 1. Night Load (Battery)
-            </h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="AC Units" type="number" value={inputs.acCount} onChange={(e) => setInputs({...inputs, acCount: +e.target.value})} />
-                <Input label="Size (HP)" type="number" value={inputs.acHorsePower} onChange={(e) => setInputs({...inputs, acHorsePower: +e.target.value})} step="0.5" />
-              </div>
-              <Input label="Night Run Hours" type="number" value={inputs.acHoursNight} onChange={(e) => setInputs({...inputs, acHoursNight: +e.target.value})} />
-              <div className="p-3 bg-indigo-50 rounded text-sm text-indigo-800">
-                <strong>Battery Need:</strong> {analysis.totalSteadyNightLoad.toFixed(1)} kWh
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-white p-5 rounded-xl border border-slate-200">
-            <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-              <Zap size={18} className="text-red-500"/> 2. The Power Spike
-            </h3>
-            <div className="space-y-4">
-              <Input label="Electric Showers" type="number" value={inputs.showers} onChange={(e) => setInputs({...inputs, showers: +e.target.value})} />
-              <div className="p-3 bg-red-50 rounded text-sm text-red-800">
-                <strong>Peak Spike:</strong> {(inputs.showers * inputs.showerPowerKW).toFixed(1)} kW
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-white p-5 rounded-xl border border-slate-200">
-            <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-              <MapPin size={18} className="text-green-500"/> 3. Roof & Solar Data
+              <MapPin size={18} className="text-green-500"/> Site Analysis
             </h3>
             <div className="space-y-3">
-              
-              {/* --- ADDRESS SEARCH BAR --- */}
               <div className="relative mb-2">
                  <input 
                    type="text"
                    value={addressSearch}
                    onChange={(e) => setAddressSearch(e.target.value)}
                    className="w-full p-2 pr-20 border border-slate-300 rounded text-sm"
-                   placeholder="Enter address (e.g. Cosmos Farm, Pangasinan)"
+                   placeholder="Enter address..."
                  />
               </div>
-
-              {/* --- INTERACTIVE MAP CONTAINER --- */}
-              <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 relative mb-3 shadow-inner">
+              <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 relative mb-3 shadow-inner">
                 <APIProvider apiKey={import.meta.env.VITE_GOOGLE_SOLAR_KEY}>
                   <Map
                     style={{width: '100%', height: '100%'}}
-                    defaultCenter={coordinates} // UNLOCKED (Draggable)
+                    defaultCenter={coordinates}
                     defaultZoom={19}
                     mapTypeId="hybrid"
                     gestureHandling={'cooperative'} 
                     disableDefaultUI={false} 
                   >
-                     {/* 1. Allows Searching */}
                      <GeocoderControl address={addressSearch} onLocationFound={handleAddressFound} />
-                     
-                     {/* 2. Moves Map when Inputs Change */}
                      <RecenterMap lat={coordinates.lat} lng={coordinates.lng} />
-
-                     {/* 3. Updates Inputs when Map Dragged */}
                      <MapEvents onDragEnd={handleMapIdle} />
                   </Map>
                 </APIProvider>
-                
                 <div className="absolute bottom-2 left-2 bg-white/90 text-slate-800 text-[10px] px-2 py-1 rounded font-bold flex items-center gap-1 shadow-sm border border-gray-200">
                   <MousePointer2 size={10}/> Drag to adjust
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Input label="Lat" value={coordinates.lat} onChange={(e) => setCoordinates({...coordinates, lat: Number(e.target.value)})} />
-                <Input label="Lng" value={coordinates.lng} onChange={(e) => setCoordinates({...coordinates, lng: Number(e.target.value)})} />
-              </div>
-              
-              <Button onClick={handleSolarLookup} disabled={fetchingSolar} className="w-full flex items-center justify-center gap-2 shadow-lg bg-orange-600 hover:bg-orange-700">
-                {fetchingSolar ? 'Fetching...' : <><RefreshCw size={16}/> UPDATE SOLAR DATA</>}
+              <Button onClick={handleSolarLookup} disabled={fetchingSolar} className="w-full flex items-center justify-center gap-2 shadow-sm bg-slate-800 hover:bg-slate-900">
+                {fetchingSolar ? 'Scanning...' : <><RefreshCw size={16}/> Scan Solar Potential</>}
               </Button>
+            </div>
+          </Card>
 
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                 <div className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-700">
-                    <Edit3 size={16}/> 
-                    <span>Calculation Inputs:</span>
-                 </div>
-                 <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Roof Area (m²)</label>
-                      <input 
-                        type="number" 
-                        value={inputs.manualRoofArea} 
-                        onChange={(e) => setInputs({...inputs, manualRoofArea: +e.target.value})}
-                        className="w-full p-2 border border-slate-300 rounded text-slate-900 font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Sun Hours/Day</label>
-                      <input 
-                        type="number" 
-                        value={inputs.manualSunHours} 
-                        onChange={(e) => setInputs({...inputs, manualSunHours: +e.target.value})}
-                        className="w-full p-2 border border-slate-300 rounded text-slate-900 font-bold bg-yellow-50"
-                      />
-                    </div>
-                  </div>
-              </div>
+          {/* --- INPUTS CARD --- */}
+          <Card className="bg-white p-5 rounded-xl border border-slate-200">
+            <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+              <Edit3 size={18} className="text-blue-500"/> Design Inputs
+            </h3>
+            <div className="space-y-3">
+               <div className="grid grid-cols-2 gap-3">
+                  <Input label="Electric Showers" type="number" value={inputs.showers} onChange={(e) => setInputs({...inputs, showers: +e.target.value})} />
+                  <Input label="Occupants" type="number" value={inputs.people} onChange={(e) => setInputs({...inputs, people: +e.target.value})} />
+               </div>
+               <div className="grid grid-cols-2 gap-3">
+                  <Input label="AC Units" type="number" value={inputs.acCount} onChange={(e) => setInputs({...inputs, acCount: +e.target.value})} />
+                  <Input label="Night Hours" type="number" value={inputs.acHoursNight} onChange={(e) => setInputs({...inputs, acHoursNight: +e.target.value})} />
+               </div>
+               <button 
+                 onClick={() => setShowMath(!showMath)}
+                 className="w-full mt-2 text-xs text-blue-600 font-bold hover:underline flex items-center justify-center gap-1"
+               >
+                 {showMath ? "Hide Calculations" : "🧮 Show Detailed Math & Prices"}
+               </button>
             </div>
           </Card>
         </div>
 
+        {/* === RIGHT COLUMN: FINANCIALS === */}
         <div className="lg:col-span-2 space-y-6">
-          {/* RESULTS COLUMN UNCHANGED */}
+          
+          {/* --- NEW: MATH & PRICING BREAKDOWN --- */}
+          {showMath && (
+            <div className="bg-slate-100 p-4 rounded-xl border border-slate-300 text-sm animate-in fade-in slide-in-from-top-4">
+               <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                 <Calculator size={16}/> Engineering & Pricing Breakdown
+               </h4>
+               <div className="grid grid-cols-3 gap-4">
+                  
+                  {/* COL 1: ASSUMPTIONS */}
+                  <div className="bg-white p-3 rounded border border-slate-200">
+                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">Cost Assumptions</div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>Elec Rate:</span> <span className="font-mono">₱{inputs.electricityRate.toFixed(2)}</span>
+                     </div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>LPG Price:</span> <span className="font-mono">₱{inputs.lpgPrice}</span>
+                     </div>
+                     <div className="flex justify-between py-1">
+                        <span>Karnot Unit:</span> <span className="font-mono">₱{inputs.eaasFee.toLocaleString()}</span>
+                     </div>
+                  </div>
+
+                  {/* COL 2: THERMAL PHYSICS */}
+                  <div className="bg-white p-3 rounded border border-slate-200">
+                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">Thermal Load</div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>Est. Liters:</span> <span className="font-mono">{analysis.dailyLiters.toFixed(0)} L/day</span>
+                     </div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>Temp Lift:</span> <span className="font-mono">{inputs.targetTemp - inputs.inletTemp}°C</span>
+                     </div>
+                     <div className="flex justify-between border-b border-slate-100 py-1">
+                        <span>Energy:</span> <span className="font-mono">{analysis.dailyThermalKWh.toFixed(1)} kWh</span>
+                     </div>
+                     <div className="flex justify-between py-1 font-bold text-blue-600">
+                        <span>Tank Rec:</span> <span className="font-mono">{analysis.recommendedTank} L</span>
+                     </div>
+                  </div>
+
+                  {/* COL 3: SOLVIVA DB LOOKUP */}
+                  <div className="bg-white p-3 rounded border border-slate-200">
+                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">Solviva Database</div>
+                     <div className="space-y-2">
+                        <div>
+                           <div className="text-[10px] text-red-500 font-bold">PLAN A (Large)</div>
+                           <div className="truncate text-xs">{analysis.planA?.name}</div>
+                           <div className="flex justify-between font-mono text-xs">
+                              <span>{analysis.planA?.kW_Cooling_Nominal} kW</span>
+                              <span>₱{analysis.planA?.salesPriceUSD?.toLocaleString()}</span>
+                           </div>
+                        </div>
+                        <div className="border-t border-slate-100 pt-1">
+                           <div className="text-[10px] text-green-600 font-bold">PLAN B (Optimized)</div>
+                           <div className="truncate text-xs">{analysis.planB?.name}</div>
+                           <div className="flex justify-between font-mono text-xs">
+                              <span>{analysis.planB?.kW_Cooling_Nominal} kW</span>
+                              <span>₱{analysis.planB?.salesPriceUSD?.toLocaleString()}</span>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {/* COMPARISON CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* SCENARIO A: SOLAR ONLY */}
             <div className={`p-6 rounded-xl border-2 ${analysis.planAFits ? 'border-red-200 bg-red-50' : 'border-red-500 bg-red-100'}`}>
               <div className="flex justify-between mb-4">
                 <h3 className="font-bold text-slate-700">Scenario A: Status Quo</h3>
@@ -493,6 +523,7 @@ const SolvivaPartnerCalculator = () => {
               </div>
             </div>
 
+            {/* SCENARIO B: PARTNER MODEL */}
             <div className="p-6 rounded-xl border-2 border-green-500 bg-green-50">
               <div className="flex justify-between mb-4">
                 <h3 className="font-bold text-green-800">Scenario B: Partner Model</h3>
