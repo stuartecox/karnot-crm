@@ -71,22 +71,23 @@ const InvestorFinancialModel = () => {
     recoveryHours: 10,           // Hours to heat full tank
 
     // Utility Partnership Model (1882 Energy)
-    equipmentMarginPercent: 15,  // Utility's markup on equipment sale
-    electricityNetMargin: 25,    // Net margin on electricity sales (after generation, T&D)
+    karnotDiscountPercent: 15,   // Karnot's discount to 1882 (1882 pays 85% of retail)
+    utilityMarkupPercent: 0,     // 1882's markup on top of discounted price (0% = sells at retail)
     installationCostPerUnit: 600,
+    electricityNetMargin: 25,    // Net margin on NEW electricity sales (after generation, T&D)
     annualServicePerUnit: 172,   
     externalTankCostPerLiter: 2.50,
 
     // Customer Financing (Utility finances customer)
     customerFinancingTerm: 60,   // Months
-    customerAPR: 9,              // Annual interest rate
+    customerAPR: 9,              // Annual interest rate (customer pays this)
 
     // Revenue Model
     carbonCreditPrice: 15,       // USD per ton CO2
     contractYears: 5,
 
     // Utility Financing (Utility borrows to fund deployments)
-    utilityInterestRate: 8,      // Utility's cost of capital
+    utilityInterestRate: 8,      // Utility's cost of capital (1882 pays this)
     utilityLoanTerm: 5,
 
     // Portfolio
@@ -183,18 +184,24 @@ const InvestorFinancialModel = () => {
     const installationCost = inputs.installationCostPerUnit;
     const tankCost = externalTankCost;
     
-    // Karnot sells to 1882 at full price
-    const karnotSalePrice = equipmentCost + installationCost + tankCost;
+    // Package retail price (what customer sees)
+    const packageRetailPrice = equipmentCost + installationCost + tankCost;
     
-    // 1882 marks up equipment by X% before financing to customer
-    const customerEquipmentPrice = karnotSalePrice * (1 + inputs.equipmentMarginPercent / 100);
-    const equipmentMarginUSD = customerEquipmentPrice - karnotSalePrice;
+    // Karnot gives 1882 a 15% discount
+    const karnotDiscountedPrice = packageRetailPrice * (1 - inputs.karnotDiscountPercent / 100);
     
-    // 1882's upfront cost (what they pay Karnot)
-    const utilityCOGS = karnotSalePrice;
+    // 1882 can add markup (default 0% = sells at retail)
+    const utilityMarkup = karnotDiscountedPrice * (inputs.utilityMarkupPercent / 100);
+    const customerEquipmentPrice = karnotDiscountedPrice + utilityMarkup;
+    
+    // 1882's COGS (what they pay Karnot after discount)
+    const utilityCOGS = karnotDiscountedPrice;
+    
+    // 1882's equipment margin (difference between customer price and COGS)
+    const equipmentMarginUSD = customerEquipmentPrice - utilityCOGS;
 
-    console.log(`Karnot sale: $${karnotSalePrice}, 1882 markup: ${inputs.equipmentMarginPercent}%, Customer pays: $${customerEquipmentPrice}`);
-    console.log(`1882 equipment margin: $${equipmentMarginUSD}`);
+    console.log(`Package retail: $${packageRetailPrice}, Karnot discount: ${inputs.karnotDiscountPercent}%, 1882 COGS: $${utilityCOGS}`);
+    console.log(`Customer pays: $${customerEquipmentPrice}, 1882 margin: $${equipmentMarginUSD}`);
 
     // --- STEP E: CUSTOMER FINANCING ---
     // Customer finances the equipment (with markup) over X months at Y% APR
@@ -277,15 +284,25 @@ const InvestorFinancialModel = () => {
     const total5YearCosts = annualOperatingCosts * inputs.contractYears;
     const netProfit5Year = total5YearRevenue - total5YearCosts;
 
-    // --- STEP K: UTILITY FINANCING COST ---
-    // If utility borrows to fund deployments
-    const utilityDebtPrincipal = utilityCOGS; // What utility actually pays
+    // --- STEP K: UTILITY FINANCING COST & SPREAD REVENUE ---
+    // 1882 borrows to fund deployments at 8%, customers pay 9% = spread profit
+    const utilityDebtPrincipal = utilityCOGS; // What utility actually pays (discounted price)
     const utilityAnnualInterest = utilityDebtPrincipal * (inputs.utilityInterestRate / 100);
     const utilityTotalInterest = utilityAnnualInterest * inputs.utilityLoanTerm;
     const utilityTotalDebtCost = utilityDebtPrincipal + utilityTotalInterest;
+    
+    // Customer financing on RETAIL price (higher principal)
+    const customerDebtPrincipal = customerEquipmentPrice;
+    const customerAnnualInterest = customerDebtPrincipal * (inputs.customerAPR / 100);
+    const customerTotalInterest = customerAnnualInterest * inputs.customerFinancingTerm / 12; // Convert to years
+    
+    // Financing spread revenue (customer pays more interest than 1882 pays)
+    const financingSpreadRevenue = customerTotalInterest - utilityTotalInterest;
 
-    // Net profit after financing
-    const netProfitAfterFinancing = netProfit5Year - utilityTotalInterest;
+    console.log(`Financing spread: Customer pays ${inputs.customerAPR}% on $${customerDebtPrincipal} = $${customerTotalInterest.toFixed(0)}, 1882 pays ${inputs.utilityInterestRate}% on $${utilityDebtPrincipal} = $${utilityTotalInterest.toFixed(0)}, Spread = $${financingSpreadRevenue.toFixed(0)}`);
+
+    // Net profit after financing (now includes financing spread as revenue!)
+    const netProfitAfterFinancing = netProfit5Year - utilityTotalInterest + financingSpreadRevenue;
 
     // --- STEP L: KEY METRICS ---
     // Simple payback (months)
@@ -390,13 +407,15 @@ const InvestorFinancialModel = () => {
       equipmentCost,
       installationCost,
       tankCost,
-      karnotSalePrice,
+      packageRetailPrice,
+      karnotDiscountedPrice,
       customerEquipmentPrice,
       equipmentMarginUSD,
       utilityCOGS,
       utilityDebtPrincipal,
       utilityTotalInterest,
       utilityTotalDebtCost,
+      financingSpreadRevenue,
 
       // Utility Revenue
       upfrontEquipmentMargin,
@@ -696,20 +715,20 @@ const InvestorFinancialModel = () => {
                     <span className="font-semibold">{fmtUSD(calculations.tankCost)}</span>
                   </div>
                   <div className="flex justify-between py-3 bg-purple-50 rounded-lg px-3 -mx-3">
-                    <span className="font-bold text-gray-800">Karnot Sale Price</span>
-                    <span className="font-bold text-purple-600 text-lg">{fmtUSD(calculations.karnotSalePrice)}</span>
+                    <span className="font-bold text-gray-800">Package Retail Price</span>
+                    <span className="font-bold text-purple-600 text-lg">{fmtUSD(calculations.packageRetailPrice)}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">1882 Markup ({inputs.equipmentMarginPercent}%)</span>
-                    <span className="font-semibold text-green-600">{fmtUSD(calculations.equipmentMarginUSD)}</span>
+                    <span className="text-gray-600">Karnot Discount ({inputs.karnotDiscountPercent}%)</span>
+                    <span className="font-semibold text-green-600">-{fmtUSD(calculations.packageRetailPrice - calculations.karnotDiscountedPrice)}</span>
                   </div>
                   <div className="flex justify-between py-3 bg-blue-50 rounded-lg px-3 -mx-3">
-                    <span className="font-bold text-gray-800">Customer Pays</span>
-                    <span className="font-bold text-blue-600 text-lg">{fmtUSD(calculations.customerEquipmentPrice)}</span>
+                    <span className="font-bold text-gray-800">1882 COGS (Discounted)</span>
+                    <span className="font-bold text-blue-600 text-lg">{fmtUSD(calculations.utilityCOGS)}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">1882 COGS (upfront)</span>
-                    <span className="font-semibold text-red-600">{fmtUSD(calculations.utilityCOGS)}</span>
+                    <span className="text-gray-600">Customer Pays (Retail)</span>
+                    <span className="font-semibold">{fmtUSD(calculations.customerEquipmentPrice)}</span>
                   </div>
                   <div className="flex justify-between py-3 bg-green-50 rounded-lg px-3 -mx-3 mt-2">
                     <span className="font-bold text-gray-800">Equipment Margin</span>
@@ -723,8 +742,9 @@ const InvestorFinancialModel = () => {
                 <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Annual Revenue Per Unit</h4>
                 <div className="space-y-2">
                   <div className="p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border-l-4 border-blue-500">
-                    <div className="text-xs font-bold text-blue-600 uppercase">1. Electricity Profit</div>
+                    <div className="text-xs font-bold text-blue-600 uppercase">1. Electricity Profit (NEW Sales)</div>
                     <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualElectricityProfitUSD)}<span className="text-sm text-gray-500">/year ({inputs.electricityNetMargin}%)</span></div>
+                    <div className="text-xs text-gray-600 mt-1">Customer switches LPG → Electric</div>
                   </div>
                   <div className="p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border-l-4 border-purple-500">
                     <div className="text-xs font-bold text-purple-600 uppercase">2. Service Revenue</div>
@@ -733,6 +753,11 @@ const InvestorFinancialModel = () => {
                   <div className="p-3 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-lg border-l-4 border-emerald-500">
                     <div className="text-xs font-bold text-emerald-600 uppercase">3. Carbon Credits</div>
                     <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualCarbonRevenueUSD)}<span className="text-sm text-gray-500">/year</span></div>
+                  </div>
+                  <div className="p-3 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border-l-4 border-orange-500">
+                    <div className="text-xs font-bold text-orange-600 uppercase">4. Financing Spread (5yr)</div>
+                    <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.financingSpreadRevenue)}<span className="text-sm text-gray-500"> total</span></div>
+                    <div className="text-xs text-gray-600 mt-1">Customer 9% - 1882 8% = 1% spread</div>
                   </div>
                   <div className="p-3 bg-gradient-to-r from-red-50 to-red-100 rounded-lg border-l-4 border-red-500">
                     <div className="text-xs font-bold text-red-600 uppercase">Operating Costs</div>
@@ -980,27 +1005,31 @@ const InvestorFinancialModel = () => {
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>1882 buys heat pumps from Karnot at full price, marks up {inputs.equipmentMarginPercent}% to customer</span>
+                <span><strong>Karnot gives 15% discount</strong> - 1882 buys at 85% of retail price</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>Customer finances equipment over {inputs.customerFinancingTerm} months @ {inputs.customerAPR}% (still saves money vs LPG)</span>
+                <span><strong>1882 sells at retail</strong> - Customer pays full price, gets {inputs.customerFinancingTerm}mo @ {inputs.customerAPR}%</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>NEW electricity demand:</strong> Customer now uses heat pump instead of LPG</span>
+                <span><strong>NEW electricity sales!</strong> Customer switches LPG → Electric heat pump</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>1882 earns {inputs.electricityNetMargin}% net margin on new electricity sales (based on AboitizPower margins)</span>
+                <span>1882 earns {inputs.electricityNetMargin}% margin on NEW demand (based on AboitizPower margins)</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>Recurring service + carbon revenue for {inputs.contractYears} years</span>
+                <span><strong>Financing spread:</strong> Customer pays {inputs.customerAPR}%, 1882 borrows @ {inputs.utilityInterestRate}%</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Cross-sell Solviva solar</strong> to {inputs.solvivaConversionRate}% of customers (group synergy)</span>
+                <span>Service + carbon revenue for {inputs.contractYears} years</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                <span><strong>Solviva solar cross-sell</strong> to {inputs.solvivaConversionRate}% of customers</span>
               </li>
             </ul>
           </div>
@@ -1009,19 +1038,23 @@ const InvestorFinancialModel = () => {
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Equipment margin:</strong> {fmtUSD(calculations.upfrontEquipmentMargin)} upfront</span>
+                <span><strong>Equipment margin:</strong> {fmtUSD(calculations.upfrontEquipmentMargin)} upfront (15% discount)</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Electricity profit:</strong> {fmtUSD(calculations.annualElectricityProfitUSD)}/year ({inputs.electricityNetMargin}% margin)</span>
+                <span><strong>Electricity profit:</strong> {fmtUSD(calculations.annualElectricityProfitUSD)}/year ({inputs.electricityNetMargin}% on NEW sales)</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Service revenue:</strong> {fmtUSD(calculations.annualServiceRevenue)}/year</span>
+                <span><strong>Financing spread:</strong> {fmtUSD(calculations.financingSpreadRevenue)} over 5yr (1% spread)</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Carbon credits:</strong> {fmtUSD(calculations.annualCarbonRevenueUSD)}/year</span>
+                <span><strong>Service:</strong> {fmtUSD(calculations.annualServiceRevenue)}/year</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                <span><strong>Carbon:</strong> {fmtUSD(calculations.annualCarbonRevenueUSD)}/year</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
