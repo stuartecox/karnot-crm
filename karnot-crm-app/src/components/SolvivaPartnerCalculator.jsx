@@ -271,7 +271,7 @@ const SolvivaPartnerCalculator = () => {
     }
 
     // --- STEP C: TANK MATH ---
-    const requiredTotalVolume = Math.round.ceil(dailyLiters / 100) * 100;
+    const requiredTotalVolume = Math.round(dailyLiters / 100) * 100;
     
     let integratedTankVolume = selectedKarnot.tankVolume || 0;
     if (!integratedTankVolume) {
