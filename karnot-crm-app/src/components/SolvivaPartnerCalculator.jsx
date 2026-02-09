@@ -431,88 +431,79 @@ const monthlyAdvantage_Customer = netMonthlyCost_SolarOnly - netMonthlyCost_Part
 
 // THEN your return statement
 return {
-      // Thermal
-      dailyLiters, 
-      dailyThermalKWh, 
-      requiredRecoveryKW,
-      // Machine
-      selectedKarnot, 
-      hpInputKW,
-      hpDailyKWh,
-      hpMonthlyKWh,
-      hpAnnualKWh,
-      // Tank
-      requiredTotalVolume, 
-      integratedTankVolume, 
-      externalTankNeeded,
-      externalTankCost,
-      // Electrical
-      peakLoad_A, 
-      peakLoad_B,
-      showerPeakKW,
-      // Solar
-      planA, 
-      planB, 
-      panelsA, 
-      panelsB, 
-      panelsSaved,
-      // Costs
-      costA, 
-      costB_Total, 
-      costKarnot,
-      installationCost,
-      capexSavings,
-      // Fuel Economics
-      currentAnnualFuelCost,
-      hpAnnualCost,
-      annualFuelSavings,
-      fiveYearFuelSavings,
-      // Solar Value
-      monthlyGenB_kWh,
-      annualGenB_kWh,
-      solarOffsetKWh,
-      annualSolarValue,
-      fiveYearSolarValue,
-      // Total Value
-      fiveYearOperatingSavings,
-      fiveYearTotalSavings,
-      // Financing
-      downPaymentAmount,
-      loanAmount,
-      monthlyPayment,
-      monthlyPaymentPHP,
-      monthlySavings,
-      netMonthlyCashFlow,
-      simplePayback,
-      // Solviva Metrics
-      solvivaUnitMargin,
-      karnotCommission,
-      installationRevenue,
-      annualServiceRevenue,
-      fiveYearServiceRevenue,
-      totalPartnerRevenueUpfront,
-      totalPartnerRevenueFiveYear,
-      revenueIncrease
-      // Around line 420, BEFORE "// Solviva Monthly Payments"
-      monthlySavings: Math.round(monthlySavings),
-      monthlyPaymentPHP: Math.round(monthlyPayment * 58),
-      netMonthlyCashFlow: Math.round(monthlySavings - (monthlyPayment * 58)),
-      simplePayback: Math.round((costB_Total * 58) / (annualFuelSavings + annualSolarValue) * 10) / 10,
-
-      // Solviva Business Metrics
-      solvivaUnitMargin: Math.round(costB_Solar * 0.35),
-      karnotCommission: Math.round(costKarnot * 0.15),
-      installationRevenue: Math.round(installationCost * 0.20),
-      annualServiceRevenue: Math.round(inputs.annualServicePerUnit),
-      fiveYearServiceRevenue: Math.round(inputs.annualServicePerUnit * 5),
-      totalPartnerRevenueUpfront: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)),
-      totalPartnerRevenueFiveYear: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20) + (inputs.annualServicePerUnit * 5)),
-      revenueIncrease: Math.round(((((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)) / (costA * 0.35)) - 1) * 100),
-
-      // Solviva Monthly Payments (your existing code is fine here)
-  },
+  // Thermal
+  dailyLiters: Math.round(dailyLiters), 
+  dailyThermalKWh: Math.round(dailyThermalKWh * 10) / 10, 
+  requiredRecoveryKW: Math.round(requiredRecoveryKW * 10) / 10,
+  // Machine
+  selectedKarnot, 
+  hpInputKW: Math.round(hpInputKW * 100) / 100,
+  hpDailyKWh: Math.round(hpDailyKWh * 10) / 10,
+  hpMonthlyKWh: Math.round(hpMonthlyKWh),
+  hpAnnualKWh: Math.round(hpAnnualKWh),
+  // Tank
+  requiredTotalVolume, 
+  integratedTankVolume, 
+  externalTankNeeded,
+  externalTankCost: Math.round(externalTankCost),
+  // Electrical
+  peakLoad_A: Math.round(peakLoad_A * 10) / 10, 
+  peakLoad_B: Math.round(peakLoad_B * 10) / 10,
+  showerPeakKW: Math.round(showerPeakKW * 10) / 10,
+  // Solar
+  planA, 
+  planB, 
+  panelsA, 
+  panelsB, 
+  panelsSaved,
+  // Costs
+  costA: Math.round(costA), 
+  costB_Total: Math.round(costB_Total), 
+  costKarnot: Math.round(costKarnot),
+  installationCost: Math.round(installationCost),
+  capexSavings: Math.round(capexSavings),
+  // Fuel Economics
+  currentAnnualFuelCost: Math.round(currentAnnualFuelCost),
+  hpAnnualCost: Math.round(hpAnnualCost),
+  annualFuelSavings: Math.round(annualFuelSavings),
+  fiveYearFuelSavings: Math.round(fiveYearFuelSavings),
+  // Solar Value
+  monthlyGenB_kWh: Math.round(monthlyGenB_kWh),
+  annualGenB_kWh: Math.round(annualGenB_kWh),
+  solarOffsetKWh: Math.round(solarOffsetKWh),
+  annualSolarValue: Math.round(annualSolarValue),
+  fiveYearSolarValue: Math.round(fiveYearSolarValue),
+  // Total Value
+  fiveYearOperatingSavings: Math.round(fiveYearOperatingSavings),
+  fiveYearTotalSavings: Math.round(fiveYearTotalSavings),
+  // Traditional Financing
+  downPaymentAmount: Math.round(downPaymentAmount),
+  loanAmount: Math.round(loanAmount),
+  monthlyPayment: Math.round(monthlyPayment),
+  monthlyPaymentPHP: Math.round(monthlyPayment * 58),
+  monthlySavings: Math.round((annualFuelSavings + annualSolarValue) / 12),
+  netMonthlyCashFlow: Math.round(((annualFuelSavings + annualSolarValue) / 12) - (monthlyPayment * 58)),
+  simplePayback: Math.round((costB_Total * 58) / (annualFuelSavings + annualSolarValue) * 10) / 10,
+  // Solviva Business Metrics
+  solvivaUnitMargin: Math.round(costB_Solar * 0.35),
+  karnotCommission: Math.round(costKarnot * 0.15),
+  installationRevenue: Math.round(installationCost * 0.20),
+  annualServiceRevenue: Math.round(inputs.annualServicePerUnit),
+  fiveYearServiceRevenue: Math.round(inputs.annualServicePerUnit * 5),
+  totalPartnerRevenueUpfront: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)),
+  totalPartnerRevenueFiveYear: Math.round((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20) + (inputs.annualServicePerUnit * 5)),
+  revenueIncrease: Math.round(((((costB_Solar * 0.35) + (costKarnot * 0.15) + (installationCost * 0.20)) / (costA * 0.35)) - 1) * 100),
+  // Solviva Monthly Payments
+  monthlyPayment_SolarOnly: Math.round(monthlyPayment_SolarOnly),
+  monthlyPayment_Partner_Total: Math.round(monthlyPayment_Partner_Total),
+  residualBill_SolarOnly: Math.round(residualBill_SolarOnly),
+  residualBill_Partner: Math.round(residualBill_Partner),
+  netMonthlyCost_SolarOnly: Math.round(netMonthlyCost_SolarOnly),
+  netMonthlyCost_Partner: Math.round(netMonthlyCost_Partner),
+  monthlyAdvantage_Customer: Math.round(monthlyAdvantage_Customer),
+};
   
-  [inputs, solvivaProducts, karnotProducts]); 
+}, [inputs, solvivaProducts, karnotProducts]); 
 
   // === 4. ENHANCED PDF GENERATOR ===
   const generatePDFReport = () => {
@@ -992,7 +983,7 @@ return {
     </div>
   </div>
   <div className="bg-yellow-100 p-4 mt-4 rounded text-center">
-    <<div className="text-2xl font-bold">₱{Math.round(analysis.monthlyAdvantage_Customer)}/month savings</div>
+    <div className="text-2xl font-bold">₱{Math.round(analysis.monthlyAdvantage_Customer)}/month savings</div>
   </div>
 </div>
          
