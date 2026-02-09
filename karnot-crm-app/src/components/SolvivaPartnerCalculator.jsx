@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { fetchSolarPotential } from '../utils/googleSolar';
-import { calculateHeatPump, calculateFixtureDemand } from '../utils/heatPumpLogic'; 
+import { calculateFixtureDemand } from '../utils/heatPumpLogic'; 
 import html2pdf from 'html2pdf.js';
 import { APIProvider, Map, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Card, Input, Button } from '../data/constants.jsx';
@@ -284,46 +284,53 @@ const SolvivaPartnerCalculator = () => {
 
   // === 3. COMPREHENSIVE ANALYSIS LOGIC ===
   const analysis = useMemo(() => {
-    // --- STEP A: USE HEAT PUMP CALCULATOR FOR PROPER PRODUCT SELECTION ---
-    const heatPumpInputs = {
-      currency: 'USD',
-      userType: 'home',
-      homeOccupants: inputs.people,
-      dailyLitersInput: (inputs.people * 50) + (inputs.showers * 60),
-      heatingType: inputs.currentHeating,
-      fuelPrice: inputs.electricityRate,
-      elecRate: inputs.electricityRate,
-      lpgPrice: inputs.lpgPrice,
-      lpgSize: inputs.lpgSize,
-      dieselPrice: inputs.dieselPrice,
-      ambientTemp: 30,
-      inletTemp: inputs.inletTemp,
-      targetTemp: inputs.targetTemp,
-      systemType: 'grid-solar',
-      sunHours: inputs.manualSunHours,
-      heatPumpType: 'all',
-      includeCooling: false
-    };
-
-    const heatPumpResult = calculateHeatPump(heatPumpInputs, karnotProducts);
+    // --- STEP A: SIZE THE THERMAL LOAD (FROM DATABASE ONLY) ---
+    const dailyLiters = (inputs.people * 50) + (inputs.showers * 60);
     
-    if (!heatPumpResult || !heatPumpResult.selectedProduct) {
+    const deltaT = inputs.targetTemp - inputs.inletTemp;
+    const dailyThermalKWh = (dailyLiters * deltaT * 1.163) / 1000;
+    
+    const requiredRecoveryKW = dailyThermalKWh / inputs.recoveryHours;
+
+    // --- STEP B: SELECT THE MACHINE (DIRECTLY FROM DATABASE) ---
+    // Find the smallest Karnot unit that meets the required Recovery KW
+    let selectedKarnot = karnotProducts.find(p => (p.kW_DHW_Nominal || p.kW || 0) >= requiredRecoveryKW);
+    
+    // If no product meets requirement, use the largest available
+    if (!selectedKarnot && karnotProducts.length > 0) {
+      selectedKarnot = karnotProducts[karnotProducts.length - 1];
+    }
+    
+    // If still no products (empty database), show error state
+    if (!selectedKarnot) {
       return {
         error: true,
-        message: "No suitable Karnot heat pump found in database. Please ensure products have correct kW_DHW_Nominal values.",
-        dailyLiters: heatPumpInputs.dailyLitersInput
+        message: "No Karnot heat pump products found in database. Please add products in Product Manager.",
+        dailyLiters, 
+        dailyThermalKWh, 
+        requiredRecoveryKW
       };
     }
 
-    const selectedKarnot = heatPumpResult.selectedProduct;
-    const dailyLiters = heatPumpResult.dailyLiters;
-    const dailyThermalKWh = heatPumpResult.dailyThermalKWh;
-    const requiredRecoveryKW = heatPumpResult.requiredRecoveryKW;
-    const integratedTankVolume = heatPumpResult.integratedTankVolume || 0;
-    const externalTankNeeded = heatPumpResult.externalTankNeeded || 0;
-    const externalTankCost = heatPumpResult.externalTankCost || 0;
+    // --- STEP C: TANK MATH (FROM DATABASE PRODUCT) ---
+    const requiredTotalVolume = Math.round(dailyLiters / 100) * 100;
+    
+    // Get integrated tank volume from database product
+    let integratedTankVolume = selectedKarnot.tankVolume || 0;
+    
+    // Fallback: parse from product name if tankVolume field not set
+    if (!integratedTankVolume && selectedKarnot.name) {
+        if (selectedKarnot.name.includes("200L") || selectedKarnot.name.includes("200 L")) {
+          integratedTankVolume = 200;
+        } else if (selectedKarnot.name.includes("300L") || selectedKarnot.name.includes("300 L")) {
+          integratedTankVolume = 300;
+        }
+    }
+    
+    const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
+    const externalTankCost = externalTankNeeded * inputs.externalTankCostPerLiter;
 
-    // --- STEP B: ELECTRICAL LOADS (SCENARIO A vs B) ---
+    // --- STEP D: ELECTRICAL LOADS (SCENARIO A vs B) ---
     const kwPerHP = 0.85; 
     const acTotalKW = inputs.acCount * inputs.acHorsePower * kwPerHP;
     
@@ -335,7 +342,7 @@ const SolvivaPartnerCalculator = () => {
     const hpInputKW = (selectedKarnot.kW_DHW_Nominal || 3.5) / (selectedKarnot.cop || 4.2);
     const peakLoad_B = inputs.baseLoadKW + acTotalKW + hpInputKW;         
     
-    // --- STEP C: SELECT SOLVIVA SYSTEMS USING PRICING TABLES ---
+    // --- STEP E: SELECT SOLVIVA SYSTEMS USING PRICING TABLES ---
     const targetInverterA = peakLoad_A * 1.2;
     const targetInverterB = peakLoad_B * 1.2;
 
@@ -360,12 +367,12 @@ const SolvivaPartnerCalculator = () => {
       };
     }
 
-    // --- STEP D: PANEL COUNTS ---
+    // --- STEP F: PANEL COUNTS ---
     const panelsA = Math.ceil(systemSize_A * 1000 / inputs.panelWattage);
     const panelsB = Math.ceil(systemSize_B * 1000 / inputs.panelWattage);
     const panelsSaved = Math.max(0, panelsA - panelsB);
 
-    // --- STEP E: TOTAL PROJECT COSTS ---
+    // --- STEP G: TOTAL PROJECT COSTS ---
     const costA = planA?.salesPriceUSD || 0;
     const costB_Solar = planB?.salesPriceUSD || 0;
     const costKarnot = selectedKarnot.salesPriceUSD || 0;
@@ -375,7 +382,7 @@ const SolvivaPartnerCalculator = () => {
     // CAPEX Comparison
     const capexSavings = costA - costB_Total;
     
-    // --- STEP F: FUEL COST COMPARISONS ---
+    // --- STEP H: FUEL COST COMPARISONS ---
     let currentAnnualFuelCost = 0;
     
     if (inputs.currentHeating === 'electric') {
@@ -407,7 +414,7 @@ const SolvivaPartnerCalculator = () => {
     const annualFuelSavings = currentAnnualFuelCost - hpAnnualCost;
     const fiveYearFuelSavings = annualFuelSavings * 5;
     
-    // --- STEP G: SOLAR GENERATION VALUE ---
+    // --- STEP I: SOLAR GENERATION VALUE ---
     const totalDailyLoad = (inputs.baseLoadKW + acTotalKW) * inputs.acHoursNight / 24;
     const heatPumpLoad = hpDailyKWh;
     const totalDailyKWh = (totalDailyLoad * 24) + heatPumpLoad;
@@ -419,11 +426,11 @@ const SolvivaPartnerCalculator = () => {
     const annualSolarValue = solarOffsetKWh * inputs.electricityRate;
     const fiveYearSolarValue = annualSolarValue * 5;
     
-    // --- STEP H: TOTAL VALUE PROPOSITION ---
+    // --- STEP J: TOTAL VALUE PROPOSITION ---
     const fiveYearOperatingSavings = (fiveYearFuelSavings + fiveYearSolarValue) / 58;
     const fiveYearTotalSavings = capexSavings + fiveYearOperatingSavings;
     
-    // --- STEP I: TRADITIONAL FINANCING ---
+    // --- STEP K: TRADITIONAL FINANCING ---
     const downPaymentAmount = costB_Total * (inputs.downPayment / 100);
     const loanAmount = costB_Total - downPaymentAmount;
     const monthlyRate = inputs.interestRate / 100 / 12;
@@ -432,7 +439,7 @@ const SolvivaPartnerCalculator = () => {
       ? loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
       : 0;
 
-    // --- STEP J: SOLVIVA MONTHLY PAYMENT MODEL (NEW) ---
+    // --- STEP L: SOLVIVA MONTHLY PAYMENT MODEL ---
     // Scenario A: Solar Only - direct lookup from pricing table
     const monthlyPayment_SolarOnly_PHP = solvivaPayment_A;
     const monthlyPayment_SolarOnly_USD = Math.round(monthlyPayment_SolarOnly_PHP / 58);
@@ -471,7 +478,7 @@ const SolvivaPartnerCalculator = () => {
       hpMonthlyKWh: Math.round(hpMonthlyKWh),
       hpAnnualKWh: Math.round(hpAnnualKWh),
       // Tank
-      requiredTotalVolume: heatPumpResult.requiredTotalVolume || Math.round(dailyLiters / 100) * 100, 
+      requiredTotalVolume: Math.round(dailyLiters / 100) * 100, 
       integratedTankVolume, 
       externalTankNeeded,
       externalTankCost: Math.round(externalTankCost),
