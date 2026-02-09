@@ -1111,6 +1111,59 @@ const SolvivaPartnerCalculator = () => {
             </button>
             {showCustomerBenefits && (
               <div className="p-6 space-y-4">
+                
+                {/* DETAILED FINANCIAL CALCULATIONS */}
+                <div className="bg-slate-50 p-4 rounded-lg border-2 border-slate-200">
+                  <h4 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
+                    <Calculator size={16}/> Detailed Financial Calculations
+                  </h4>
+                  
+                  {/* Heat Pump Financing */}
+                  <div className="bg-white p-3 rounded-lg mb-3">
+                    <div className="text-xs font-bold text-orange-600 mb-2">HEAT PUMP FINANCING</div>
+                    <div className="space-y-1 text-xs font-mono">
+                      <div className="flex justify-between"><span>Heat Pump ({analysis.selectedKarnot.name}):</span><span className="font-bold">${analysis.costKarnot.toLocaleString()}</span></div>
+                      <div className="flex justify-between"><span>External Tank ({analysis.externalTankNeeded}L @ $2.50/L):</span><span className="font-bold">${analysis.externalTankCost.toLocaleString()}</span></div>
+                      <div className="flex justify-between"><span>Installation:</span><span className="font-bold">${analysis.installationCost.toLocaleString()}</span></div>
+                      <div className="flex justify-between border-t pt-1 mt-1"><span className="font-bold">Total:</span><span className="font-bold text-orange-600">${(analysis.costKarnot + analysis.externalTankCost + analysis.installationCost).toLocaleString()}</span></div>
+                      <div className="flex justify-between text-[10px] text-slate-500 mt-2"><span>Financing: {inputs.solvivaFinancingTerm} months @ 9% APR</span><span className="font-bold">₱{analysis.monthlyPayment_HeatPump_PHP.toLocaleString()}/mo</span></div>
+                    </div>
+                  </div>
+
+                  {/* Solar Packages */}
+                  <div className="bg-white p-3 rounded-lg mb-3">
+                    <div className="text-xs font-bold text-blue-600 mb-2">SOLVIVA SOLAR PACKAGES ({inputs.solvivaFinancingTerm} months)</div>
+                    <div className="space-y-1 text-xs font-mono">
+                      <div className="flex justify-between"><span>Solar Only ({analysis.systemSize_A} kWp):</span><span className="font-bold text-red-600">₱{analysis.monthlyPayment_SolarOnly_PHP.toLocaleString()}/mo</span></div>
+                      <div className="flex justify-between"><span>Partner Solar ({analysis.systemSize_B} kWp):</span><span className="font-bold text-green-600">₱{analysis.monthlyPayment_Solar_PHP.toLocaleString()}/mo</span></div>
+                    </div>
+                  </div>
+
+                  {/* Total Monthly Costs */}
+                  <div className="bg-white p-3 rounded-lg">
+                    <div className="text-xs font-bold text-purple-600 mb-2">TOTAL MONTHLY COSTS</div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                      <div className="bg-red-50 p-2 rounded"><div className="font-bold text-red-600 mb-1">Solar Only</div><div className="space-y-0.5"><div className="flex justify-between"><span>Solviva:</span><span>₱{analysis.monthlyPayment_SolarOnly_PHP.toLocaleString()}</span></div><div className="flex justify-between"><span>Grid:</span><span>₱{analysis.residualBill_SolarOnly.toLocaleString()}</span></div><div className="flex justify-between border-t pt-0.5 font-bold"><span>Total:</span><span>₱{analysis.netMonthlyCost_SolarOnly.toLocaleString()}</span></div></div></div>
+                      <div className="bg-green-50 p-2 rounded"><div className="font-bold text-green-600 mb-1">Partner Model</div><div className="space-y-0.5"><div className="flex justify-between"><span>Solar:</span><span>₱{analysis.monthlyPayment_Solar_PHP.toLocaleString()}</span></div><div className="flex justify-between"><span>Heat Pump:</span><span>₱{analysis.monthlyPayment_HeatPump_PHP.toLocaleString()}</span></div><div className="flex justify-between"><span>Grid:</span><span>₱{analysis.residualBill_Partner.toLocaleString()}</span></div><div className="flex justify-between border-t pt-0.5 font-bold"><span>Total:</span><span>₱{analysis.netMonthlyCost_Partner.toLocaleString()}</span></div></div></div>
+                    </div>
+                    <div className="mt-2 p-2 bg-yellow-50 rounded text-center"><div className="text-[10px] text-yellow-700">Monthly Savings</div><div className="text-lg font-bold text-yellow-900">₱{analysis.monthlyAdvantage_Customer.toLocaleString()}</div></div>
+                  </div>
+
+                  {/* 5-Year Breakdown */}
+                  <div className="bg-white p-3 rounded-lg mt-3">
+                    <div className="text-xs font-bold text-indigo-600 mb-2">5-YEAR VALUE</div>
+                    <div className="space-y-1 text-xs font-mono">
+                      <div className="flex justify-between"><span>CAPEX Savings:</span><span>₱{(analysis.capexSavings * 58).toLocaleString()}</span></div>
+                      <div className="text-[10px] text-slate-500 pl-4">Solar A: ${analysis.costA.toLocaleString()} vs B: ${analysis.costB_Total.toLocaleString()}</div>
+                      <div className="flex justify-between mt-1"><span>Fuel Savings (5yr):</span><span>₱{analysis.fiveYearFuelSavings.toLocaleString()}</span></div>
+                      <div className="text-[10px] text-slate-500 pl-4">₱{analysis.annualFuelSavings.toLocaleString()}/yr × 5</div>
+                      <div className="flex justify-between mt-1"><span>Solar Value (5yr):</span><span>₱{analysis.fiveYearSolarValue.toLocaleString()}</span></div>
+                      <div className="text-[10px] text-slate-500 pl-4">{analysis.annualGenB_kWh.toLocaleString()} kWh/yr × ₱{inputs.electricityRate} × 5</div>
+                      <div className="flex justify-between border-t-2 pt-1 mt-2 font-bold text-indigo-900"><span>TOTAL:</span><span className="text-lg">₱{((analysis.capexSavings * 58) + analysis.fiveYearFuelSavings + analysis.fiveYearSolarValue).toLocaleString()}</span></div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
                     <div className="text-xs text-green-700 mb-1">CAPEX Advantage</div>
