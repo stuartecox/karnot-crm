@@ -66,35 +66,39 @@ const InvestorFinancialModel = () => {
     // Customer Profile
     heatingType: 'lpg',          
     lpgPricePerBottle: 950,      
-    dailyLitersHotWater: 1500,   
+    dailyLitersHotWater: 2700,   
     electricityRate: 12.25,      
-    recoveryHours: 10,           // Hours to heat full tank
+    recoveryHours: 10,
 
-    // Utility Partnership Model (1882 Energy)
+    // Energy-as-a-Service Model (1882 Energy)
+    savingsSplitUtility: 75,     // 1882 takes 75% of customer savings as subscription
+    savingsSplitCustomer: 25,    // Customer keeps 25% of savings
     karnotDiscountPercent: 15,   // Karnot's discount to 1882 (1882 pays 85% of retail)
-    utilityMarkupPercent: 0,     // 1882's markup on top of discounted price (0% = sells at retail)
     installationCostPerUnit: 600,
     electricityNetMargin: 25,    // Net margin on NEW electricity sales (after generation, T&D)
     annualServicePerUnit: 172,   
     externalTankCostPerLiter: 2.50,
 
-    // Customer Financing (Utility finances customer)
-    customerFinancingTerm: 60,   // Months
-    customerAPR: 9,              // Annual interest rate (customer pays this)
+    // Solviva Solar Cross-Sell (NEW!)
+    solvivaConversionRate: 40,   // % of customers who add solar (higher with savings pitch!)
+    solvivaAvgSystemSize: 6.1,   // kWp average system
+    solvivaAvgSystemPrice: 3500, // USD per system
+    solvivaReferralFee: 10,      // % referral fee to 1882
+    
+    // Regional Expansion (NEW Philippine rules)
+    canQuoteOutsideRegion: true, // New regulations allow cross-region sales
+    targetRegions: ['NCR', 'Region III', 'Region IV-A'], // Luzon focus
 
     // Revenue Model
     carbonCreditPrice: 15,       // USD per ton CO2
     contractYears: 5,
 
-    // Utility Financing (Utility borrows to fund deployments)
-    utilityInterestRate: 8,      // Utility's cost of capital (1882 pays this)
+    // Utility Financing (1882 borrows to fund deployments)
+    utilityInterestRate: 8,      // 1882's cost of capital
     utilityLoanTerm: 5,
 
     // Portfolio
     portfolioUnits: 250,
-    
-    // Solviva Solar Cross-Sell
-    solvivaConversionRate: 30,   // % of customers who add solar
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -179,75 +183,65 @@ const InvestorFinancialModel = () => {
     const externalTankNeeded = Math.max(0, requiredTotalVolume - integratedTankVolume);
     const externalTankCost = externalTankNeeded * inputs.externalTankCostPerLiter;
 
-    // --- STEP D: UTILITY INVESTMENT & PRICING ---
+    // --- STEP D: UTILITY INVESTMENT (1882 OWNS EQUIPMENT) ---
     const equipmentCost = heatPumpPriceUSD;
     const installationCost = inputs.installationCostPerUnit;
     const tankCost = externalTankCost;
     
-    // Package retail price (what customer sees)
+    // Package retail price (before Karnot discount)
     const packageRetailPrice = equipmentCost + installationCost + tankCost;
     
     // Karnot gives 1882 a 15% discount
-    const karnotDiscountedPrice = packageRetailPrice * (1 - inputs.karnotDiscountPercent / 100);
-    
-    // 1882 can add markup (default 0% = sells at retail)
-    const utilityMarkup = karnotDiscountedPrice * (inputs.utilityMarkupPercent / 100);
-    const customerEquipmentPrice = karnotDiscountedPrice + utilityMarkup;
-    
-    // 1882's COGS (what they pay Karnot after discount)
-    const utilityCOGS = karnotDiscountedPrice;
-    
-    // 1882's equipment margin (difference between customer price and COGS)
-    const equipmentMarginUSD = customerEquipmentPrice - utilityCOGS;
+    const utilityCOGS = packageRetailPrice * (1 - inputs.karnotDiscountPercent / 100);
 
     console.log(`Package retail: $${packageRetailPrice}, Karnot discount: ${inputs.karnotDiscountPercent}%, 1882 COGS: $${utilityCOGS}`);
-    console.log(`Customer pays: $${customerEquipmentPrice}, 1882 margin: $${equipmentMarginUSD}`);
 
-    // --- STEP E: CUSTOMER FINANCING ---
-    // Customer finances the equipment (with markup) over X months at Y% APR
-    const principal = customerEquipmentPrice * CONFIG.FX_RATE; // PHP
-    const monthlyRate = inputs.customerAPR / 100 / 12;
-    const numPayments = inputs.customerFinancingTerm;
-    
-    const customerMonthlyPayment = numPayments > 0 && monthlyRate > 0
-      ? (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
-        (Math.pow(1 + monthlyRate, numPayments) - 1)
-      : 0;
-
-    const totalFinancingCost = (customerMonthlyPayment * numPayments) - principal;
-    const totalCustomerPays = customerMonthlyPayment * numPayments;
-
-    // --- STEP F: CUSTOMER CURRENT COSTS ---
+    // --- STEP E: CUSTOMER CURRENT COSTS ---
     let customerCurrentMonthlyCost = 0;
     let lpgKgPerYear = 0;
+    let lpgBottlesPerMonth = 0;
 
     if (inputs.heatingType === 'lpg') {
+      // LPG calculation
       const dailyLpgKg = dailyThermalKWh / (CONFIG.LPG_BURNER_EFFICIENCY * CONFIG.LPG_KWH_PER_KG);
       const lpgKgPerMonth = dailyLpgKg * 30;
       lpgKgPerYear = dailyLpgKg * 365;
-      const lpgBottlesPerMonth = lpgKgPerMonth / 11;
+      lpgBottlesPerMonth = lpgKgPerMonth / 11; // 11kg per bottle
       customerCurrentMonthlyCost = lpgBottlesPerMonth * inputs.lpgPricePerBottle;
+      console.log(`LPG: ${lpgBottlesPerMonth.toFixed(1)} bottles/mo @ ₱${inputs.lpgPricePerBottle} = ₱${customerCurrentMonthlyCost.toFixed(0)}/mo`);
     } else {
+      // Electric resistance heating
       const dailyKwh = dailyThermalKWh / CONFIG.COP_ELECTRIC;
       customerCurrentMonthlyCost = dailyKwh * 30 * inputs.electricityRate;
-      lpgKgPerYear = (dailyKwh * 365) / CONFIG.LPG_KWH_PER_KG;
+      lpgKgPerYear = (dailyKwh * 365) / CONFIG.LPG_KWH_PER_KG; // For carbon calc
     }
 
-    // --- STEP G: HEAT PUMP OPERATING COST (CUSTOMER PAYS MERALCO) ---
+    // --- STEP F: HEAT PUMP OPERATING COST (CUSTOMER PAYS MERALCO) ---
     const dailyHeatPumpKwh = dailyThermalKWh / heatPumpCOP;
     const monthlyHeatPumpKwh = dailyHeatPumpKwh * 30;
     const heatPumpMonthlyCostPHP = monthlyHeatPumpKwh * inputs.electricityRate;
 
-    // Customer net position
+    // --- STEP G: ENERGY-AS-A-SERVICE PRICING (75/25 SAVINGS SPLIT) ---
     const customerMonthlySavings = customerCurrentMonthlyCost - heatPumpMonthlyCostPHP;
-    const customerNetPosition = customerMonthlySavings - customerMonthlyPayment;
+    
+    // 1882 takes 75% of savings as monthly subscription
+    const monthlySubscriptionPHP = customerMonthlySavings * (inputs.savingsSplitUtility / 100);
+    const monthlySubscriptionUSD = monthlySubscriptionPHP / CONFIG.FX_RATE;
+    const annualSubscriptionUSD = monthlySubscriptionUSD * 12;
+    
+    // Customer keeps 25% of savings
+    const customerNetSavings = customerMonthlySavings * (inputs.savingsSplitCustomer / 100);
+    
+    // Customer total monthly payment
+    const customerTotalMonthly = heatPumpMonthlyCostPHP + monthlySubscriptionPHP;
+
+    console.log(`Savings: ₱${customerMonthlySavings.toFixed(0)}/mo → 1882 gets ₱${monthlySubscriptionPHP.toFixed(0)}/mo (${inputs.savingsSplitUtility}%), Customer keeps ₱${customerNetSavings.toFixed(0)}/mo (${inputs.savingsSplitCustomer}%)`);
 
     // --- STEP H: UTILITY REVENUE STREAMS ---
-    // 1. Equipment margin (upfront)
-    const upfrontEquipmentMargin = equipmentMarginUSD;
+    // 1. Monthly subscription (75% of customer savings) - PRIMARY REVENUE!
+    const monthlySubscriptionRevenue = monthlySubscriptionUSD;
     
     // 2. Electricity revenue (NEW demand from heat pump)
-    // monthlyHeatPumpKwh already calculated in STEP G
     const annualHeatPumpKwh = dailyHeatPumpKwh * 365;
     const annualElectricityRevenue = annualHeatPumpKwh * inputs.electricityRate; // PHP
     const annualElectricityRevenueUSD = annualElectricityRevenue / CONFIG.FX_RATE;
@@ -263,9 +257,9 @@ const InvestorFinancialModel = () => {
     const annualCarbonRevenueUSD = annualCO2TonsAvoided * inputs.carbonCreditPrice;
 
     // Total annual ongoing revenue
-    const totalAnnualOngoingRevenue = annualElectricityProfitUSD + annualServiceRevenue + annualCarbonRevenueUSD;
+    const totalAnnualOngoingRevenue = annualSubscriptionUSD + annualElectricityProfitUSD + annualServiceRevenue + annualCarbonRevenueUSD;
 
-    console.log(`Annual electricity: ${annualHeatPumpKwh.toFixed(0)} kWh = $${annualElectricityRevenueUSD.toFixed(0)} revenue, $${annualElectricityProfitUSD.toFixed(0)} profit (${inputs.electricityNetMargin}% margin)`);
+    console.log(`Subscription: $${annualSubscriptionUSD.toFixed(0)}/year | Electricity: ${annualHeatPumpKwh.toFixed(0)} kWh = $${annualElectricityProfitUSD.toFixed(0)} profit`);
 
     // --- STEP I: UTILITY COSTS (ONGOING) ---
     const annualMaintenanceCost = equipmentCost * 0.02; // 2%
@@ -273,36 +267,26 @@ const InvestorFinancialModel = () => {
     const annualOperatingCosts = annualMaintenanceCost + annualInsuranceCost;
 
     // --- STEP J: UTILITY CASH FLOWS ---
-    // Year 0: Upfront equipment margin
-    const year0CashFlow = upfrontEquipmentMargin;
+    // EaaS model: No upfront revenue, all recurring subscription + electricity + service + carbon
+    const year0CashFlow = 0; // 1882 owns equipment, no upfront sale
 
-    // Year 1-5: Electricity profit + Service + Carbon - Operating costs
+    // Year 1-5: Subscription + Electricity profit + Service + Carbon - Operating costs
     const annualNetCashFlow = totalAnnualOngoingRevenue - annualOperatingCosts;
 
     // Total 5-year
-    const total5YearRevenue = year0CashFlow + (totalAnnualOngoingRevenue * inputs.contractYears);
+    const total5YearRevenue = totalAnnualOngoingRevenue * inputs.contractYears;
     const total5YearCosts = annualOperatingCosts * inputs.contractYears;
     const netProfit5Year = total5YearRevenue - total5YearCosts;
 
-    // --- STEP K: UTILITY FINANCING COST & SPREAD REVENUE ---
-    // 1882 borrows to fund deployments at 8%, customers pay 9% = spread profit
-    const utilityDebtPrincipal = utilityCOGS; // What utility actually pays (discounted price)
+    // --- STEP K: UTILITY FINANCING COST ---
+    // 1882 borrows to fund equipment purchases
+    const utilityDebtPrincipal = utilityCOGS;
     const utilityAnnualInterest = utilityDebtPrincipal * (inputs.utilityInterestRate / 100);
     const utilityTotalInterest = utilityAnnualInterest * inputs.utilityLoanTerm;
     const utilityTotalDebtCost = utilityDebtPrincipal + utilityTotalInterest;
-    
-    // Customer financing on RETAIL price (higher principal)
-    const customerDebtPrincipal = customerEquipmentPrice;
-    const customerAnnualInterest = customerDebtPrincipal * (inputs.customerAPR / 100);
-    const customerTotalInterest = customerAnnualInterest * inputs.customerFinancingTerm / 12; // Convert to years
-    
-    // Financing spread revenue (customer pays more interest than 1882 pays)
-    const financingSpreadRevenue = customerTotalInterest - utilityTotalInterest;
 
-    console.log(`Financing spread: Customer pays ${inputs.customerAPR}% on $${customerDebtPrincipal} = $${customerTotalInterest.toFixed(0)}, 1882 pays ${inputs.utilityInterestRate}% on $${utilityDebtPrincipal} = $${utilityTotalInterest.toFixed(0)}, Spread = $${financingSpreadRevenue.toFixed(0)}`);
-
-    // Net profit after financing (now includes financing spread as revenue!)
-    const netProfitAfterFinancing = netProfit5Year - utilityTotalInterest + financingSpreadRevenue;
+    // Net profit after financing
+    const netProfitAfterFinancing = netProfit5Year - utilityTotalInterest;
 
     // --- STEP L: KEY METRICS ---
     // Simple payback (months)
@@ -382,17 +366,21 @@ const InvestorFinancialModel = () => {
     const units = inputs.portfolioUnits;
     const portfolioInvestment = utilityDebtPrincipal * units;
     const portfolioAnnualRevenue = totalAnnualOngoingRevenue * units;
-    const portfolioUpfrontMargin = year0CashFlow * units;
     const portfolioNetProfit5Year = netProfitAfterFinancing * units;
     const portfolioCO2Reduction = annualCO2TonsAvoided * units;
     const portfolioPeakReduction = (CONFIG.PEAK_REDUCTION_KW * units) / 1000; // MW
     const portfolioElectricityProfit = annualElectricityProfitUSD * units;
+    const portfolioSubscriptionRevenue = annualSubscriptionUSD * units;
     
-    // Solviva Solar Cross-Sell (sister company revenue)
+    // Solviva Solar Cross-Sell (sister company revenue + group synergy)
     const solvivaCustomers = units * (inputs.solvivaConversionRate / 100);
-    const solvivaAvgSystemUSD = 3500; // Approx 6.10 kWp system
-    const solvivaReferralFee = solvivaAvgSystemUSD * 0.05; // 5% referral to 1882
+    const solvivaAvgSystemUSD = inputs.solvivaAvgSystemPrice;
+    const solvivaReferralFee = solvivaAvgSystemUSD * (inputs.solvivaReferralFee / 100);
     const solvivaReferralRevenue = solvivaCustomers * solvivaReferralFee;
+    const solvivaGroupRevenue = solvivaCustomers * solvivaAvgSystemUSD; // Total solar sales for Solviva
+    
+    // Regional expansion addressable market
+    const regionalMarketSize = inputs.canQuoteOutsideRegion ? units * 3 : units; // 3x TAM with cross-region
 
     return {
       // Product Selection
@@ -408,18 +396,14 @@ const InvestorFinancialModel = () => {
       installationCost,
       tankCost,
       packageRetailPrice,
-      karnotDiscountedPrice,
-      customerEquipmentPrice,
-      equipmentMarginUSD,
       utilityCOGS,
       utilityDebtPrincipal,
       utilityTotalInterest,
       utilityTotalDebtCost,
-      financingSpreadRevenue,
 
-      // Utility Revenue
-      upfrontEquipmentMargin,
-      year0CashFlow,
+      // Utility Revenue (EaaS Model)
+      annualSubscriptionUSD,
+      monthlySubscriptionUSD,
       annualElectricityRevenueUSD,
       annualElectricityProfitUSD,
       annualServiceRevenue,
@@ -433,13 +417,12 @@ const InvestorFinancialModel = () => {
 
       // Customer
       customerCurrentMonthlyCost,
+      lpgBottlesPerMonth,
       heatPumpMonthlyCostPHP,
+      monthlySubscriptionPHP,
       customerMonthlySavings,
-      customerMonthlyPayment,
-      customerNetPosition,
-      totalFinancingCost,
-      customerAPR: inputs.customerAPR,
-      customerFinancingTerm: inputs.customerFinancingTerm,
+      customerNetSavings,
+      customerTotalMonthly,
 
       // Metrics
       paybackMonths,
@@ -460,13 +443,15 @@ const InvestorFinancialModel = () => {
       // Portfolio
       portfolioInvestment,
       portfolioAnnualRevenue,
-      portfolioUpfrontMargin,
+      portfolioSubscriptionRevenue,
       portfolioNetProfit5Year,
       portfolioCO2Reduction,
       portfolioPeakReduction,
       portfolioElectricityProfit,
       solvivaCustomers,
       solvivaReferralRevenue,
+      solvivaGroupRevenue,
+      regionalMarketSize,
     };
   }, [inputs, karnotProducts]);
 
@@ -525,11 +510,11 @@ const InvestorFinancialModel = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">
             <div className="text-3xl font-bold">{fmtUSD(calculations.utilityCOGS)}</div>
-            <div className="text-xs text-emerald-100">Utility Investment</div>
+            <div className="text-xs text-emerald-100">1882 Investment</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold">{fmtUSD(calculations.upfrontEquipmentMargin)}</div>
-            <div className="text-xs text-emerald-100">Upfront Margin</div>
+            <div className="text-3xl font-bold">{fmtUSD(calculations.annualSubscriptionUSD)}</div>
+            <div className="text-xs text-emerald-100">Annual Subscription</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold">{fmtUSD(calculations.netProfitAfterFinancing)}</div>
@@ -741,23 +726,23 @@ const InvestorFinancialModel = () => {
               <div>
                 <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Annual Revenue Per Unit</h4>
                 <div className="space-y-2">
+                  <div className="p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border-l-4 border-green-500">
+                    <div className="text-xs font-bold text-green-600 uppercase">1. Monthly Subscription (75% Savings)</div>
+                    <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualSubscriptionUSD)}<span className="text-sm text-gray-500">/year</span></div>
+                    <div className="text-xs text-gray-600 mt-1">Customer pays ₱{fmt(calculations.monthlySubscriptionPHP)}/mo for service</div>
+                  </div>
                   <div className="p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border-l-4 border-blue-500">
-                    <div className="text-xs font-bold text-blue-600 uppercase">1. Electricity Profit (NEW Sales)</div>
+                    <div className="text-xs font-bold text-blue-600 uppercase">2. Electricity Profit (NEW Sales)</div>
                     <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualElectricityProfitUSD)}<span className="text-sm text-gray-500">/year ({inputs.electricityNetMargin}%)</span></div>
                     <div className="text-xs text-gray-600 mt-1">Customer switches LPG → Electric</div>
                   </div>
                   <div className="p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border-l-4 border-purple-500">
-                    <div className="text-xs font-bold text-purple-600 uppercase">2. Service Revenue</div>
+                    <div className="text-xs font-bold text-purple-600 uppercase">3. Service Revenue</div>
                     <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualServiceRevenue)}<span className="text-sm text-gray-500">/year</span></div>
                   </div>
                   <div className="p-3 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-lg border-l-4 border-emerald-500">
-                    <div className="text-xs font-bold text-emerald-600 uppercase">3. Carbon Credits</div>
+                    <div className="text-xs font-bold text-emerald-600 uppercase">4. Carbon Credits</div>
                     <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.annualCarbonRevenueUSD)}<span className="text-sm text-gray-500">/year</span></div>
-                  </div>
-                  <div className="p-3 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border-l-4 border-orange-500">
-                    <div className="text-xs font-bold text-orange-600 uppercase">4. Financing Spread (5yr)</div>
-                    <div className="text-xl font-bold text-gray-800">{fmtUSD(calculations.financingSpreadRevenue)}<span className="text-sm text-gray-500"> total</span></div>
-                    <div className="text-xs text-gray-600 mt-1">Customer 9% - 1882 8% = 1% spread</div>
                   </div>
                   <div className="p-3 bg-gradient-to-r from-red-50 to-red-100 rounded-lg border-l-4 border-red-500">
                     <div className="text-xs font-bold text-red-600 uppercase">Operating Costs</div>
