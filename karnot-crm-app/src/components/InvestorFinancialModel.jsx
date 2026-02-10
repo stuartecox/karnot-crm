@@ -763,26 +763,21 @@ const InvestorFinancialModel = () => {
               <Users size={20} className="text-orange-600" /> Customer Value Proposition
             </h3>
 
-            <div className="grid grid-cols-4 gap-4 mb-4">
-              <div className="p-4 bg-red-50 rounded-lg text-center">
-                <div className="text-xs font-bold text-red-600 uppercase mb-1">Current Cost</div>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="p-4 bg-red-50 rounded-lg text-center border-2 border-red-200">
+                <div className="text-xs font-bold text-red-600 uppercase mb-2">Current Cost (LPG)</div>
                 <div className="text-2xl font-bold text-red-700">{fmtPHP(calculations.customerCurrentMonthlyCost)}</div>
-                <div className="text-xs text-gray-500">{inputs.heatingType === 'lpg' ? 'LPG' : 'Electric'}</div>
+                <div className="text-xs text-gray-600 mt-1">{calculations.lpgBottlesPerMonth.toFixed(1)} bottles/month</div>
               </div>
-              <div className="p-4 bg-blue-50 rounded-lg text-center">
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Heat Pump Elec</div>
-                <div className="text-2xl font-bold text-blue-700">{fmtPHP(calculations.heatPumpMonthlyCostPHP)}</div>
-                <div className="text-xs text-gray-500">Paid to Meralco</div>
+              <div className="p-4 bg-blue-50 rounded-lg text-center border-2 border-blue-200">
+                <div className="text-xs font-bold text-blue-600 uppercase mb-2">New Payment (AboitizPower)</div>
+                <div className="text-2xl font-bold text-blue-700">{fmtPHP(calculations.customerTotalMonthly)}</div>
+                <div className="text-xs text-gray-600 mt-1">{fmtPHP(calculations.heatPumpMonthlyCostPHP)} elec + {fmtPHP(calculations.monthlySubscriptionPHP)} service</div>
               </div>
-              <div className="p-4 bg-purple-50 rounded-lg text-center">
-                <div className="text-xs font-bold text-purple-600 uppercase mb-1">Equipment Payment</div>
-                <div className="text-2xl font-bold text-purple-700">{fmtPHP(calculations.customerMonthlyPayment)}</div>
-                <div className="text-xs text-gray-500">{inputs.customerFinancingTerm}mo @ {inputs.customerAPR}%</div>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg text-center">
-                <div className="text-xs font-bold text-green-600 uppercase mb-1">Net Savings</div>
-                <div className="text-2xl font-bold text-green-700">{fmtPHP(calculations.customerNetPosition)}</div>
-                <div className="text-xs text-gray-500">Per month</div>
+              <div className="p-4 bg-green-50 rounded-lg text-center border-2 border-green-200">
+                <div className="text-xs font-bold text-green-600 uppercase mb-2">Net Savings</div>
+                <div className="text-2xl font-bold text-green-700">{fmtPHP(calculations.customerNetSavings)}</div>
+                <div className="text-xs text-gray-600 mt-1">per month ({inputs.savingsSplitCustomer}% of total savings)</div>
               </div>
             </div>
 
@@ -807,6 +802,93 @@ const InvestorFinancialModel = () => {
                   <CheckCircle size={16} className="text-green-500" />
                   <span>ESG compliance</span>
                 </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Utility Economics (1882 Energy) */}
+          <Card>
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <DollarSign size={20} className="text-blue-600" /> Utility Economics (Per Unit - USD)
+            </h3>
+
+            <div className="grid grid-cols-2 gap-6 mb-4">
+              {/* Left: Costs */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Cost to Karnot</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">Retail Price</span>
+                    <span className="font-semibold">{fmtUSD(calculations.packageRetailPrice)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">Karnot Discount ({inputs.karnotDiscountPercent}%)</span>
+                    <span className="font-semibold text-green-600">-{fmtUSD(calculations.packageRetailPrice - calculations.utilityCOGS)}</span>
+                  </div>
+                  <div className="flex justify-between py-3 bg-blue-50 rounded-lg px-3 -mx-3 mt-2">
+                    <span className="font-bold text-gray-800">1882 Investment</span>
+                    <span className="font-bold text-blue-600 text-lg">{fmtUSD(calculations.utilityCOGS)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Revenue */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-500 uppercase mb-3">Income from Customer</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">Customer pays monthly</span>
+                    <span className="font-semibold">₱{fmt(calculations.customerTotalMonthly)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b text-sm text-gray-500">
+                    <span className="pl-4">→ Electricity (to Meralco)</span>
+                    <span>₱{fmt(calculations.heatPumpMonthlyCostPHP)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b text-sm">
+                    <span className="pl-4 font-semibold text-gray-700">→ Subscription (to 1882) ({inputs.savingsSplitUtility}%)</span>
+                    <span className="font-semibold">₱{fmt(calculations.monthlySubscriptionPHP)}</span>
+                  </div>
+                  <div className="flex justify-between py-3 bg-green-50 rounded-lg px-3 -mx-3 mt-2">
+                    <span className="font-bold text-gray-800">1882 Monthly Revenue</span>
+                    <span className="font-bold text-green-600 text-lg">{fmtUSD(calculations.monthlySubscriptionUSD)}</span>
+                  </div>
+                  <div className="flex justify-between py-3 bg-blue-50 rounded-lg px-3 -mx-3">
+                    <span className="font-bold text-gray-800">Yearly Subscription</span>
+                    <span className="font-bold text-blue-600 text-lg">{fmtUSD(calculations.annualSubscriptionUSD)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b mt-3">
+                    <span className="text-gray-600">+ Electricity Profit ({inputs.electricityNetMargin}%)</span>
+                    <span className="font-semibold">{fmtUSD(calculations.annualElectricityProfitUSD)}/yr</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">+ Service + Carbon</span>
+                    <span className="font-semibold">{fmtUSD(calculations.annualServiceRevenue + calculations.annualCarbonRevenueUSD)}/yr</span>
+                  </div>
+                  <div className="flex justify-between py-3 bg-orange-50 rounded-lg px-3 -mx-3 mt-2">
+                    <span className="font-bold text-gray-800">Total Annual Revenue</span>
+                    <span className="font-bold text-orange-600 text-lg">{fmtUSD(calculations.totalAnnualOngoingRevenue)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ROI Metrics */}
+            <div className="grid grid-cols-4 gap-4 pt-4 border-t">
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-xs text-gray-600 uppercase mb-1">Payback</div>
+                <div className="text-2xl font-bold text-green-600">{Math.round(calculations.paybackMonths)} mo</div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-xs text-gray-600 uppercase mb-1">5-Yr Net Profit</div>
+                <div className="text-2xl font-bold text-blue-600">{fmtUSD(calculations.netProfitAfterFinancing)}</div>
+              </div>
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="text-xs text-gray-600 uppercase mb-1">ROI</div>
+                <div className="text-2xl font-bold text-purple-600">{calculations.roi5Year.toFixed(0)}%</div>
+              </div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-xs text-gray-600 uppercase mb-1">IRR</div>
+                <div className="text-2xl font-bold text-orange-600">{calculations.irrPercent.toFixed(1)}%</div>
               </div>
             </div>
           </Card>
@@ -978,76 +1060,76 @@ const InvestorFinancialModel = () => {
         </div>
       </Card>
 
-      {/* === INVESTMENT THESIS === */}
+      {/* === COMPETITIVE POSITIONING === */}
       <Card className="bg-gradient-to-br from-slate-800 to-slate-900 text-white">
         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Briefcase size={24} /> Investment Thesis for 1882 Energy / AboitizPower
+          <Briefcase size={24} /> Why AboitizPower Wins vs Competing Utility
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="font-bold text-blue-300 mb-3">The Opportunity</h4>
+            <h4 className="font-bold text-blue-300 mb-3">AboitizPower Competitive Advantages</h4>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Karnot gives 15% discount</strong> - 1882 buys at 85% of retail price</span>
+                <span><strong>Solviva Group Synergy:</strong> Sister company cross-sells solar to {inputs.solvivaConversionRate}% → ${fmt(calculations.solvivaGroupRevenue)} group revenue (competitor has NO solar offering)</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>1882 sells at retail</strong> - Customer pays full price, gets {inputs.customerFinancingTerm}mo @ {inputs.customerAPR}%</span>
+                <span><strong>Regional Expansion:</strong> New PH regs allow cross-region sales → 3× TAM (NCR + III + IV-A) vs competitor's single region</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>NEW electricity sales!</strong> Customer switches LPG → Electric heat pump</span>
+                <span><strong>Existing Customer Base:</strong> Large AboitizPower retail base = faster deployment vs competitor starting from zero</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>1882 earns {inputs.electricityNetMargin}% margin on NEW demand (based on AboitizPower margins)</span>
+                <span><strong>Brand Trust:</strong> AboitizPower name accelerates customer acquisition (competitor unknown/untrusted)</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Financing spread:</strong> Customer pays {inputs.customerAPR}%, 1882 borrows @ {inputs.utilityInterestRate}%</span>
+                <span><strong>Cheaper Capital:</strong> Investment-grade {inputs.utilityInterestRate}% borrowing cost vs competitor's higher rates</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>Service + carbon revenue for {inputs.contractYears} years</span>
+                <span><strong>Karnot Exclusive:</strong> {inputs.karnotDiscountPercent}% discount ONLY for AboitizPower (competitor pays full retail)</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Solviva solar cross-sell</strong> to {inputs.solvivaConversionRate}% of customers</span>
+                <span><strong>Proven Margins:</strong> Model uses YOUR actual {inputs.electricityNetMargin}% electricity margin (from 9M25 results)</span>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-green-300 mb-3">Revenue Streams</h4>
+            <h4 className="font-bold text-green-300 mb-3">Revenue Model (Per Unit)</h4>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Equipment margin:</strong> {fmtUSD(calculations.upfrontEquipmentMargin)} upfront (15% discount)</span>
+                <span><strong>Subscription revenue:</strong> {fmtUSD(calculations.annualSubscriptionUSD)}/year ({inputs.savingsSplitUtility}% of customer savings = RECURRING!)</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Electricity profit:</strong> {fmtUSD(calculations.annualElectricityProfitUSD)}/year ({inputs.electricityNetMargin}% on NEW sales)</span>
+                <span><strong>Electricity profit:</strong> {fmtUSD(calculations.annualElectricityProfitUSD)}/year (NEW sales from LPG conversion)</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Financing spread:</strong> {fmtUSD(calculations.financingSpreadRevenue)} over 5yr (1% spread)</span>
+                <span><strong>Service + Carbon:</strong> {fmtUSD(calculations.annualServiceRevenue + calculations.annualCarbonRevenueUSD)}/year</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Service:</strong> {fmtUSD(calculations.annualServiceRevenue)}/year</span>
+                <span><strong>Total:</strong> {fmtUSD(calculations.totalAnnualOngoingRevenue)}/year per unit</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>Carbon:</strong> {fmtUSD(calculations.annualCarbonRevenueUSD)}/year</span>
+                <span><strong>{calculations.irrPercent.toFixed(0)}% IRR</strong> | <strong>{Math.round(calculations.paybackMonths)} mo payback</strong> | <strong>{calculations.roi5Year.toFixed(0)}% ROI</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span><strong>{calculations.irrPercent.toFixed(0)}% IRR</strong> | <strong>{Math.round(calculations.paybackMonths)} month</strong> payback</span>
+                <span><strong>Grid benefits:</strong> Peak reduction defers infrastructure capex</span>
               </li>
               <li className="flex items-start gap-2">
                 <TrendingUp size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                <span>Peak demand reduction defers grid infrastructure capex</span>
+                <span><strong>Customer wins too:</strong> Saves ₱{fmt(calculations.customerNetSavings)}/mo vs LPG with zero upfront cost</span>
               </li>
             </ul>
           </div>
