@@ -64,7 +64,7 @@ const EaaSInvestorCalculator = () => {
           .filter(p => {
             const isR290 = (p.Refrigerant || p.refrigerant || '').toUpperCase() === 'R290';
             const hasDHW = parseFloat(p.kW_DHW_Nominal) > 0;
-            return isR290 && hasDHW;
+            return isR290 && isAquaHero;
           })
           .sort((a, b) => parseFloat(a.salesPriceUSD) - parseFloat(b.salesPriceUSD));
         setProducts(aquaHero);
