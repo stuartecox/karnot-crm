@@ -7,15 +7,20 @@ import {
 } from 'lucide-react';
 import { Card, Button, Input, Section } from '../data/constants.jsx';
 
+// Firebase Imports (Required for "Source of Truth" Sync)
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
 // ==========================================
-// KARNOT INVESTOR MODEL - 1882 ENERGY PARTNERSHIP
-// Updated: "Show the Math" Mode + UI Layout Fixes
+// KARNOT INVESTOR MODEL - LIVE SYNC VERSION
 // ==========================================
 
 const InvestorFinancialModel = () => {
   
-  // === HARDWARE CONSTANTS (FEB 2026) ===
-  const HARDWARE = {
+  // === 1. DEFINE DEFAULT HARDWARE (BACKUP) ===
+  // We use state now so we can overwrite these with DB values
+  const [hardware, setHardware] = useState({
     AQUAHERO_200: {
       id: 'ah200',
       name: 'AquaHERO 200L',
@@ -23,7 +28,7 @@ const InvestorFinancialModel = () => {
       recoveryRateLph: 46,      
       cop: 4.00,                
       maxDailyYield: 460,       
-      priceUSD: 2235,           
+      priceUSD: 2235, // Default Fallback          
       powerInputKW: 0.55        
     },
     AQUAHERO_300: {
@@ -33,19 +38,75 @@ const InvestorFinancialModel = () => {
       recoveryRateLph: 50,      
       cop: 3.48,                
       maxDailyYield: 500,       
-      priceUSD: 2544,           
+      priceUSD: 2544, // Default Fallback           
       powerInputKW: 0.69        
     }
-  };
+  });
 
-  // === SOLVIVA SOLAR SYSTEMS (FROM CSV) ===
-  const SOLVIVA_SYSTEMS = [
+  // === 2. DEFINE DEFAULT SOLVIVA SYSTEMS (BACKUP) ===
+  const [solvivaSystems, setSolvivaSystems] = useState([
     { id: 'sol005', name: 'Solviva Hybrid 5.49kWp', sizeKW: 5.49, priceUSD: 11500 },
     { id: 'sol010', name: 'Solviva Hybrid 10.37kWp', sizeKW: 10.37, priceUSD: 18100 },
     { id: 'sol012', name: 'Solviva Hybrid 12.20kWp', sizeKW: 12.20, priceUSD: 20900 },
     { id: 'sol016', name: 'Solviva Hybrid 16.47kWp', sizeKW: 16.47, priceUSD: 27400 },
     { id: 'sol020', name: 'Solviva Hybrid 20.13kWp', sizeKW: 20.13, priceUSD: 31400 }
-  ];
+  ]);
+
+  const [dbStatus, setDbStatus] = useState('using_defaults'); // 'loading', 'success', 'error'
+
+  // === 3. LIVE DB SYNC (THE SOURCE OF TRUTH) ===
+  useEffect(() => {
+    const fetchLivePrices = async () => {
+        const user = getAuth().currentUser;
+        if (!user) return;
+
+        try {
+            setDbStatus('loading');
+            const snap = await getDocs(collection(db, 'users', user.uid, 'products'));
+            const allProducts = snap.docs.map(doc => doc.data());
+
+            // A. UPDATE AQUAHERO PRICES
+            // Find products that match our names loosely
+            const db200 = allProducts.find(p => p.name?.includes('200L') && p.name?.includes('AquaHERO'));
+            const db300 = allProducts.find(p => p.name?.includes('300L') && p.name?.includes('AquaHERO'));
+
+            if (db200 || db300) {
+                setHardware(prev => ({
+                    AQUAHERO_200: db200 ? { ...prev.AQUAHERO_200, priceUSD: db200.salesPriceUSD || prev.AQUAHERO_200.priceUSD } : prev.AQUAHERO_200,
+                    AQUAHERO_300: db300 ? { ...prev.AQUAHERO_300, priceUSD: db300.salesPriceUSD || prev.AQUAHERO_300.priceUSD } : prev.AQUAHERO_300,
+                }));
+            }
+
+            // B. UPDATE SOLVIVA SYSTEMS
+            // Filter for "Competitor Solar" category and map to our format
+            const dbSolar = allProducts.filter(p => p.category === 'Competitor Solar');
+            
+            if (dbSolar.length > 0) {
+                // Sort by size (kW)
+                const mappedSolar = dbSolar
+                    .map(p => ({
+                        id: p.id || Math.random().toString(),
+                        name: p.name,
+                        sizeKW: p.kW_Cooling_Nominal || 0, // Assuming kW is stored here based on previous csv
+                        priceUSD: p.salesPriceUSD || 0
+                    }))
+                    .sort((a,b) => a.sizeKW - b.sizeKW);
+
+                if (mappedSolar.length > 0) {
+                    setSolvivaSystems(mappedSolar);
+                }
+            }
+            setDbStatus('success');
+            console.log("✅ Pricing synced with Product Manager");
+
+        } catch (error) {
+            console.error("DB Sync Failed:", error);
+            setDbStatus('error');
+        }
+    };
+
+    fetchLivePrices();
+  }, []);
 
   // === INVESTOR INPUTS ===
   const [inputs, setInputs] = useState({
@@ -67,7 +128,7 @@ const InvestorFinancialModel = () => {
     // Solviva Solar Cross-Sell
     solvivaConversionRate: 40,
     solvivaTerm: 60,            
-    selectedSolvivaSystemId: 'sol005',
+    selectedSolvivaSystemId: '', // Will set default in useEffect
 
     // Revenue Model
     carbonCreditPrice: 15,
@@ -81,6 +142,13 @@ const InvestorFinancialModel = () => {
     portfolioUnits: 250,
   });
 
+  // Set default solar system once list is loaded
+  useEffect(() => {
+      if (solvivaSystems.length > 0 && !inputs.selectedSolvivaSystemId) {
+          setInputs(prev => ({...prev, selectedSolvivaSystemId: solvivaSystems[0].id}));
+      }
+  }, [solvivaSystems]);
+
   const [showMath, setShowMath] = useState(false);
 
   // === CONSTANTS ===
@@ -92,7 +160,7 @@ const InvestorFinancialModel = () => {
     DELTA_T: 30,                 
     LPG_KWH_PER_KG: 13.8,
     LPG_CO2_PER_KG: 3.0,
-    SOLAR_FINANCING_RATE: 0.09 // 9% APR for Solviva financing
+    SOLAR_FINANCING_RATE: 0.09 
   };
 
   // === FORMATTING ===
@@ -110,14 +178,15 @@ const InvestorFinancialModel = () => {
     let selectedUnit = null;
     let unitCount = 1;
 
+    // Use state 'hardware' instead of constant
     if (inputs.dailyLitersHotWater <= 460) {
-        selectedUnit = HARDWARE.AQUAHERO_200;
+        selectedUnit = hardware.AQUAHERO_200;
         unitCount = 1;
     } else if (inputs.dailyLitersHotWater <= 500) {
-        selectedUnit = HARDWARE.AQUAHERO_300;
+        selectedUnit = hardware.AQUAHERO_300;
         unitCount = 1;
     } else {
-        selectedUnit = HARDWARE.AQUAHERO_300;
+        selectedUnit = hardware.AQUAHERO_300;
         unitCount = Math.ceil(inputs.dailyLitersHotWater / 500);
     }
 
@@ -188,7 +257,7 @@ const InvestorFinancialModel = () => {
     const irrPercent = irr * 100;
 
     // --- 3. SOLVIVA CROSS-SELL ---
-    const selectedSolviva = SOLVIVA_SYSTEMS.find(s => s.id === inputs.selectedSolvivaSystemId) || SOLVIVA_SYSTEMS[0];
+    const selectedSolviva = solvivaSystems.find(s => s.id === inputs.selectedSolvivaSystemId) || solvivaSystems[0];
     const term = inputs.solvivaTerm;
     
     // Monthly Payment Calculation (PMT Formula)
@@ -196,7 +265,6 @@ const InvestorFinancialModel = () => {
     const pmtFactor = (ratePerPeriod * Math.pow(1 + ratePerPeriod, term)) / (Math.pow(1 + ratePerPeriod, term) - 1);
     
     // Scenario A: Solar Only (Needs bigger system for electric showers)
-    // We assume they need ~150% more solar to cover electric shower spikes
     const solarOnlySystemSize = selectedSolviva.sizeKW * 1.5;
     const solarOnlyPriceUSD = selectedSolviva.priceUSD * 1.5; // Linear scaling approximation
     const solarOnlyMonthlyPaymentUSD = solarOnlyPriceUSD * pmtFactor;
@@ -242,7 +310,7 @@ const InvestorFinancialModel = () => {
       solarOnlySystemSize
     };
 
-  }, [inputs]);
+  }, [inputs, hardware, solvivaSystems]); // Add state dependencies
 
   const handleChange = (field, isNumber = false) => (e) => {
     const val = isNumber ? parseFloat(e.target.value) || 0 : e.target.value;
@@ -253,14 +321,33 @@ const InvestorFinancialModel = () => {
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen font-sans">
       {/* === HEADER === */}
       <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-8 mb-8 text-white shadow-xl">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-white/10 rounded-xl">
-            <Briefcase size={32} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Karnot × Solviva Calculator</h1>
-            <p className="text-blue-200">Commercial & Residential EaaS | AquaHERO R290 Deployment</p>
-          </div>
+        <div className="flex justify-between items-start">
+            <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 bg-white/10 rounded-xl">
+                    <Briefcase size={32} />
+                </div>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Karnot × Solviva Calculator</h1>
+                    <p className="text-blue-200">Commercial & Residential EaaS | AquaHERO R290 Deployment</p>
+                </div>
+            </div>
+            {/* Database Connection Status Indicator */}
+            <div className="text-right">
+                <div className="text-[10px] uppercase font-bold tracking-wider mb-1 text-slate-400">Pricing Source</div>
+                {dbStatus === 'success' ? (
+                   <div className="flex items-center justify-end gap-2 text-green-400 font-bold bg-green-900/30 px-3 py-1 rounded-full border border-green-700/50">
+                       <RefreshCw size={14} /> Live Database
+                   </div>
+                ) : dbStatus === 'loading' ? (
+                   <div className="flex items-center justify-end gap-2 text-blue-400 font-bold animate-pulse">
+                       <RefreshCw size={14} className="animate-spin" /> Syncing...
+                   </div>
+                ) : (
+                   <div className="flex items-center justify-end gap-2 text-slate-400 font-bold bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                       <Shield size={14} /> Offline Defaults
+                   </div>
+                )}
+            </div>
         </div>
       </div>
 
@@ -505,7 +592,7 @@ const InvestorFinancialModel = () => {
                                 value={inputs.selectedSolvivaSystemId}
                                 onChange={handleChange('selectedSolvivaSystemId')}
                             >
-                                {SOLVIVA_SYSTEMS.map(sys => (
+                                {solvivaSystems.map(sys => (
                                     <option key={sys.id} value={sys.id}>{sys.name}</option>
                                 ))}
                             </select>
