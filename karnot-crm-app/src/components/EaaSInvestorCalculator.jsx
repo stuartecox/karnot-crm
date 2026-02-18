@@ -61,7 +61,7 @@ const EaaSInvestorCalculator = () => {
     electricityRate:      12.25, // PHP/kWh (Meralco average)
 
     // Solar system (Solviva solar)
-    solarCoverPct:        85,    // % of HP electricity from solar
+    solarCoverPct:        92,   // 92% = Hybrid (battery) · drop below 85% for Ready (no battery)
     solarWindowHours:     8,     // Hours per day HP can run on solar (8am-4pm)
 
     // EaaS commercial terms
@@ -308,7 +308,7 @@ const EaaSInvestorCalculator = () => {
               <div className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-1">Solviva Energy Solutions</div>
               <h1 className="text-3xl font-bold">Residential EaaS Investor Model</h1>
               <p className="text-slate-400 mt-1">
-                AquaHERO R290 · Solar-Powered Hot Water · No Upfront Cost · Max {inputs.dailyLiters}L/day
+                AquaHERO R290 · {inputs.solarCoverPct >= 85 ? '🔋 Solviva Hybrid (with battery)' : '☀️ Solviva Ready (no battery)'} · No Upfront Cost · Max {inputs.dailyLiters}L/day
               </p>
             </div>
           </div>
@@ -323,7 +323,7 @@ const EaaSInvestorCalculator = () => {
       {/* ── EXEC SUMMARY STRIP ── */}
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-6 text-white shadow-lg">
         <h2 className="text-xs font-bold text-orange-100 uppercase mb-4 flex items-center gap-2">
-          <Target size={14}/> Executive Summary — Per Unit · {selectedProduct?.name}
+          <Target size={14}/> Executive Summary — Per Unit · {selectedProduct?.name} · {inputs.solarCoverPct >= 85 ? '🔋 Hybrid' : '☀️ Ready'}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
           <div>
@@ -434,19 +434,79 @@ const EaaSInvestorCalculator = () => {
               <div className="text-red-500 mt-0.5">Electric shower / immersion heater (COP ≈ 0.95)</div>
             </div>
 
-            {/* Solar slider */}
-            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <label className="text-xs font-bold text-yellow-800 block mb-1">
-                Solviva Solar Coverage: <span className="text-yellow-900">{inputs.solarCoverPct}%</span>
-                <span className="text-yellow-600 font-normal ml-1">({100 - inputs.solarCoverPct}% grid residual)</span>
-              </label>
-              <input type="range" min="70" max="95" step="5" value={inputs.solarCoverPct}
-                onChange={set('solarCoverPct', true)} className="w-full accent-yellow-600"/>
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-yellow-700 mt-1">
-                <span>HP grid cost: <strong>{fmtPHP(calc.monthlyHpGridPHP)}/mo</strong></span>
-                <span>Solar recovery: <strong>{inputs.solarWindowHours}hr window</strong></span>
-              </div>
-            </div>
+            {/* Solar slider — Hybrid / Ready */}
+            {(() => {
+              const isHybrid = inputs.solarCoverPct >= 85;
+              const bgClass    = isHybrid ? 'bg-blue-50 border-blue-300'   : 'bg-yellow-50 border-yellow-200';
+              const labelClass = isHybrid ? 'text-blue-900'                : 'text-yellow-900';
+              const subClass   = isHybrid ? 'text-blue-600'                : 'text-yellow-600';
+              const infoClass  = isHybrid ? 'text-blue-700'                : 'text-yellow-700';
+              const accent     = isHybrid ? 'accent-blue-600'              : 'accent-yellow-600';
+              return (
+                <div className={`mt-3 p-3 border rounded-lg ${bgClass}`}>
+                  {/* Product type badge */}
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={`text-xs font-bold block ${labelClass}`}>
+                      Solviva Solar Coverage: <span className="text-base font-black">{inputs.solarCoverPct}%</span>
+                      <span className={`font-normal ml-1 ${subClass}`}>({100 - inputs.solarCoverPct}% grid residual)</span>
+                    </label>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${isHybrid ? 'bg-blue-200 text-blue-800' : 'bg-yellow-200 text-yellow-800'}`}>
+                      {isHybrid ? '🔋 HYBRID' : '☀️ READY'}
+                    </span>
+                  </div>
+
+                  {/* Quick presets */}
+                  <div className="flex gap-2 mb-2">
+                    <button onClick={() => setInputs(p=>({...p, solarCoverPct: 70}))}
+                      className={`flex-1 text-[10px] font-bold py-1 rounded-lg transition-all ${inputs.solarCoverPct === 70 ? 'bg-yellow-400 text-yellow-900' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}`}>
+                      ☀️ Ready<br/>70% (30% grid)
+                    </button>
+                    <button onClick={() => setInputs(p=>({...p, solarCoverPct: 75}))}
+                      className={`flex-1 text-[10px] font-bold py-1 rounded-lg transition-all ${inputs.solarCoverPct === 75 ? 'bg-yellow-400 text-yellow-900' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}`}>
+                      ☀️ Ready<br/>75% (25% grid)
+                    </button>
+                    <button onClick={() => setInputs(p=>({...p, solarCoverPct: 90}))}
+                      className={`flex-1 text-[10px] font-bold py-1 rounded-lg transition-all ${inputs.solarCoverPct === 90 ? 'bg-blue-400 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
+                      🔋 Hybrid<br/>90% (10% grid)
+                    </button>
+                    <button onClick={() => setInputs(p=>({...p, solarCoverPct: 95}))}
+                      className={`flex-1 text-[10px] font-bold py-1 rounded-lg transition-all ${inputs.solarCoverPct === 95 ? 'bg-blue-400 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
+                      🔋 Hybrid<br/>95% (5% grid)
+                    </button>
+                  </div>
+
+                  {/* Slider with zone markers */}
+                  <div className="relative mb-1">
+                    <input type="range" min="60" max="97" step="1" value={inputs.solarCoverPct}
+                      onChange={set('solarCoverPct', true)} className={`w-full ${accent}`}/>
+                    {/* Visual zone bar */}
+                    <div className="flex h-1.5 rounded-full overflow-hidden mt-1">
+                      <div className="bg-yellow-300" style={{width: `${(85-60)/(97-60)*100}%`}}/>
+                      <div className="w-1 bg-slate-500"/>
+                      <div className="bg-blue-400 flex-1"/>
+                    </div>
+                    <div className="flex justify-between text-[9px] text-slate-500 mt-0.5">
+                      <span>☀️ Ready (no battery)</span>
+                      <span className="font-bold">85% threshold</span>
+                      <span>🔋 Hybrid (battery)</span>
+                    </div>
+                  </div>
+
+                  {/* Product type explanation */}
+                  <div className={`mt-2 text-[11px] p-2 rounded-lg ${isHybrid ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    {isHybrid
+                      ? `🔋 Hybrid: Battery stores excess solar → HP runs on battery at night → only ${100-inputs.solarCoverPct}% grid needed`
+                      : `☀️ Ready: No battery → HP runs on solar only (daytime) → grid covers night top-ups → ${100-inputs.solarCoverPct}% grid residual`
+                    }
+                  </div>
+
+                  <div className={`grid grid-cols-2 gap-2 text-[11px] mt-2 ${infoClass}`}>
+                    <span>HP grid cost: <strong>{fmtPHP(calc.monthlyHpGridPHP)}/mo</strong></span>
+                    <span>Solar window: <strong>{inputs.solarWindowHours}hr/day</strong></span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* EaaS Terms */}
