@@ -814,6 +814,162 @@ const EaaSInvestorCalculator = () => {
         </div>
       </div>
 
+      {/* ── TOTAL COST OF OWNERSHIP COMPARISON ── */}
+      <div className="bg-white rounded-xl border-2 border-slate-200 p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-orange-100 rounded-lg"><Zap size={20} className="text-orange-600"/></div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800">The Solar Sizing Advantage</h3>
+            <p className="text-sm text-slate-500">Why the AquaHERO bundle is a better deal than solar alone — total cost of ownership over {inputs.contractYears} years</p>
+          </div>
+        </div>
+
+        {/* The core insight callout */}
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-6 mt-4">
+          <div className="flex items-start gap-3">
+            <Zap size={20} className="text-amber-600 mt-0.5 flex-shrink-0"/>
+            <div className="text-sm text-amber-900">
+              <strong>The hidden problem with solar-only:</strong> Electric showers create a massive peak load spike ({inputs.electricShowerCount || 3} showers × 3.5 kW = 10.5 kW instantaneous). 
+              To cope, the solar system must be <strong>3× oversized</strong> — 20.13 kWp instead of 6.1 kWp. 
+              The AquaHERO eliminates the spike entirely, letting you install <strong>25 fewer panels</strong> and a <strong>70% smaller system</strong>.
+            </div>
+          </div>
+        </div>
+
+        {/* Side by side comparison table */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+          {/* Column 1: Solar Only */}
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-5">
+            <div className="text-center mb-4">
+              <div className="text-xs font-bold text-red-500 uppercase tracking-wide mb-1">Option A</div>
+              <div className="text-lg font-bold text-red-900">Solar Only</div>
+              <div className="text-xs text-red-600 mt-1">Oversized to cover electric showers</div>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center py-2 border-b border-red-200">
+                <span className="text-red-700">Solar system size</span>
+                <span className="font-bold text-red-900">20.13 kWp</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-red-200">
+                <span className="text-red-700">Solar panels needed</span>
+                <span className="font-bold text-red-900">~37 panels</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-red-200">
+                <span className="text-red-700">Solar monthly payment</span>
+                <span className="font-bold text-red-900">₱31,400</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-red-200">
+                <span className="text-red-700">Hot water (electric)</span>
+                <span className="font-bold text-red-900">{fmtPHP(calc.monthlyBaselinePHP)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-red-200">
+                <span className="text-red-700">Residual grid bill</span>
+                <span className="font-bold text-red-900">₱1,858</span>
+              </div>
+              <div className="flex justify-between items-center py-3 bg-red-100 rounded-lg px-3 -mx-3 mt-2">
+                <span className="font-bold text-red-900">Total / month</span>
+                <span className="font-bold text-red-900 text-lg">{fmtPHP(33258 + calc.monthlyBaselinePHP)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 mt-1">
+                <span className="text-red-700 font-bold">{inputs.contractYears}-year total cost</span>
+                <span className="font-bold text-red-900 text-lg">{fmtPHP((33258 + calc.monthlyBaselinePHP) * inputs.contractYears * 12)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: VS divider */}
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="text-4xl font-black text-slate-300 mb-4">VS</div>
+            <div className="space-y-3 text-center">
+              <div className="bg-green-100 rounded-xl p-4">
+                <div className="text-2xl font-bold text-green-700">{fmtPHP((33258 + calc.monthlyBaselinePHP) - 17570)}</div>
+                <div className="text-xs text-green-600 font-bold uppercase mt-1">Monthly saving</div>
+              </div>
+              <div className="bg-blue-100 rounded-xl p-4">
+                <div className="text-2xl font-bold text-blue-700">{fmtPHP(((33258 + calc.monthlyBaselinePHP) - 17570) * inputs.contractYears * 12)}</div>
+                <div className="text-xs text-blue-600 font-bold uppercase mt-1">{inputs.contractYears}-year saving</div>
+              </div>
+              <div className="bg-orange-100 rounded-xl p-4">
+                <div className="text-2xl font-bold text-orange-700">25 panels</div>
+                <div className="text-xs text-orange-600 font-bold uppercase mt-1">Avoided</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 3: Solviva Bundle */}
+          <div className="bg-green-50 border-2 border-green-400 rounded-xl p-5 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-full">RECOMMENDED</div>
+            <div className="text-center mb-4">
+              <div className="text-xs font-bold text-green-500 uppercase tracking-wide mb-1">Option B</div>
+              <div className="text-lg font-bold text-green-900">Solviva Bundle</div>
+              <div className="text-xs text-green-600 mt-1">Right-sized solar + AquaHERO free</div>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center py-2 border-b border-green-200">
+                <span className="text-green-700">Solar system size</span>
+                <span className="font-bold text-green-900">6.1 kWp</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-green-200">
+                <span className="text-green-700">Solar panels needed</span>
+                <span className="font-bold text-green-900">~12 panels</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-green-200">
+                <span className="text-green-700">Solar monthly payment</span>
+                <span className="font-bold text-green-900">₱12,400</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-green-200">
+                <span className="text-green-700">Hot water (AquaHERO)</span>
+                <span className="font-bold text-green-600 flex items-center gap-1"><CheckCircle size={14}/> Included</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-green-200">
+                <span className="text-green-700">EaaS subscription</span>
+                <span className="font-bold text-green-900">{fmtPHP(calc.solvivaSharePHP)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-green-200">
+                <span className="text-green-700">Residual grid bill</span>
+                <span className="font-bold text-green-900">₱1,155</span>
+              </div>
+              <div className="flex justify-between items-center py-3 bg-green-100 rounded-lg px-3 -mx-3 mt-2">
+                <span className="font-bold text-green-900">Total / month</span>
+                <span className="font-bold text-green-900 text-lg">₱{fmt(12400 + calc.solvivaSharePHP + 1155)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 mt-1">
+                <span className="text-green-700 font-bold">{inputs.contractYears}-year total cost</span>
+                <span className="font-bold text-green-900 text-lg">{fmtPHP((12400 + calc.solvivaSharePHP + 1155) * inputs.contractYears * 12)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* What this means for Solviva */}
+        <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl p-5">
+          <h4 className="font-bold text-orange-400 mb-3 flex items-center gap-2"><TrendingUp size={16}/> What This Means for Solviva Investors</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm">
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-xl font-bold text-green-400">$7,000</div>
+              <div className="text-xs text-slate-400 mt-1">Solar system saving per customer<br/>(20.13 kWp → 6.1 kWp)</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-xl font-bold text-orange-400">{fmtUSD(calc.utilityCOGS)}</div>
+              <div className="text-xs text-slate-400 mt-1">HP cost absorbed by Solviva<br/>(recovered via EaaS subscription)</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-xl font-bold text-blue-400">{fmtUSD(7000 - calc.utilityCOGS)}</div>
+              <div className="text-xs text-slate-400 mt-1">Net customer benefit upfront<br/>(solar saving minus HP cost)</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-xl font-bold text-yellow-400">{fmtPHP((33258 + calc.monthlyBaselinePHP) - (12400 + calc.solvivaSharePHP + 1155))}</div>
+              <div className="text-xs text-slate-400 mt-1">Customer monthly advantage<br/>vs solar-only option</div>
+            </div>
+          </div>
+          <div className="mt-4 text-xs text-slate-400 text-center">
+            The AquaHERO doesn't cost Solviva money — it <strong className="text-white">enables a smaller, more affordable solar sale</strong> while generating a perpetual EaaS income stream. 
+            The HP is recovered in <strong className="text-orange-400">{Math.round(calc.paybackMonths)} months</strong> through subscription revenue.
+          </div>
+        </div>
+      </div>
+
       {/* ── PORTFOLIO PROJECTION ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
@@ -821,7 +977,7 @@ const EaaSInvestorCalculator = () => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-gradient-to-br from-slate-700 to-slate-900 text-white p-6 rounded-xl text-center">
-            <div className="text-3xl font-bold">${(calc.portfolioInvestment/1000000).toFixed(1)}M</div>
+            <div className="text-3xl font-bold">{calc.portfolioInvestment >= 1000000 ? `$${(calc.portfolioInvestment/1000000).toFixed(1)}M` : `$${(calc.portfolioInvestment/1000).toFixed(0)}K`}</div>
             <div className="text-sm text-gray-300">Solviva Investment</div>
           </div>
           <div className="bg-gradient-to-br from-orange-500 to-orange-700 text-white p-6 rounded-xl text-center">
@@ -829,7 +985,7 @@ const EaaSInvestorCalculator = () => {
             <div className="text-sm text-orange-200">Annual Revenue</div>
           </div>
           <div className="bg-gradient-to-br from-green-600 to-green-800 text-white p-6 rounded-xl text-center">
-            <div className="text-3xl font-bold">${(calc.portfolioNetProfit/1000000).toFixed(1)}M</div>
+            <div className="text-3xl font-bold">{calc.portfolioNetProfit >= 1000000 ? `$${(calc.portfolioNetProfit/1000000).toFixed(1)}M` : `$${(calc.portfolioNetProfit/1000).toFixed(0)}K`}</div>
             <div className="text-sm text-green-200">{inputs.contractYears}-Year Net Profit</div>
           </div>
           <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white p-6 rounded-xl text-center">
