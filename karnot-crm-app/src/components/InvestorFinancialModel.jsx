@@ -3,13 +3,13 @@ import {
   TrendingUp, DollarSign, BarChart3, PieChart, Target, Award,
   Building, Users, Zap, Leaf, AlertCircle, CheckCircle, Info,
   ChevronDown, ChevronUp, Download, RefreshCw, Calculator,
-  Briefcase, LineChart, ArrowRight, Shield, Droplets, Sun, Flame
+  Briefcase, LineChart, ArrowRight, Shield, Droplets, Sun, Flame, X
 } from 'lucide-react';
 import { Card, Button, Input, Section } from '../data/constants.jsx';
 
 // ==========================================
 // KARNOT INVESTOR MODEL - 1882 ENERGY PARTNERSHIP
-// Integrated with Solviva "Scenario A/B" Logic & Full Pricing Matrix
+// Updated: "Show the Math" Mode + UI Layout Fixes
 // ==========================================
 
 const InvestorFinancialModel = () => {
@@ -38,21 +38,14 @@ const InvestorFinancialModel = () => {
     }
   };
 
-  // === SOLVIVA PRICING MATRIX (FROM DETAILED MODEL) ===
-  // Price in USD (approx) or PHP? The detailed model implies PHP based on values (11500 for 5kW seems low for USD if full system, but let's assume USD based on context of previous prompt, OR strictly use the values provided which match the CSV Sales Price column).
-  // *Correction*: The CSV said "Sales Price 11500" for 5.49kWp. In the detailed model code, it says `5.49: 11500` for 60mo.
-  // I will assume these are USD figures for the Investor Model consistency.
-  const SOLVIVA_PRICING = {
-    hybrid: {
-      12: { 5.49: 35200, 6.10: 38000, 8.54: 49300, 10.37: 55700, 12.20: 64100, 16.47: 84200, 20.13: 96500 },
-      24: { 5.49: 19900, 6.10: 21600, 8.54: 27800, 10.37: 31500, 12.20: 36200, 16.47: 47600, 20.13: 54500 },
-      36: { 5.49: 15000, 6.10: 16200, 8.54: 21000, 10.37: 23700, 12.20: 27200, 16.47: 35800, 20.13: 41000 },
-      48: { 5.49: 12700, 6.10: 13800, 8.54: 17800, 10.37: 20100, 12.20: 23100, 16.47: 30400, 20.13: 34800 },
-      60: { 5.49: 11500, 6.10: 12400, 8.54: 16000, 10.37: 18100, 12.20: 20900, 16.47: 27400, 20.13: 31400 }
-    }
-  };
-  
-  const SYSTEM_SIZES = [5.49, 6.10, 8.54, 10.37, 12.20, 16.47, 20.13];
+  // === SOLVIVA SOLAR SYSTEMS (FROM CSV) ===
+  const SOLVIVA_SYSTEMS = [
+    { id: 'sol005', name: 'Solviva Hybrid 5.49kWp', sizeKW: 5.49, priceUSD: 11500 },
+    { id: 'sol010', name: 'Solviva Hybrid 10.37kWp', sizeKW: 10.37, priceUSD: 18100 },
+    { id: 'sol012', name: 'Solviva Hybrid 12.20kWp', sizeKW: 12.20, priceUSD: 20900 },
+    { id: 'sol016', name: 'Solviva Hybrid 16.47kWp', sizeKW: 16.47, priceUSD: 27400 },
+    { id: 'sol020', name: 'Solviva Hybrid 20.13kWp', sizeKW: 20.13, priceUSD: 31400 }
+  ];
 
   // === INVESTOR INPUTS ===
   const [inputs, setInputs] = useState({
@@ -73,8 +66,8 @@ const InvestorFinancialModel = () => {
 
     // Solviva Solar Cross-Sell
     solvivaConversionRate: 40,
-    solvivaTerm: 60,            // 12, 24, 36, 48, 60
-    solvivaSystemSize: 5.49,    // Selected kWp
+    solvivaTerm: 60,            
+    selectedSolvivaSystemId: 'sol005',
 
     // Revenue Model
     carbonCreditPrice: 15,
@@ -88,6 +81,8 @@ const InvestorFinancialModel = () => {
     portfolioUnits: 250,
   });
 
+  const [showMath, setShowMath] = useState(false);
+
   // === CONSTANTS ===
   const CONFIG = {
     FX_RATE: 58.5,
@@ -97,6 +92,7 @@ const InvestorFinancialModel = () => {
     DELTA_T: 30,                 
     LPG_KWH_PER_KG: 13.8,
     LPG_CO2_PER_KG: 3.0,
+    SOLAR_FINANCING_RATE: 0.09 // 9% APR for Solviva financing
   };
 
   // === FORMATTING ===
@@ -175,6 +171,7 @@ const InvestorFinancialModel = () => {
     const utilityAnnualInterest = utilityCOGS * (inputs.utilityInterestRate / 100);
     const netProfitAfterFinance = (annualNetCashFlow - utilityAnnualInterest) * inputs.contractYears;
     const roi5Year = (netProfitAfterFinance / utilityCOGS) * 100;
+    const paybackMonths = utilityCOGS / (annualNetCashFlow / 12);
 
     // IRR
     const cashFlows = [-utilityCOGS];
@@ -190,29 +187,30 @@ const InvestorFinancialModel = () => {
     }
     const irrPercent = irr * 100;
 
-    // --- 3. SOLVIVA CROSS-SELL (THE "BUNDLE PITCH" LOGIC) ---
+    // --- 3. SOLVIVA CROSS-SELL ---
+    const selectedSolviva = SOLVIVA_SYSTEMS.find(s => s.id === inputs.selectedSolvivaSystemId) || SOLVIVA_SYSTEMS[0];
     const term = inputs.solvivaTerm;
-    const sysSize = inputs.solvivaSystemSize;
     
-    // Get Pricing from Matrix
-    const solvivaPriceUSD = SOLVIVA_PRICING.hybrid[term][sysSize] || 0;
-    const solvivaMonthlyPaymentPHP = (solvivaPriceUSD * CONFIG.FX_RATE) / term; // Simplified linear or use loan calc
+    // Monthly Payment Calculation (PMT Formula)
+    const ratePerPeriod = CONFIG.SOLAR_FINANCING_RATE / 12;
+    const pmtFactor = (ratePerPeriod * Math.pow(1 + ratePerPeriod, term)) / (Math.pow(1 + ratePerPeriod, term) - 1);
     
-    // Calculate "Solar Only" vs "Partner" Scenario
-    // Scenario A: Solar Only (High load due to electric showers)
-    // We simulate a larger system need for solar-only to cover electric showers
-    const showerLoadKW = 3.5 * 3; // 3 showers @ 3.5kW
-    const solarOnlySystemSize = SYSTEM_SIZES.find(s => s >= sysSize * 1.5) || SYSTEM_SIZES[SYSTEM_SIZES.length-1];
-    const solarOnlyPriceUSD = SOLVIVA_PRICING.hybrid[term][solarOnlySystemSize];
-    const solarOnlyMonthlyPaymentPHP = (solarOnlyPriceUSD * CONFIG.FX_RATE) / term;
-    
-    // Portfolio Values
+    // Scenario A: Solar Only (Needs bigger system for electric showers)
+    // We assume they need ~150% more solar to cover electric shower spikes
+    const solarOnlySystemSize = selectedSolviva.sizeKW * 1.5;
+    const solarOnlyPriceUSD = selectedSolviva.priceUSD * 1.5; // Linear scaling approximation
+    const solarOnlyMonthlyPaymentUSD = solarOnlyPriceUSD * pmtFactor;
+    const solarOnlyMonthlyPaymentPHP = solarOnlyMonthlyPaymentUSD * CONFIG.FX_RATE;
+
+    // Scenario B: Bundle (Solar + HP)
+    const bundleSolarPaymentUSD = selectedSolviva.priceUSD * pmtFactor;
+    const bundleSolarPaymentPHP = bundleSolarPaymentUSD * CONFIG.FX_RATE;
+    const bundleTotalPaymentPHP = bundleSolarPaymentPHP + customerTotalMonthly; // Solar Loan + HP Sub
+
+    // Pipeline
     const portfolioUnits = inputs.portfolioUnits;
-    const portfolioInvestment = utilityCOGS * portfolioUnits;
-    const portfolioNetProfit = netProfitAfterFinance * portfolioUnits;
-    
     const solvivaCustomers = portfolioUnits * (inputs.solvivaConversionRate / 100);
-    const solvivaPipelineValue = solvivaCustomers * solvivaPriceUSD;
+    const solvivaPipelineValue = solvivaCustomers * selectedSolviva.priceUSD;
 
     return {
       selectedUnit,
@@ -224,6 +222,7 @@ const InvestorFinancialModel = () => {
       customerTotalMonthly,
       customerNetSavings,
       lpgBottlesPerMonth,
+      monthlySubscriptionPHP,
       annualSubscriptionUSD,
       annualElectricityProfitUSD,
       totalAnnualOngoingRevenue,
@@ -231,15 +230,15 @@ const InvestorFinancialModel = () => {
       netProfitAfterFinance,
       roi5Year,
       irrPercent,
-      portfolioInvestment,
-      portfolioNetProfit,
+      paybackMonths,
       solvivaCustomers,
       solvivaPipelineValue,
       annualCO2Tons,
-      // Solviva Specifics
-      solvivaPriceUSD,
-      solvivaMonthlyPaymentPHP,
+      // Bundle Logic
+      selectedSolviva,
       solarOnlyMonthlyPaymentPHP,
+      bundleSolarPaymentPHP,
+      bundleTotalPaymentPHP,
       solarOnlySystemSize
     };
 
@@ -251,15 +250,15 @@ const InvestorFinancialModel = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen font-sans">
       {/* === HEADER === */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-8 mb-8 text-white">
+      <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-8 mb-8 text-white shadow-xl">
         <div className="flex items-center gap-4 mb-4">
           <div className="p-3 bg-white/10 rounded-xl">
             <Briefcase size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Karnot × Solviva Calculator</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Karnot × Solviva Calculator</h1>
             <p className="text-blue-200">Commercial & Residential EaaS | AquaHERO R290 Deployment</p>
           </div>
         </div>
@@ -341,24 +340,14 @@ const InvestorFinancialModel = () => {
                         className="mt-3"
                     />
                 </div>
-
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Portfolio Scale</label>
-                    <input
-                        type="range"
-                        min="50"
-                        max="500"
-                        step="10"
-                        value={inputs.portfolioUnits}
-                        onChange={handleChange('portfolioUnits', true)}
-                        className="w-full accent-blue-600"
-                    />
-                    <div className="flex justify-between text-xs font-bold text-gray-400 mt-1">
-                        <span>50 Units</span>
-                        <span className="text-blue-600">{inputs.portfolioUnits} Units</span>
-                        <span>500 Units</span>
-                    </div>
-                </div>
+                
+                <button
+                    onClick={() => setShowMath(!showMath)}
+                    className="w-full py-2 bg-blue-50 text-blue-600 font-bold text-sm rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center justify-center gap-2"
+                >
+                    <Calculator size={16} />
+                    {showMath ? "Hide the Math" : "Show the Math"}
+                </button>
             </div>
           </Card>
         </div>
@@ -366,6 +355,57 @@ const InvestorFinancialModel = () => {
         {/* === RESULTS PANEL === */}
         <div className="lg:col-span-2 space-y-6">
           
+          {/* SHOW MATH SECTION */}
+          {showMath && (
+              <div className="bg-slate-800 text-slate-200 p-6 rounded-xl shadow-inner font-mono text-sm space-y-6 border border-slate-700">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-600 pb-3">
+                      <Calculator size={20} className="text-green-400"/> Engineering & Financial Assumptions
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">1. Thermal Demand</h4>
+                          <div className="space-y-1">
+                              <div className="flex justify-between"><span>Daily Volume:</span> <span className="text-white">{inputs.dailyLitersHotWater} L</span></div>
+                              <div className="flex justify-between"><span>Delta T:</span> <span className="text-white">30°C (25°C → 55°C)</span></div>
+                              <div className="flex justify-between"><span>Energy Factor:</span> <span className="text-white">0.001163 kWh/L/°C</span></div>
+                              <div className="flex justify-between border-t border-slate-600 pt-1 text-green-400"><span>Daily Thermal Energy:</span> <span>{(inputs.dailyLitersHotWater * 30 * 0.001163).toFixed(2)} kWh</span></div>
+                          </div>
+                      </div>
+
+                      <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">2. LPG Baseline</h4>
+                          <div className="space-y-1">
+                              <div className="flex justify-between"><span>LPG Energy:</span> <span className="text-white">13.8 kWh/kg</span></div>
+                              <div className="flex justify-between"><span>Burner Efficiency:</span> <span className="text-white">85%</span></div>
+                              <div className="flex justify-between"><span>Effective Energy:</span> <span className="text-white">11.73 kWh/kg</span></div>
+                              <div className="flex justify-between border-t border-slate-600 pt-1 text-orange-400"><span>Monthly Bottles:</span> <span>{calculations.lpgBottlesPerMonth.toFixed(1)} x 11kg</span></div>
+                          </div>
+                      </div>
+
+                      <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">3. Unit Economics</h4>
+                          <div className="space-y-1">
+                              <div className="flex justify-between"><span>Retail Price:</span> <span className="text-white">{fmtUSD(calculations.packageRetailPrice)}</span></div>
+                              <div className="flex justify-between"><span>Karnot Discount:</span> <span className="text-white">{inputs.karnotDiscountPercent}%</span></div>
+                              <div className="flex justify-between"><span>Cost of Goods:</span> <span className="text-white">{fmtUSD(calculations.utilityCOGS)}</span></div>
+                              <div className="flex justify-between border-t border-slate-600 pt-1 text-blue-400"><span>Payback Period:</span> <span>{calculations.paybackMonths.toFixed(1)} Months</span></div>
+                          </div>
+                      </div>
+
+                      <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">4. Solar Financing</h4>
+                          <div className="space-y-1">
+                              <div className="flex justify-between"><span>System Price:</span> <span className="text-white">{fmtUSD(calculations.selectedSolviva.priceUSD)}</span></div>
+                              <div className="flex justify-between"><span>Term:</span> <span className="text-white">{inputs.solvivaTerm} Months</span></div>
+                              <div className="flex justify-between"><span>Interest Rate:</span> <span className="text-white">9% APR</span></div>
+                              <div className="flex justify-between border-t border-slate-600 pt-1 text-yellow-400"><span>Monthly Pmt (Est):</span> <span>{fmtPHP(calculations.bundleSolarPaymentPHP)}</span></div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          )}
+
           {/* Unit Economics Card */}
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -422,49 +462,51 @@ const InvestorFinancialModel = () => {
             </div>
           </Card>
 
-          {/* Solviva Cross-Sell (Enhanced) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Solviva Cross-Sell (Responsive Grid Fix) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
              {/* Customer Savings */}
-             <Card className="bg-gradient-to-br from-slate-800 to-slate-900 text-white">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                    <Users size={20} className="text-blue-400" /> Customer Savings
-                </h3>
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                        <span className="text-slate-400 text-sm">Current LPG Spend</span>
-                        <span className="text-xl font-bold text-red-400">{fmtPHP(calculations.customerCurrentMonthlyCost)}<span className="text-xs text-slate-500">/mo</span></span>
+             <Card className="bg-gradient-to-br from-slate-800 to-slate-900 text-white h-full flex flex-col justify-between">
+                <div>
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                        <Users size={20} className="text-blue-400" /> Customer Savings
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                            <span className="text-slate-400 text-sm">Current LPG Spend</span>
+                            <span className="text-xl font-bold text-red-400">{fmtPHP(calculations.customerCurrentMonthlyCost)}<span className="text-xs text-slate-500">/mo</span></span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                            <span className="text-slate-400 text-sm">New 1882 Payment</span>
+                            <span className="text-xl font-bold text-white">{fmtPHP(calculations.customerTotalMonthly)}<span className="text-xs text-slate-500">/mo</span></span>
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                        <span className="text-slate-400 text-sm">New 1882 Payment</span>
-                        <span className="text-xl font-bold text-white">{fmtPHP(calculations.customerTotalMonthly)}<span className="text-xs text-slate-500">/mo</span></span>
-                    </div>
-                    <div className="bg-green-500/20 border border-green-500/50 p-3 rounded-lg flex justify-between items-center">
-                        <span className="text-green-300 font-bold">Net Monthly Savings</span>
-                        <span className="text-2xl font-bold text-green-400">{fmtPHP(calculations.customerNetSavings)}</span>
-                    </div>
+                </div>
+                <div className="bg-green-500/20 border border-green-500/50 p-3 rounded-lg flex justify-between items-center mt-4">
+                    <span className="text-green-300 font-bold">Net Monthly Savings</span>
+                    <span className="text-2xl font-bold text-green-400">{fmtPHP(calculations.customerNetSavings)}</span>
                 </div>
              </Card>
 
              {/* Solviva "Bundle" Pitch */}
-             <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-orange-100">
+             <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-orange-100 h-full">
                 <div className="flex justify-between items-start mb-4">
                     <h3 className="text-lg font-bold text-orange-900 flex items-center gap-2">
                         <Sun size={20} className="text-orange-600" /> Solviva Cross-Sell
                     </h3>
                 </div>
                 
-                <div className="flex flex-col h-full justify-between space-y-4">
+                <div className="flex flex-col gap-4">
                     {/* Controls */}
                     <div className="grid grid-cols-2 gap-2">
                          <div>
                             <label className="text-[10px] font-bold text-orange-800 uppercase mb-1 block">System</label>
                             <select 
                                 className="w-full p-1 rounded bg-white border border-orange-200 text-sm font-bold text-gray-700"
-                                value={inputs.solvivaSystemSize}
-                                onChange={handleChange('solvivaSystemSize', true)}
+                                value={inputs.selectedSolvivaSystemId}
+                                onChange={handleChange('selectedSolvivaSystemId')}
                             >
-                                {SYSTEM_SIZES.map(kw => (
-                                    <option key={kw} value={kw}>{kw} kWp</option>
+                                {SOLVIVA_SYSTEMS.map(sys => (
+                                    <option key={sys.id} value={sys.id}>{sys.name}</option>
                                 ))}
                             </select>
                          </div>
@@ -475,8 +517,8 @@ const InvestorFinancialModel = () => {
                                 value={inputs.solvivaTerm}
                                 onChange={handleChange('solvivaTerm', true)}
                             >
-                                <option value={12}>12 Months</option>
                                 <option value={36}>36 Months</option>
+                                <option value={48}>48 Months</option>
                                 <option value={60}>60 Months</option>
                             </select>
                          </div>
@@ -484,17 +526,27 @@ const InvestorFinancialModel = () => {
 
                     {/* The Pitch Logic */}
                     <div className="bg-white p-3 rounded-lg border border-orange-100 shadow-sm space-y-2">
-                         <div className="text-xs font-bold text-orange-400 uppercase">Customer Monthly Payment</div>
-                         <div className="flex justify-between items-center">
-                            <span className="text-xs text-red-600">Solar Only ({calculations.solarOnlySystemSize} kWp):</span>
+                         <div className="text-xs font-bold text-orange-400 uppercase">Monthly Payment Comparison</div>
+                         
+                         {/* Solar Only */}
+                         <div className="flex justify-between items-center opacity-75">
+                            <div className="flex flex-col">
+                                <span className="text-xs text-red-600 font-bold">Solar Only (Larger System)</span>
+                                <span className="text-[10px] text-gray-500">Needs {(calculations.solarOnlySystemSize).toFixed(1)} kWp for electric showers</span>
+                            </div>
                             <span className="text-sm font-bold text-red-600 line-through decoration-red-400 decoration-2">
                                 {fmtPHP(calculations.solarOnlyMonthlyPaymentPHP)}
                             </span>
                          </div>
-                         <div className="flex justify-between items-center">
-                            <span className="text-xs text-green-700">Bundle ({inputs.solvivaSystemSize} kWp + HP):</span>
+
+                         {/* Bundle */}
+                         <div className="flex justify-between items-center border-t pt-2 mt-1">
+                            <div className="flex flex-col">
+                                <span className="text-xs text-green-700 font-bold">Bundle (Optimized + HP)</span>
+                                <span className="text-[10px] text-gray-500">Smaller Solar + Heat Pump Sub</span>
+                            </div>
                             <span className="text-lg font-bold text-green-700">
-                                {fmtPHP(calculations.solvivaMonthlyPaymentPHP + calculations.customerTotalMonthly)}
+                                {fmtPHP(calculations.bundleTotalPaymentPHP)}
                             </span>
                          </div>
                     </div>
