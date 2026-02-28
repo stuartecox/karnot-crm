@@ -90,6 +90,9 @@ import InvestorAutoResearch from './components/InvestorAutoResearch.jsx';
 import InvestorFinancialModel from './components/InvestorFinancialModel.jsx';
 import EaaSInvestorCalculator from './components/EaaSInvestorCalculator.jsx';
 
+// --- Social Media & Marketing ---
+import SocialMediaPlanner from './pages/SocialMediaPlanner.jsx';
+
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
 // ==========================================
@@ -107,7 +110,8 @@ import {
     Users, Settings, Calculator, Plus, Landmark, ChevronDown,
     MapPin, Wrench, Briefcase, FileText, Target, Package, 
     UserCheck, Calendar as CalendarIcon, CheckCircle, Globe, Upload, Sparkles,
-    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap
+    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap,
+    Share2, Linkedin, BookOpen, Layout, Image
 } from 'lucide-react'; 
 
 // ==========================================
@@ -218,6 +222,15 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'serviceInvoice', label: 'Service Invoice', icon: FileText }
     ];
 
+    // Social Media & Marketing Menu
+    const socialMediaMenu = [
+        { view: 'socialPlanner', label: 'Social Planner', icon: Layout, badge: 'NEW' },
+        { view: 'socialContent', label: 'Content Calendar', icon: CalendarIcon },
+        { view: 'socialAnalytics', label: 'Analytics Tracker', icon: BarChart2 },
+        { view: 'socialCampaigns', label: 'Campaigns', icon: Zap },
+        { view: 'socialTraining', label: 'Training Hub', icon: BookOpen },
+    ];
+
     // Investment Menu
     const investmentMenu = [
         { view: 'investmentPipeline', label: 'Command Center', icon: TrendingUp },
@@ -314,7 +327,17 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                         variant="orange"
                     />
                     <DropdownMenu label="Operations" icon={Wrench} items={operationsMenu} activeView={activeView} setActiveView={setActiveView} />
-                    
+
+                    {/* Social Media & Marketing */}
+                    <DropdownMenu
+                        label="Social Media"
+                        icon={Share2}
+                        items={socialMediaMenu}
+                        activeView={activeView}
+                        setActiveView={setActiveView}
+                        variant="orange"
+                    />
+
                     {/* Investment Menu with PURPLE variant */}
                     <DropdownMenu 
                         label="Investment" 
@@ -815,6 +838,29 @@ export default function App() {
 
                 {activeView === 'eaasCalc' && (
                     <EaaSInvestorCalculator />
+                )}
+
+                {/* ====================================== */}
+                {/* 6D. SOCIAL MEDIA & MARKETING           */}
+                {/* ====================================== */}
+                {activeView === 'socialPlanner' && (
+                    <SocialMediaPlanner user={user} initialTab="overview" key="social-overview" />
+                )}
+
+                {activeView === 'socialContent' && (
+                    <SocialMediaPlanner user={user} initialTab="content" key="social-content" />
+                )}
+
+                {activeView === 'socialAnalytics' && (
+                    <SocialMediaPlanner user={user} initialTab="analytics" key="social-analytics" />
+                )}
+
+                {activeView === 'socialCampaigns' && (
+                    <SocialMediaPlanner user={user} initialTab="campaigns" key="social-campaigns" />
+                )}
+
+                {activeView === 'socialTraining' && (
+                    <SocialMediaPlanner user={user} initialTab="training" key="social-training" />
                 )}
 
                 {/* 7. QUOTING */}
