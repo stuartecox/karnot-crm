@@ -356,12 +356,26 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                     {(userRole === 'ADMIN' || userPermissions.includes('accounts')) && (
                         <>
                             <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
-                            <Button 
-                                onClick={() => setActiveView('accounts')} 
+                            <Button
+                                onClick={() => setActiveView('accounts')}
                                 variant={activeView === 'accounts' ? 'primary' : 'secondary'}
                                 className="font-bold uppercase text-[10px] tracking-widest border-orange-200 text-orange-700 bg-orange-50 h-9"
                             >
                                 <Landmark className="mr-1.5" size={14} /> Accounts
+                            </Button>
+                        </>
+                    )}
+
+                    {/* Admin: Team Management */}
+                    {userRole === 'ADMIN' && (
+                        <>
+                            <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+                            <Button
+                                onClick={() => setActiveView('admin')}
+                                variant={activeView === 'admin' ? 'primary' : 'secondary'}
+                                className="font-bold uppercase text-[10px] tracking-widest h-9"
+                            >
+                                <Settings className="mr-1.5" size={14} /> Admin
                             </Button>
                         </>
                     )}
