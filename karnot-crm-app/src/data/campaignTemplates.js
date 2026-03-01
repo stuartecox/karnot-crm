@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ─── ENERGY MANAGER SEQUENCE ─────────────────────────────────
-// Goal: Get 30-40 qualified NCR sites (1,000-5,000L hot water)
+// Goal: Get 30 qualified NCR sites for funded pilot installations
 // Audience: Corporate energy managers at hotels, F&B, industrial
 // Style: Branded HTML — professional, exciting, zero-risk feel
 // Landing page: karnot.com/pilot
@@ -16,7 +16,7 @@ export const ENERGY_MANAGER_SEQUENCE = [
         name: 'EM-1: Flagship Pilot Invitation',
         timing: 'Week 1 — Day 1',
         subject: 'Your facility could qualify for a fully-funded energy upgrade',
-        preheader: 'Karnot is funding 10 pilot installations in Metro Manila — zero capex, guaranteed savings.',
+        preheader: 'Karnot is funding 30 pilot installations in Metro Manila — zero capex, guaranteed savings.',
         tags: ['BRANDED', 'RESPONSIVE', 'WEEK-1'],
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <style>
@@ -67,7 +67,7 @@ body{margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-seri
 <div class="body">
 <p>Dear {{ contact.FIRSTNAME }},</p>
 
-<p>Karnot Energy Solutions is <strong>fully funding 10 pilot installations</strong> of our CO2 and R290 heat pump systems across Metro Manila — and we're looking for facilities like yours.</p>
+<p>Karnot Energy Solutions is <strong>fully funding 30 pilot installations</strong> of our CO2 and R290 heat pump systems across Metro Manila — and we're looking for facilities like yours.</p>
 
 <div class="callout">
 <p><strong>What this means for you:</strong> Zero capital expenditure. We install our heat pump system at no cost. You pay nothing upfront. You simply share a portion of the energy savings — and keep guaranteed savings from Day 1.</p>
@@ -94,7 +94,7 @@ body{margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-seri
 </ul>
 </div>
 
-<p>This is <strong>not a sales pitch</strong>. We are BOI-SIPP registered and actively investing in proving our technology across the NCR. Only 10 facilities will be selected for this fully-funded round.</p>
+<p>This is <strong>not a sales pitch</strong>. We are BOI-SIPP registered and actively investing in proving our technology across the NCR. Only 30 facilities will be selected for this fully-funded round.</p>
 
 <a href="https://karnot.com/pilot" class="cta">CHECK IF YOUR FACILITY QUALIFIES →</a>
 
@@ -198,7 +198,7 @@ body{margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-seri
 <p><span class="pill">Key Point</span></p>
 <p>Under our EaaS model, you keep <strong>25% of the energy savings from Day 1</strong>. For a facility using 3,000L/day, that's approximately <strong>₱28,500/month in your pocket</strong> — for doing nothing except saying yes.</p>
 
-<p>We've opened applications for <strong>10 pilot sites in NCR</strong>. Several slots have already received interest.</p>
+<p>We've opened applications for <strong>30 pilot sites in NCR</strong>. Several slots have already received interest.</p>
 
 <a href="https://karnot.com/pilot" class="cta">APPLY FOR THE PILOT PROGRAM →</a>
 
@@ -222,8 +222,8 @@ stuart.cox@karnot.com</p>
         id: 'em_email_3',
         name: 'EM-3: Last Spots (Urgency)',
         timing: 'Week 2 — Day 8 (if no response)',
-        subject: 'Only 4 pilot spots remaining — NCR facilities',
-        preheader: '6 facilities already shortlisted. Submit before we close applications.',
+        subject: 'Only 8 pilot spots remaining — NCR facilities',
+        preheader: '22 facilities already shortlisted. Submit before we close applications.',
         tags: ['BRANDED', 'URGENCY', 'WEEK-2'],
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <style>
@@ -254,29 +254,27 @@ body{margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-seri
 <div class="header"><h1>KARNOT ENERGY SOLUTIONS</h1></div>
 
 <div class="urgent">
-<h2>ONLY 4 PILOT SPOTS REMAINING</h2>
-<p>Applications close when all 10 slots are filled</p>
+<h2>ONLY 8 PILOT SPOTS REMAINING</h2>
+<p>Applications close when all 30 slots are filled</p>
 </div>
 
 <div class="body">
 <p>{{ contact.FIRSTNAME }},</p>
 
-<p>Quick update on our Flagship EaaS Pilot Program — we've had strong interest and <strong>6 of 10 pilot slots have already been shortlisted</strong>.</p>
+<p>Quick update on our Flagship EaaS Pilot Program — we've had strong interest and <strong>22 of 30 pilot slots have already been shortlisted</strong>.</p>
 
 <div class="progress">
 <h4>Pilot Program Status</h4>
-<div class="bar-wrap"><div class="bar-fill"><span>6 of 10 Filled</span></div></div>
+<div class="bar-wrap"><div class="bar-fill" style="width:73%"><span>22 of 30 Filled</span></div></div>
 <div class="slots">
-<span class="slot taken">Hotel — Makati</span>
-<span class="slot taken">F&B — Pasig</span>
-<span class="slot taken">Hospital — QC</span>
-<span class="slot taken">Resort — Tagaytay</span>
-<span class="slot taken">Laundry — BGC</span>
-<span class="slot taken">Factory — Cavite</span>
-<span class="slot open">Open Slot</span>
-<span class="slot open">Open Slot</span>
-<span class="slot open">Open Slot</span>
-<span class="slot open">Open Slot</span>
+<span class="slot taken">Hotels — Makati (4)</span>
+<span class="slot taken">F&B — Pasig (3)</span>
+<span class="slot taken">Hospitals — QC (3)</span>
+<span class="slot taken">Resorts — Tagaytay (2)</span>
+<span class="slot taken">Laundries — BGC (4)</span>
+<span class="slot taken">Factories — Cavite (3)</span>
+<span class="slot taken">Mixed — Manila (3)</span>
+<span class="slot open">8 Open Slots Remaining</span>
 </div>
 </div>
 
@@ -574,7 +572,7 @@ export const CAMPAIGN_SEQUENCES = {
         landingPage: 'karnot.com/pilot',
         totalEmails: 3,
         duration: '2 weeks',
-        goal: '30-40 qualified NCR site submissions',
+        goal: '30 qualified NCR site submissions (funded pilot)',
         color: 'orange',
         emails: ENERGY_MANAGER_SEQUENCE
     },

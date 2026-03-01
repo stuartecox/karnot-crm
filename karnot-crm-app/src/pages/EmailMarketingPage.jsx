@@ -6,6 +6,16 @@ import {
     Zap, List, Layout, ExternalLink, Target, Play, Calendar
 } from 'lucide-react';
 import { CAMPAIGN_SEQUENCES, ENERGY_MANAGER_SEQUENCE, ESCO_PARTNER_SEQUENCE } from '../data/campaignTemplates.js';
+import emailTemplateData from '../data/emailTemplates.json';
+
+// Map icon name strings from JSON → Lucide React components
+const ICON_MAP = { Zap, FileText, ArrowRight, Target, Mail, Send, Users, Calendar, Play };
+const EMAIL_TEMPLATES = Object.fromEntries(
+    Object.entries(emailTemplateData.templates).map(([key, t]) => [
+        key,
+        { ...t, icon: ICON_MAP[t.icon] || FileText }
+    ])
+);
 
 // Brevo API helper — calls via Netlify function proxy
 const brevoCall = async (endpoint, method = 'GET', data = null) => {
@@ -39,83 +49,6 @@ const TabBtn = ({ active, onClick, icon: Icon, label, badge }) => (
         {badge && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${active ? 'bg-white/20' : 'bg-orange-100 text-orange-600'}`}>{badge}</span>}
     </button>
 );
-
-// ── Email Templates ──────────────────────────────────
-const EMAIL_TEMPLATES = {
-    investment_teaser: {
-        label: 'Investment Teaser',
-        desc: 'Full branded Karnot template with stats, highlights, and CTA to iheat.ph. Best for first contact.',
-        icon: Zap, color: 'orange',
-        tags: ['BRANDED', 'RESPONSIVE', 'PERSONALIZED'],
-        subject: 'Opportunity: Clean Energy Investment in the Philippines',
-        html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<style>body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5}.container{max-width:600px;margin:0 auto;background:#fff}.header{background:#ea580c;padding:30px;text-align:center}.header h1{color:#fff;margin:0;font-size:24px}.header p{color:#fed7aa;margin:5px 0 0;font-size:14px}.body{padding:30px}.body h2{color:#1f2937;font-size:20px;margin:0 0 15px}.body p{color:#4b5563;font-size:14px;line-height:1.6;margin:0 0 12px}.highlight{background:#fff7ed;border-left:4px solid #ea580c;padding:15px;margin:20px 0;border-radius:0 8px 8px 0}.highlight strong{color:#ea580c}.cta{display:block;background:#ea580c;color:#fff!important;text-align:center;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;margin:25px 0}.footer{background:#1f2937;padding:20px;text-align:center;color:#9ca3af;font-size:12px}.footer a{color:#ea580c}</style></head>
-<body><div class="container">
-<div class="header"><h1>KARNOT ENERGY SOLUTIONS</h1><p>Clean Energy Investment Opportunity</p></div>
-<div class="body">
-<h2>Dear {{ contact.FIRSTNAME }},</h2>
-<p>I'm reaching out because we have an exciting clean energy investment opportunity in the Philippines that I believe aligns with your interests.</p>
-<div class="highlight"><strong>The Philippines Opportunity:</strong> With electricity costs at P14/kWh — among the highest in Asia — there's a massive market for energy-efficient solutions. Karnot Energy Solutions is at the forefront with our CO2 and R290 heat pump technology delivering 75%+ energy savings.</div>
-<p>We're raising investment in units of <strong>$2,500 - $5,000</strong> to scale our operations across Luzon and into the broader ASEAN market.</p>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0"><tr>
-<td width="30%" style="background:#f9fafb;border-radius:8px;padding:15px;text-align:center"><div style="font-size:24px;font-weight:900;color:#ea580c">75%+</div><div style="font-size:11px;color:#6b7280;text-transform:uppercase">Energy Savings</div></td><td width="5%"></td>
-<td width="30%" style="background:#f9fafb;border-radius:8px;padding:15px;text-align:center"><div style="font-size:24px;font-weight:900;color:#ea580c">P14</div><div style="font-size:11px;color:#6b7280;text-transform:uppercase">Cost per kWh</div></td><td width="5%"></td>
-<td width="30%" style="background:#f9fafb;border-radius:8px;padding:15px;text-align:center"><div style="font-size:24px;font-weight:900;color:#ea580c">3-4hr</div><div style="font-size:11px;color:#6b7280;text-transform:uppercase">iSTOR Coast Time</div></td>
-</tr></table>
-<p>Our iSTOR battery technology provides 3-4 hours of "coast time," creating a virtual power plant model that adds recurring revenue on top of the hardware sales.</p>
-<a href="https://iheat.ph" class="cta">Request Data Room Access →</a>
-<p>I'd welcome the opportunity to share our investor deck and discuss how this fits your portfolio.</p>
-<p>Best regards,<br><strong>Stuart Cox</strong><br>CEO, Karnot Energy Solutions<br>stuart.cox@karnot.com</p>
-</div>
-<div class="footer"><p>Karnot Energy Solutions · Philippines · <a href="https://iheat.ph">iheat.ph</a></p>
-<p style="margin-top:10px;font-size:10px">You're receiving this because you expressed interest in clean energy investments.<br><a href="{{ unsubscribe }}">Unsubscribe</a></p></div>
-</div></body></html>`
-    },
-    plain_professional: {
-        label: 'Plain Professional',
-        desc: 'Clean, text-focused email that looks personal. Best for bypassing spam filters with financial terms.',
-        icon: FileText, color: 'gray',
-        tags: ['SPAM-SAFE', 'MINIMAL', 'PERSONALIZED'],
-        subject: 'Clean Energy Investment — Philippines Market',
-        html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<style>body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5}.container{max-width:600px;margin:0 auto;background:#fff;padding:40px}p{color:#374151;font-size:14px;line-height:1.7;margin:0 0 14px}.sig{border-top:2px solid #ea580c;padding-top:15px;margin-top:25px}.sig strong{color:#ea580c}.unsub{text-align:center;margin-top:30px;font-size:11px;color:#9ca3af}.unsub a{color:#6b7280}</style></head>
-<body><div class="container">
-<p>Dear {{ contact.FIRSTNAME }},</p>
-<p>I hope this email finds you well. I'm Stuart Cox, CEO of Karnot Energy Solutions, and I'm reaching out about an investment opportunity in clean energy technology for the Philippine market.</p>
-<p>The Philippines has some of the highest electricity costs in Asia at P14/kWh, creating significant demand for energy-efficient solutions. Our CO2 and R290 heat pump systems deliver 75%+ energy savings to commercial and industrial clients.</p>
-<p>We're currently offering investment units in the range of $2,500 - $5,000, making this an accessible entry point into the fast-growing ASEAN clean energy sector.</p>
-<p>Key highlights:</p>
-<p>• 75%+ energy savings vs conventional systems<br>• iSTOR battery technology with 3-4 hour coast time<br>• Virtual power plant recurring revenue model<br>• BOI-registered enterprise (Board of Investments, Philippines)</p>
-<p>If this aligns with your investment interests, I'd welcome the opportunity to share our data room and investor deck.</p>
-<p>You can learn more at <a href="https://iheat.ph" style="color:#ea580c">iheat.ph</a></p>
-<div class="sig"><strong>Stuart Cox</strong><br>CEO, Karnot Energy Solutions<br>stuart.cox@karnot.com</div>
-<div class="unsub"><a href="{{ unsubscribe }}">Unsubscribe from future emails</a></div>
-</div></body></html>`
-    },
-    follow_up: {
-        label: 'Follow-Up',
-        desc: 'Short follow-up for contacts who didn\'t respond to the first teaser. Friendly, low-pressure.',
-        icon: ArrowRight, color: 'blue',
-        tags: ['FOLLOW-UP', 'SHORT', 'PERSONALIZED'],
-        subject: 'Following up: Karnot Energy Solutions Investment',
-        html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<style>body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5}.container{max-width:600px;margin:0 auto;background:#fff}.header{background:#ea580c;padding:20px 30px}.header h1{color:#fff;margin:0;font-size:18px}.body{padding:30px}.body p{color:#4b5563;font-size:14px;line-height:1.6;margin:0 0 12px}.cta{display:block;background:#ea580c;color:#fff!important;text-align:center;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;margin:25px 0}.footer{background:#1f2937;padding:20px;text-align:center;color:#9ca3af;font-size:12px}.footer a{color:#ea580c}</style></head>
-<body><div class="container">
-<div class="header"><h1>KARNOT ENERGY SOLUTIONS</h1></div>
-<div class="body">
-<p>Hi {{ contact.FIRSTNAME }},</p>
-<p>I wanted to follow up on my earlier email about our clean energy investment opportunity in the Philippines.</p>
-<p>Since then, we've had strong interest from investors who see the potential in our CO2 heat pump technology and the Philippine energy market.</p>
-<p>With investment units starting at just <strong>$2,500</strong>, this is an accessible way to participate in the ASEAN clean energy transition.</p>
-<p>Would you be open to a quick 15-minute call this week? I'd love to walk you through our latest numbers.</p>
-<a href="https://iheat.ph" class="cta">View Our Latest Updates →</a>
-<p>Best,<br><strong>Stuart Cox</strong><br>CEO, Karnot Energy Solutions</p>
-</div>
-<div class="footer"><p>Karnot Energy Solutions · <a href="https://iheat.ph">iheat.ph</a></p>
-<p style="margin-top:10px;font-size:10px"><a href="{{ unsubscribe }}">Unsubscribe</a></p></div>
-</div></body></html>`
-    }
-};
 
 // ═════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -166,8 +99,16 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
 
     const loadCampaigns = async () => {
         try {
-            const result = await brevoCall('/emailCampaigns', 'GET', { limit: 50, offset: 0, sort: 'desc' });
-            setCampaigns(result.campaigns || []);
+            const result = await brevoCall('/emailCampaigns', 'GET', { limit: 50, offset: 0, sort: 'desc', statistics: 'campaignStats' });
+            const rawCampaigns = result.campaigns || [];
+            // Brevo list endpoint returns statistics in different shapes —
+            // normalize to ensure inline stats always display
+            const normalized = rawCampaigns.map(c => {
+                // Brevo may return stats as globalStats or statistics or campaignStats
+                const stats = c.statistics || c.globalStats || c.campaignStats || {};
+                return { ...c, statistics: stats };
+            });
+            setCampaigns(normalized);
         } catch (err) { console.error('Load campaigns error:', err); }
     };
 
@@ -278,20 +219,31 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
         setLoading(true); setError('');
         try {
             await brevoCall(`/emailCampaigns/${campaignId}/sendNow`, 'POST');
-            setSuccess('Campaign is being sent!');
+            setSuccess('Campaign is being sent! Stats will appear in a few minutes.');
             setTimeout(() => setSuccess(''), 5000);
             await loadCampaigns();
+            // Auto-refresh stats after 30s and 60s to pick up delivery data
+            setTimeout(() => loadCampaigns(), 30000);
+            setTimeout(() => loadCampaigns(), 60000);
         } catch (err) { setError(err.message); }
         setLoading(false);
     };
 
     const handleViewStats = async (campaign) => {
         setSelectedCampaign(campaign);
+        setCampaignStats(null); // Clear stale stats while loading
         try {
-            const stats = await brevoCall(`/emailCampaigns/${campaign.id}`, 'GET');
-            setCampaignStats(stats);
+            const detailed = await brevoCall(`/emailCampaigns/${campaign.id}`, 'GET');
+            // Normalize stats — Brevo returns different shapes depending on campaign state
+            const stats = detailed.statistics || detailed.globalStats || detailed.campaignStats || {};
+            setCampaignStats({ ...detailed, statistics: stats });
+            // Also update the campaign in the list so inline stats refresh too
+            setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, statistics: stats } : c));
         } catch (err) {
-            setCampaignStats(campaign);
+            console.error('Stats fetch error:', err);
+            setCampaignStats(campaign); // Fallback to what we had
+            setError('Could not fetch latest stats from Brevo. Showing cached data.');
+            setTimeout(() => setError(''), 5000);
         }
     };
 
@@ -482,13 +434,16 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                                                 }`}>{c.status}</span>
                                             </div>
                                             <p className="text-sm text-gray-500">Subject: {c.subject}</p>
-                                            {c.statistics && (
+                                            {c.statistics && (c.statistics.delivered > 0 || c.statistics.sent > 0) && (
                                                 <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                                                    <span className="flex items-center gap-1"><Send size={11} /> {c.statistics.delivered || 0} delivered</span>
-                                                    <span className="flex items-center gap-1"><Eye size={11} /> {c.statistics.uniqueViews || 0} opened</span>
-                                                    <span className="flex items-center gap-1"><MousePointer size={11} /> {c.statistics.uniqueClicks || 0} clicked</span>
+                                                    <span className="flex items-center gap-1"><Send size={11} /> {c.statistics.delivered || c.statistics.sent || 0} delivered</span>
+                                                    <span className="flex items-center gap-1"><Eye size={11} /> {c.statistics.uniqueViews || c.statistics.viewed || 0} opened</span>
+                                                    <span className="flex items-center gap-1"><MousePointer size={11} /> {c.statistics.uniqueClicks || c.statistics.clickers || 0} clicked</span>
                                                     <span className="flex items-center gap-1"><XCircle size={11} /> {c.statistics.hardBounces || 0} bounced</span>
                                                 </div>
+                                            )}
+                                            {c.status === 'sent' && (!c.statistics || (!c.statistics.delivered && !c.statistics.sent)) && (
+                                                <p className="text-[10px] text-amber-500 mt-1">Stats loading — click "Stats" to refresh</p>
                                             )}
                                         </div>
                                         <div className="flex gap-2 ml-4">
@@ -508,21 +463,41 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                     )}
 
                     {/* Stats Panel */}
-                    {selectedCampaign && campaignStats && (
+                    {selectedCampaign && (
                         <Card className="border-2 border-blue-200 bg-blue-50/20">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-bold text-gray-800">Analytics: {selectedCampaign.name}</h3>
-                                <button onClick={() => { setSelectedCampaign(null); setCampaignStats(null); }} className="text-gray-400 hover:text-gray-600"><XCircle size={18} /></button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => handleViewStats(selectedCampaign)}
+                                        className="text-blue-500 hover:text-blue-700 p-1" title="Refresh stats">
+                                        <RefreshCw size={14} />
+                                    </button>
+                                    <button onClick={() => { setSelectedCampaign(null); setCampaignStats(null); }} className="text-gray-400 hover:text-gray-600"><XCircle size={18} /></button>
+                                </div>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <StatCard icon={Send} label="Delivered" value={campaignStats.statistics?.delivered || 0} color="green" />
-                                <StatCard icon={Eye} label="Opened" value={campaignStats.statistics?.uniqueViews || 0} color="blue"
-                                    sub={campaignStats.statistics?.delivered ? `${((campaignStats.statistics.uniqueViews / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
-                                <StatCard icon={MousePointer} label="Clicked" value={campaignStats.statistics?.uniqueClicks || 0} color="purple"
-                                    sub={campaignStats.statistics?.delivered ? `${((campaignStats.statistics.uniqueClicks / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
-                                <StatCard icon={XCircle} label="Bounced" value={(campaignStats.statistics?.hardBounces || 0) + (campaignStats.statistics?.softBounces || 0)} color="orange" />
-                                <StatCard icon={AlertCircle} label="Unsubscribed" value={campaignStats.statistics?.unsubscriptions || 0} color="orange" />
-                            </div>
+                            {!campaignStats ? (
+                                <div className="text-center py-6">
+                                    <RefreshCw size={20} className="animate-spin text-blue-400 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-400">Loading stats from Brevo...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                        <StatCard icon={Send} label="Delivered" value={campaignStats.statistics?.delivered || 0} color="green" />
+                                        <StatCard icon={Eye} label="Opened" value={campaignStats.statistics?.uniqueViews || campaignStats.statistics?.viewed || 0} color="blue"
+                                            sub={campaignStats.statistics?.delivered ? `${(((campaignStats.statistics.uniqueViews || campaignStats.statistics?.viewed || 0) / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
+                                        <StatCard icon={MousePointer} label="Clicked" value={campaignStats.statistics?.uniqueClicks || campaignStats.statistics?.clickers || 0} color="purple"
+                                            sub={campaignStats.statistics?.delivered ? `${(((campaignStats.statistics.uniqueClicks || campaignStats.statistics?.clickers || 0) / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
+                                        <StatCard icon={XCircle} label="Bounced" value={(campaignStats.statistics?.hardBounces || 0) + (campaignStats.statistics?.softBounces || 0)} color="orange" />
+                                        <StatCard icon={AlertCircle} label="Unsubscribed" value={campaignStats.statistics?.unsubscriptions || 0} color="orange" />
+                                    </div>
+                                    {selectedCampaign.status === 'sent' && campaignStats.statistics?.delivered === 0 && (
+                                        <p className="text-xs text-amber-600 mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                            Stats may take a few minutes to appear after sending. Click the refresh button to check for updates.
+                                        </p>
+                                    )}
+                                </>
+                            )}
                         </Card>
                     )}
                 </div>
@@ -533,9 +508,13 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                 <div className="space-y-4">
                     <Card>
                         <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <Users size={16} className="text-orange-500" /> Sync CRM Contacts to Brevo
+                            <Users size={16} className="text-orange-500" /> Sync CRM Contacts → Brevo
                         </h3>
-                        <p className="text-sm text-gray-500 mb-4">Push your Sales &amp; CRM contacts to a Brevo list for email campaigns. Attributes (name, company, job title) are automatically mapped.</p>
+                        <p className="text-sm text-gray-500 mb-3">Push your CRM contacts to Brevo for email campaigns. <strong>Your CRM is the master list</strong> — contacts flow one-way from CRM to Brevo. Attributes (name, company, job title) are automatically mapped.</p>
+                        <div className="flex items-center gap-2 mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                            <ArrowRight size={14} className="text-blue-500 flex-shrink-0" />
+                            <p className="text-[11px] text-blue-700"><strong>One-way sync:</strong> CRM → Brevo. Changes in your CRM are pushed to Brevo. Brevo never overwrites your CRM data.</p>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
