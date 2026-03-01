@@ -3,8 +3,9 @@ import { Card, Button, Input } from '../data/constants.jsx';
 import {
     Mail, Send, Users, BarChart2, Plus, Trash2, RefreshCw, CheckCircle, AlertCircle,
     Eye, MousePointer, XCircle, Clock, Search, Filter, FileText, Copy, ArrowRight,
-    Zap, List, Layout, ExternalLink
+    Zap, List, Layout, ExternalLink, Target, Play, Calendar
 } from 'lucide-react';
+import { CAMPAIGN_SEQUENCES, ENERGY_MANAGER_SEQUENCE, ESCO_PARTNER_SEQUENCE } from '../data/campaignTemplates.js';
 
 // Brevo API helper — calls via Netlify function proxy
 const brevoCall = async (endpoint, method = 'GET', data = null) => {
@@ -387,6 +388,7 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                 <TabBtn active={activeTab === 'contacts'} onClick={() => setActiveTab('contacts')} icon={Users} label="Sync Contacts" badge={contactsWithEmail.length || null} />
                 <TabBtn active={activeTab === 'lists'} onClick={() => setActiveTab('lists')} icon={List} label="Lists" badge={lists.length || null} />
                 <TabBtn active={activeTab === 'templates'} onClick={() => setActiveTab('templates')} icon={Layout} label="Templates" />
+                <TabBtn active={activeTab === 'sequences'} onClick={() => setActiveTab('sequences')} icon={Target} label="Sequences" badge="2" />
             </div>
 
             {/* ═══════ CAMPAIGNS TAB ═══════ */}
@@ -688,6 +690,202 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                         <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <p className="text-xs text-yellow-800">
                                 <strong>Pro Tip:</strong> Always include <code className="bg-yellow-100 px-1 rounded">{'{{ unsubscribe }}'}</code> in your emails — it's legally required and helps deliverability. The "Plain Professional" template is best for financial emails to avoid spam filters.
+                            </p>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* ═══════ SEQUENCES TAB ═══════ */}
+            {activeTab === 'sequences' && (
+                <div className="space-y-6">
+                    {/* Strategy Overview */}
+                    <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50/50 to-blue-50/50">
+                        <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                            <Target size={18} className="text-orange-500" /> Private Partner Army — Campaign Strategy
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-4">Two-track email campaign: Fish for projects with Energy Managers, then recruit ESCO partners with a proven pipeline.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div className="bg-white rounded-lg p-3 border text-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Week 1</p>
+                                <p className="text-sm font-bold text-orange-600 mt-1">Launch EM Emails</p>
+                                <p className="text-[10px] text-gray-400">Fish for projects</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border text-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Week 2-3</p>
+                                <p className="text-sm font-bold text-blue-600 mt-1">Qualify Sites</p>
+                                <p className="text-[10px] text-gray-400">Target 10-15 solid leads</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border text-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Week 3</p>
+                                <p className="text-sm font-bold text-purple-600 mt-1">Launch ESCO Emails</p>
+                                <p className="text-[10px] text-gray-400">Show pipeline proof</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border text-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Week 4+</p>
+                                <p className="text-sm font-bold text-green-600 mt-1">Close Partners</p>
+                                <p className="text-[10px] text-gray-400">$2,500-$5,000 each</p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Sequence Cards */}
+                    {Object.values(CAMPAIGN_SEQUENCES).map(seq => (
+                        <Card key={seq.id} className={`border-2 ${seq.color === 'orange' ? 'border-orange-200' : 'border-blue-200'}`}>
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                        {seq.color === 'orange'
+                                            ? <Mail size={18} className="text-orange-500" />
+                                            : <Users size={18} className="text-blue-500" />
+                                        }
+                                        {seq.name}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mt-1">{seq.description}</p>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">{seq.audience}</span>
+                                        <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Landing: {seq.landingPage}</span>
+                                        <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-bold">{seq.duration}</span>
+                                        <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold">Goal: {seq.goal}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Email Timeline */}
+                            <div className="space-y-3">
+                                {seq.emails.map((email, idx) => (
+                                    <div key={email.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-300 transition-colors">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black text-white ${
+                                            seq.color === 'orange' ? 'bg-orange-500' : 'bg-blue-500'
+                                        }`}>
+                                            {idx + 1}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h4 className="font-bold text-gray-800 text-sm">{email.name}</h4>
+                                                <span className="text-[9px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">{email.timing}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500">Subject: <strong>{email.subject}</strong></p>
+                                            {email.preheader && <p className="text-[10px] text-gray-400 mt-0.5">Preview: {email.preheader}</p>}
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {email.tags.map(tag => (
+                                                    <span key={tag} className="text-[8px] bg-white text-gray-500 px-1.5 py-0.5 rounded border font-bold">{tag}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1.5 flex-shrink-0">
+                                            <button
+                                                onClick={() => {
+                                                    setCampaignForm(prev => ({
+                                                        ...prev,
+                                                        name: email.name,
+                                                        subject: email.subject,
+                                                        htmlContent: email.html,
+                                                        tag: email.tags.join(', ')
+                                                    }));
+                                                    setShowBuilder(true);
+                                                    setActiveTab('campaigns');
+                                                }}
+                                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-colors"
+                                            >
+                                                <Play size={10} className="inline mr-1" /> Use
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const blob = new Blob([email.html], { type: 'text/html' });
+                                                    const url = URL.createObjectURL(blob);
+                                                    window.open(url, '_blank');
+                                                }}
+                                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                                            >
+                                                <Eye size={10} className="inline mr-1" /> Preview
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Launch All Button */}
+                            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                <p className="text-xs text-gray-400">
+                                    <Calendar size={12} className="inline mr-1" />
+                                    {seq.totalEmails} emails over {seq.duration}
+                                </p>
+                                <Button
+                                    onClick={() => {
+                                        const firstEmail = seq.emails[0];
+                                        setCampaignForm(prev => ({
+                                            ...prev,
+                                            name: firstEmail.name,
+                                            subject: firstEmail.subject,
+                                            htmlContent: firstEmail.html,
+                                            tag: firstEmail.tags.join(', ')
+                                        }));
+                                        setShowBuilder(true);
+                                        setActiveTab('campaigns');
+                                    }}
+                                    variant="primary"
+                                    className="text-xs"
+                                >
+                                    <Play size={12} className="mr-1" /> Create First Campaign
+                                </Button>
+                            </div>
+                        </Card>
+                    ))}
+
+                    {/* Landing Pages Info */}
+                    <Card>
+                        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            <ExternalLink size={16} className="text-green-500" /> Landing Pages
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Form submissions from these landing pages automatically create contacts in Brevo and notify Stuart via email.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="border-2 border-orange-200 rounded-xl p-4 bg-orange-50/30">
+                                <h4 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
+                                    <Mail size={16} className="text-orange-500" /> Flagship Pilot Application
+                                </h4>
+                                <p className="text-xs text-gray-500 mb-3">Energy managers submit their facility for the free EaaS pilot program.</p>
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-gray-400 w-16 flex-shrink-0">Deploy to:</span>
+                                        <code className="bg-white px-2 py-1 rounded border text-orange-600 font-mono text-[11px]">karnot.com/pilot</code>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-gray-400 w-16 flex-shrink-0">File:</span>
+                                        <code className="bg-white px-2 py-1 rounded border text-gray-600 font-mono text-[11px]">landing-pages/pilot.html</code>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-gray-400 w-16 flex-shrink-0">Form API:</span>
+                                        <code className="bg-white px-2 py-1 rounded border text-gray-600 font-mono text-[11px]">/.netlify/functions/pilot-form</code>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="border-2 border-blue-200 rounded-xl p-4 bg-blue-50/30">
+                                <h4 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
+                                    <Users size={16} className="text-blue-500" /> ESCO Partner Application
+                                </h4>
+                                <p className="text-xs text-gray-500 mb-3">ESCO companies apply for exclusive territory partnership and Co-Owner investment.</p>
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-gray-400 w-16 flex-shrink-0">Deploy to:</span>
+                                        <code className="bg-white px-2 py-1 rounded border text-blue-600 font-mono text-[11px]">iheat.ph/partner</code>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-gray-400 w-16 flex-shrink-0">File:</span>
+                                        <code className="bg-white px-2 py-1 rounded border text-gray-600 font-mono text-[11px]">landing-pages/partner.html</code>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-gray-400 w-16 flex-shrink-0">Form API:</span>
+                                        <code className="bg-white px-2 py-1 rounded border text-gray-600 font-mono text-[11px]">/.netlify/functions/pilot-form</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p className="text-xs text-yellow-800">
+                                <strong>Deployment:</strong> The landing page HTML files are in <code className="bg-yellow-100 px-1 rounded">landing-pages/</code> in your repo. Copy <code className="bg-yellow-100 px-1 rounded">pilot.html</code> to karnot.com and <code className="bg-yellow-100 px-1 rounded">partner.html</code> to iheat.ph. Update the form endpoint URL in each file to point to your Netlify function.
                             </p>
                         </div>
                     </Card>
