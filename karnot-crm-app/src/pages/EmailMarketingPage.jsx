@@ -53,7 +53,7 @@ const TabBtn = ({ active, onClick, icon: Icon, label, badge }) => (
 // ═════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═════════════════════════════════════════════════════════
-export default function EmailMarketingPage({ user, contacts = [] }) {
+export default function EmailMarketingPage({ user, contacts = [], companies = [] }) {
     const [activeTab, setActiveTab] = useState('campaigns');
     const [brevoStatus, setBrevoStatus] = useState('checking');
     const [brevoAccount, setBrevoAccount] = useState(null);
@@ -81,6 +81,104 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
     // Campaign Stats
     const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [campaignStats, setCampaignStats] = useState(null);
+
+    // Contact Filters (for targeted sync & export)
+    const [filterType, setFilterType] = useState('');       // company type: ESCO, MCS, VIP, etc.
+    const [filterRegion, setFilterRegion] = useState('');    // UK, MALAYSIA, THAILAND, etc.
+    const [filterSource, setFilterSource] = useState('');    // UK Trawler, Google Places, etc.
+
+    // Build a company lookup map for fast access
+    const companyMap = useMemo(() => {
+        const map = {};
+        companies.forEach(c => { map[c.id] = c; if (c.companyName) map[c.companyName.toLowerCase()] = c; });
+        return map;
+    }, [companies]);
+
+    // Get unique filter options from companies data
+    const filterOptions = useMemo(() => {
+        const types = new Set();
+        const regions = new Set();
+        const sources = new Set();
+        companies.forEach(c => {
+            if (c.type) types.add(c.type);
+            if (c.region) regions.add(c.region);
+            if (c.ukRegion) regions.add(c.ukRegion);
+            if (c.source) sources.add(c.source);
+        });
+        return {
+            types: [...types].sort(),
+            regions: [...regions].sort(),
+            sources: [...sources].sort()
+        };
+    }, [companies]);
+
+    // Enrich contacts with company data & apply filters
+    const enrichedContacts = useMemo(() => {
+        let result = contacts.filter(c => c.email);
+
+        // Enrich each contact with their company data
+        result = result.map(c => {
+            const company = (c.companyId && companyMap[c.companyId])
+                || (c.companyName && companyMap[c.companyName.toLowerCase()])
+                || null;
+            return { ...c, _company: company };
+        });
+
+        // Apply filters
+        if (filterType) {
+            result = result.filter(c => c._company?.type === filterType || c._company?.installerType?.includes(filterType));
+        }
+        if (filterRegion) {
+            result = result.filter(c => c._company?.region === filterRegion || c._company?.ukRegion === filterRegion);
+        }
+        if (filterSource) {
+            result = result.filter(c => c._company?.source === filterSource);
+        }
+
+        return result;
+    }, [contacts, companyMap, filterType, filterRegion, filterSource]);
+
+    const hasActiveFilters = filterType || filterRegion || filterSource;
+
+    // CSV Export for Sales Navigator
+    const exportCSVForSalesNav = () => {
+        const rows = enrichedContacts.map(c => ({
+            'First Name': c.firstName || '',
+            'Last Name': c.lastName || '',
+            'Email': c.email || '',
+            'Phone': c.phone || '',
+            'Job Title': c.jobTitle || '',
+            'Company': c.companyName || '',
+            'Company Type': c._company?.type || '',
+            'Region': c._company?.region || c._company?.ukRegion || '',
+            'City': c._company?.city || '',
+            'Website': c._company?.website || '',
+            'Source': c._company?.source || '',
+            'LinkedIn': c.linkedIn || ''
+        }));
+
+        if (rows.length === 0) { setError('No contacts match your filters.'); return; }
+
+        const headers = Object.keys(rows[0]);
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => headers.map(h => {
+                const val = (row[h] || '').toString().replace(/"/g, '""');
+                return val.includes(',') || val.includes('"') || val.includes('\n') ? `"${val}"` : val;
+            }).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const filterLabel = [filterType, filterRegion, filterSource].filter(Boolean).join('_') || 'all';
+        a.download = `karnot-contacts-${filterLabel}-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setSuccess(`Exported ${rows.length} contacts to CSV! Upload to Sales Navigator → Account Lists.`);
+        setTimeout(() => setSuccess(''), 5000);
+    };
 
     // Template Management
     const [customTemplates, setCustomTemplates] = useState(() => {
@@ -184,8 +282,8 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
         if (!targetListId) { setError('Please select or create a list first.'); return; }
         const toSync = selectedContacts.length > 0
             ? contacts.filter(c => selectedContacts.includes(c.id) && c.email)
-            : contactsWithEmail;
-        if (toSync.length === 0) { setError('No contacts with email addresses to sync.'); return; }
+            : enrichedContacts;
+        if (toSync.length === 0) { setError('No contacts match your filters. Try adjusting the filters.'); return; }
 
         setSyncLoading(true); setError('');
         let synced = 0, failed = 0;
@@ -745,14 +843,60 @@ Now, here is what I need:
             {/* ═══════ SYNC CONTACTS TAB ═══════ */}
             {activeTab === 'contacts' && (
                 <div className="space-y-4">
+                    {/* Filter Bar */}
+                    <Card className="border-2 border-orange-200 bg-orange-50/20">
+                        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            <Filter size={16} className="text-orange-500" /> Filter Contacts by Company
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-3">Filter by company type (ESCO, MCS, VIP), region, or source before syncing to Brevo or exporting for Sales Navigator.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Company Type</label>
+                                <select value={filterType} onChange={e => setFilterType(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                    <option value="">All Types</option>
+                                    {filterOptions.types.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Region / Country</label>
+                                <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                    <option value="">All Regions</option>
+                                    {filterOptions.regions.map(r => <option key={r} value={r}>{r}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Source</label>
+                                <select value={filterSource} onChange={e => setFilterSource(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                    <option value="">All Sources</option>
+                                    {filterOptions.sources.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className={`text-sm font-bold ${hasActiveFilters ? 'text-orange-600' : 'text-gray-500'}`}>
+                                    {enrichedContacts.length} contacts {hasActiveFilters ? 'match filters' : 'with email'}
+                                </span>
+                                {hasActiveFilters && (
+                                    <button onClick={() => { setFilterType(''); setFilterRegion(''); setFilterSource(''); }}
+                                        className="text-xs text-red-500 hover:text-red-700 font-bold flex items-center gap-1">
+                                        <XCircle size={12} /> Clear Filters
+                                    </button>
+                                )}
+                            </div>
+                            <Button onClick={exportCSVForSalesNav} variant="secondary" className="text-xs" disabled={enrichedContacts.length === 0}>
+                                <Download size={12} className="mr-1" /> Export CSV for Sales Navigator
+                            </Button>
+                        </div>
+                    </Card>
+
                     <Card>
                         <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <Users size={16} className="text-orange-500" /> Sync CRM Contacts → Brevo
+                            <Users size={16} className="text-orange-500" /> Sync to Brevo
                         </h3>
-                        <p className="text-sm text-gray-500 mb-3">Push your CRM contacts to Brevo for email campaigns. <strong>Your CRM is the master list</strong> — contacts flow one-way from CRM to Brevo. Attributes (name, company, job title) are automatically mapped.</p>
                         <div className="flex items-center gap-2 mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
                             <ArrowRight size={14} className="text-blue-500 flex-shrink-0" />
-                            <p className="text-[11px] text-blue-700"><strong>One-way sync:</strong> CRM → Brevo. Changes in your CRM are pushed to Brevo. Brevo never overwrites your CRM data.</p>
+                            <p className="text-[11px] text-blue-700"><strong>One-way sync:</strong> CRM → Brevo. {hasActiveFilters ? `Only the ${enrichedContacts.length} filtered contacts will sync.` : 'All contacts with email will sync.'}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -766,7 +910,7 @@ Now, here is what I need:
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Or Create New List</label>
                                 <div className="flex gap-2">
-                                    <Input value={newListName} onChange={e => setNewListName(e.target.value)} placeholder="e.g. Karnot CRM Contacts" />
+                                    <Input value={newListName} onChange={e => setNewListName(e.target.value)} placeholder="e.g. UK MCS Installers" />
                                     <Button onClick={handleCreateList} variant="secondary" disabled={!newListName.trim() || loading} className="text-xs whitespace-nowrap">
                                         <Plus size={12} className="mr-1" /> Create
                                     </Button>
@@ -779,11 +923,11 @@ Now, here is what I need:
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide">
                                     Contacts to Sync <span className="font-normal text-gray-400 normal-case ml-2">
-                                        {selectedContacts.length > 0 ? `${selectedContacts.length} selected` : `All ${contactsWithEmail.length} with email`}
+                                        {selectedContacts.length > 0 ? `${selectedContacts.length} selected` : `${enrichedContacts.length} matching`}
                                     </span>
                                 </label>
                                 <button onClick={() => setShowContactPicker(!showContactPicker)} className="text-xs text-orange-600 hover:text-orange-800 font-bold flex items-center gap-1">
-                                    <Filter size={12} /> {showContactPicker ? 'Hide Picker' : 'Select Specific'}
+                                    <Filter size={12} /> {showContactPicker ? 'Hide List' : 'View & Pick'}
                                 </button>
                             </div>
 
@@ -795,12 +939,21 @@ Now, here is what I need:
                                             <input value={contactSearch} onChange={e => setContactSearch(e.target.value)}
                                                 className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm" placeholder="Search contacts..." />
                                         </div>
-                                        <button onClick={() => setSelectedContacts(selectedContacts.length === contactsWithEmail.length ? [] : contactsWithEmail.map(c => c.id))}
+                                        <button onClick={() => setSelectedContacts(selectedContacts.length === enrichedContacts.length ? [] : enrichedContacts.map(c => c.id))}
                                             className="text-xs text-blue-600 hover:text-blue-800 font-bold whitespace-nowrap px-3">
-                                            {selectedContacts.length === contactsWithEmail.length ? 'Deselect All' : 'Select All'}
+                                            {selectedContacts.length === enrichedContacts.length ? 'Deselect All' : 'Select All'}
                                         </button>
                                     </div>
-                                    {filteredContacts.map(c => (
+                                    {enrichedContacts
+                                        .filter(c => {
+                                            if (!contactSearch) return true;
+                                            const q = contactSearch.toLowerCase();
+                                            return (c.firstName || '').toLowerCase().includes(q) ||
+                                                (c.lastName || '').toLowerCase().includes(q) ||
+                                                (c.email || '').toLowerCase().includes(q) ||
+                                                (c.companyName || '').toLowerCase().includes(q);
+                                        })
+                                        .map(c => (
                                         <label key={c.id} className="flex items-center gap-2 p-1.5 hover:bg-white rounded cursor-pointer text-sm">
                                             <input type="checkbox" checked={selectedContacts.includes(c.id)}
                                                 onChange={e => setSelectedContacts(prev => e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id))}
@@ -808,10 +961,12 @@ Now, here is what I need:
                                             <span className="font-bold text-gray-700">{c.firstName} {c.lastName}</span>
                                             <span className="text-gray-400">·</span>
                                             <span className="text-gray-500 truncate">{c.email}</span>
+                                            {c._company?.type && <span className="text-[9px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">{c._company.type}</span>}
+                                            {c._company?.region && <span className="text-[9px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex-shrink-0">{c._company.region}</span>}
                                             {c.companyName && <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded ml-auto flex-shrink-0">{c.companyName}</span>}
                                         </label>
                                     ))}
-                                    {filteredContacts.length === 0 && <p className="text-center text-gray-400 text-sm py-4">No contacts found</p>}
+                                    {enrichedContacts.length === 0 && <p className="text-center text-gray-400 text-sm py-4">No contacts match filters</p>}
                                 </div>
                             )}
                         </div>
@@ -819,7 +974,7 @@ Now, here is what I need:
                         <Button onClick={handleSyncContacts} variant="primary" disabled={syncLoading || !targetListId}>
                             {syncLoading
                                 ? <><RefreshCw size={14} className="mr-1.5 animate-spin" /> Syncing...</>
-                                : <><Send size={14} className="mr-1.5" /> Sync {selectedContacts.length > 0 ? `${selectedContacts.length} Contacts` : `All ${contactsWithEmail.length} Contacts`} to Brevo</>
+                                : <><Send size={14} className="mr-1.5" /> Sync {selectedContacts.length > 0 ? `${selectedContacts.length} Contacts` : `${enrichedContacts.length} Contacts`} to Brevo</>
                             }
                         </Button>
                     </Card>

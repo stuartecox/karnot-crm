@@ -929,7 +929,7 @@ export default function App() {
                 )}
 
                 {activeView === 'emailMarketing' && (
-                    <EmailMarketingPage user={dataUser} contacts={contacts} />
+                    <EmailMarketingPage user={dataUser} contacts={contacts} companies={companies} />
                 )}
 
                 {/* 7. QUOTING */}
