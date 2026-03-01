@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnot Energy Solutions - Green Light Summary</title>
+    <style>
+        :root {
+            --green: #27ae60;
+            --dark-green: #1e8449;
+            --blue: #2c3e50;
+            --dark-blue: #3d5a6b;
+            --darker-blue: #2d4a58;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --bg-light: #f5f5f7;
+            --border-color: #d2d2d7;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 40px 22px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d5f6d 0%, #1e3a44 100%);
+            color: #fff;
+            padding: 60px 40px;
+            text-align: center;
+            margin: 0;
+        }
+        
+        .teaser-badge {
+            display: inline-block;
+            background: transparent;
+            color: #2ecc71;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 2px solid #2ecc71;
+        }
+        
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1.5px;
+            line-height: 1.2;
+            color: #fff;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 20px auto 40px;
+            line-height: 1.6;
+            max-width: 900px;
+        }
+        
+        h2 {
+            color: var(--blue);
+            font-size: 2rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--green);
+        }
+        
+        h3 {
+            color: var(--blue);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            margin-top: 25px;
+        }
+        
+        .section-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%);
+            border-left: 5px solid var(--green);
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+        
+        .highlight-box strong {
+            color: var(--dark-green);
+            font-size: 18px;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, rgba(61, 90, 107, 0.15) 0%, rgba(61, 90, 107, 0.05) 100%);
+            border-left: 5px solid var(--dark-blue);
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+        
+        .info-box strong {
+            color: var(--dark-blue);
+            font-size: 18px;
+        }
+        
+        .financial-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .financial-table th {
+            background: var(--bg-light);
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--blue);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.9em;
+        }
+        
+        .financial-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+        
+        .financial-table tr:hover {
+            background: var(--bg-light);
+        }
+        
+        .financial-table strong {
+            color: var(--blue);
+        }
+        
+        .badges {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--green) 0%, var(--dark-green) 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+        }
+        
+        .investment-box {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--darker-blue) 100%);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 20px;
+            color: white;
+        }
+        
+        .investment-box h3 {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .investment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .investment-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .investment-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .investment-card h4 {
+            color: #2ecc71;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .investment-card ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .investment-card li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: white;
+        }
+        
+        .investment-card li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        
+        .investment-card strong {
+            color: white;
+        }
+        
+        .scoring-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .score-card {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .score-card.greenlight {
+            border-color: var(--green);
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%);
+        }
+        
+        .score-card h4 {
+            color: var(--blue);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .score-indicator {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--green);
+            border-radius: 3px;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .checkbox.checked {
+            background: var(--green);
+        }
+        
+        .checkbox.checked:after {
+            content: "✓";
+            color: white;
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .contact-card {
+            text-align: center;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--darker-blue) 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .contact-card h2 {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .contact-btn {
+            display: inline-block;
+            background: #fff;
+            color: var(--dark-blue);
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 700;
+            margin-top: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .contact-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .metric-highlight {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--green);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+            .header {
+                padding: 40px 20px;
+            }
+            .section-card {
+                padding: 25px;
+            }
+            .scoring-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="teaser-badge">CONFIDENTIAL - GREENLIGHT SUMMARY</div>
+        <h1>Karnot Green Light Summary</h1>
+        <p class="subtitle">Investment Opportunity Brief | Series Seed Round<br><strong>$430,000 Raise | January 2026</strong></p>
+    </div>
+
+    <div class="container">
+        <!-- Opportunity Summary -->
+        <div class="section-card">
+            <h2>💡 Investment Opportunity</h2>
+            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 20px;">
+                Karnot Energy Solutions is decarbonizing thermal energy across ASEAN by replacing combustion boilers and toxic PFAS refrigerant systems with <strong>Natural Refrigerant (CO₂/R290) Heat Pumps</strong>. Our proprietary hardware ecosystem, combined with the AI-driven <strong>iSAVE™ platform</strong>, delivers up to <span class="metric-highlight">75% energy cost reduction</span> while eliminating fossil fuel dependence and regulatory risk.
+            </p>
+            
+            <div class="highlight-box">
+                <strong>The "Quintuple Squeeze" Market Opportunity</strong><br>
+                We are uniquely positioned at the convergence of five massive market forces: (1) Global PFAS refrigerant bans starting 2027, (2) Fossil fuel phase-out mandates, (3) Food security crisis requiring controlled environment agriculture, (4) Escalating energy costs, and (5) Grid instability across ASEAN. Karnot's technology solves all five simultaneously.
+            </div>
+        </div>
+
+        <!-- Technology & Validation -->
+        <div class="section-card">
+            <h2>⚙️ Technology & Market Validation</h2>
+            
+            <h3>Proven Technology (TRL 9 - Commercial)</h3>
+            <ul>
+                <li><strong>10,000+ units deployed in Europe</strong> - Platform validated across diverse climates and applications</li>
+                <li><strong>iHEAT CO₂ Monoblocs</strong> with FLX™ Defrost (Patent Pending) - Industry-leading cold climate performance</li>
+                <li><strong>iCOOL R290 Chillers</strong> - Food-safe, regulation-proof cooling for commercial applications</li>
+                <li><strong>iSAVE AI Platform</strong> - Predictive optimization reducing energy consumption by additional 15-20%</li>
+            </ul>
+
+            <h3>Third-Party Validation</h3>
+            <ul>
+                <li><strong>US Department of Energy / Oak Ridge National Laboratory:</strong> Independent validation study confirms performance claims</li>
+                <li><strong>MCS Certification (UK):</strong> Government-approved installation standards</li>
+                <li><strong>Lufthansa Technik Philippines:</strong> Commercial installation saving ₱400,000/year (verified)</li>
+            </ul>
+
+            <h3>Market Size</h3>
+            <div class="info-box">
+                <strong>$12B ASEAN Serviceable Market</strong> - Commercial and industrial thermal energy replacement across 11 countries. <strong>$300B Global Total Addressable Market</strong> as PFAS bans trigger forced replacement cycle starting 2027-2030.
+            </div>
+        </div>
+
+        <!-- Financial Projections -->
+        <div class="section-card">
+            <h2>📊 Financial Outlook (2026-2030)</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Conservative projections based on validated unit economics and regional expansion strategy
+            </p>
+            
+            <table class="financial-table">
+                <thead>
+                    <tr>
+                        <th>Metric (USD)</th>
+                        <th>2026</th>
+                        <th>2027</th>
+                        <th>2028</th>
+                        <th>2030</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Revenue</strong></td>
+                        <td>$515K</td>
+                        <td>$1.9M</td>
+                        <td>$3.8M</td>
+                        <td><strong>$14.8M</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gross Profit</strong></td>
+                        <td>$239K</td>
+                        <td>$940K</td>
+                        <td>$2.0M</td>
+                        <td><strong>$8.1M</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Net Profit</strong></td>
+                        <td>$7.6K</td>
+                        <td>$399K</td>
+                        <td>$1.1M</td>
+                        <td><strong>$5.5M</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Net Margin</strong></td>
+                        <td>1%</td>
+                        <td>21%</td>
+                        <td>29%</td>
+                        <td><strong>37%</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cash Position</strong></td>
+                        <td>$78K</td>
+                        <td>$510K</td>
+                        <td>$1.2M</td>
+                        <td><strong>$6.0M</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="badges">
+                <span class="badge">Revenue CAGR: 77%</span>
+                <span class="badge">LTV:CAC Ratio: 23:1 (Export)</span>
+                <span class="badge">Profitable Year 1</span>
+                <span class="badge">Positive Cash Flow Q4 2026</span>
+            </div>
+        </div>
+
+        <!-- Investment Structure -->
+        <div class="section-card">
+            <div class="investment-box">
+                <h3>💵 Investment Structure - Dual Track ($430K Total)</h3>
+                
+                <div class="investment-grid">
+                    <div class="investment-card">
+                        <h4>Track 1: Strategic Equity Partners</h4>
+                        <ul>
+                            <li><strong>Allocation:</strong> $180,000</li>
+                            <li><strong>Unit Size:</strong> $5,000 per investor</li>
+                            <li><strong>Pre-Money Valuation:</strong> $1.2M</li>
+                            <li><strong>Target ROI:</strong> 52.8x by 2030 exit</li>
+                            <li><strong>Dividends:</strong> 40% payout starting 2028</li>
+                            <li><strong>Ideal For:</strong> Energy managers, industry experts, angels</li>
+                        </ul>
+                    </div>
+
+                    <div class="investment-card">
+                        <h4>Track 2: Convertible Note</h4>
+                        <ul>
+                            <li><strong>Allocation:</strong> $250,000</li>
+                            <li><strong>Minimum:</strong> $250K (single ticket)</li>
+                            <li><strong>Valuation Cap:</strong> $3.0M</li>
+                            <li><strong>Discount:</strong> 20% to Series A</li>
+                            <li><strong>Interest:</strong> 10% accruing</li>
+                            <li><strong>Ideal For:</strong> VCs, family offices, institutional</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p style="margin-top: 20px; opacity: 0.9; font-size: 0.95em;">
+                    <strong>Use of Funds:</strong> Inventory financing for enterprise customer opportunities and working capital for strategic partner energy manager network expansion across 36 ASEAN territories.
+                </p>
+            </div>
+        </div>
+
+        <!-- Traction & Pipeline -->
+        <div class="section-card">
+            <h2>🚀 Current Traction</h2>
+            
+            <h3>Commercial Deployments</h3>
+            <ul>
+                <li><strong>Lufthansa Technik Philippines:</strong> iHEAT installation saving ₱400K/year in verified energy costs</li>
+                <li><strong>HydroGreen Canada Partnership:</strong> Controlled environment agriculture (fodder systems) integration</li>
+                <li><strong>Cosmos Farm (Internal):</strong> Live demonstration facility showcasing full product ecosystem</li>
+            </ul>
+
+            <h3>Enterprise Customer Development</h3>
+            <ul>
+                <li><strong>Industrial Food Processing:</strong> Multiple active discussions with major multinational manufacturers for process heating and cooling system upgrades</li>
+                <li><strong>Electric Cooperative Virtual Power Plant:</strong> Advanced planning stage for residential heat pump deployment pilot program</li>
+                <li><strong>Controlled Environment Agriculture:</strong> Expansion opportunities across multiple production facilities</li>
+                <li><strong>Commercial Real Estate:</strong> Hotel and mixed-use development thermal system specifications in progress</li>
+            </ul>
+
+            <h3>Strategic Positioning</h3>
+            <ul>
+                <li><strong>BOI-SIPP Registration:</strong> Philippine government tax incentives for sustainable technology</li>
+                <li><strong>Founder IP Ownership:</strong> Clean technology transfer from Likido (previous NASDAQ exit)</li>
+                <li><strong>Partner Network Development:</strong> Active recruitment of ASEAN energy managers with territory exclusivity framework</li>
+            </ul>
+        </div>
+
+        <!-- Investment Committee Scoring -->
+        <div class="section-card">
+            <h2>🟩 Investment Committee Assessment</h2>
+            
+            <div class="scoring-section">
+                <div class="score-card greenlight">
+                    <h4>Team & Execution</h4>
+                    <div class="score-indicator">
+                        <span class="checkbox checked"></span>
+                        <strong style="color: var(--green);">STRONG</strong>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: var(--text-secondary);">
+                        Founder Stuart Cox: 30 years thermal engineering experience, previous exit (Likido/Dalrada NASDAQ). Proven execution capability with validated commercial deployments.
+                    </p>
+                </div>
+
+                <div class="score-card greenlight">
+                    <h4>Technology & IP</h4>
+                    <div class="score-indicator">
+                        <span class="checkbox checked"></span>
+                        <strong style="color: var(--green);">VALIDATED</strong>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: var(--text-secondary);">
+                        TRL 9 (Commercial Ready). 10,000+ European deployments. FLX™ Defrost patent pending. DOE/ORNL third-party validation. Regulation-proof technology positioning.
+                    </p>
+                </div>
+
+                <div class="score-card greenlight">
+                    <h4>Market & Timing</h4>
+                    <div class="score-indicator">
+                        <span class="checkbox checked"></span>
+                        <strong style="color: var(--green);">EXCEPTIONAL</strong>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: var(--text-secondary);">
+                        Regulatory tailwinds: PFAS bans 2027-2030 create forced $300B replacement cycle. First-mover advantage in ASEAN market with active enterprise customer development.
+                    </p>
+                </div>
+
+                <div class="score-card greenlight">
+                    <h4>Financial Performance</h4>
+                    <div class="score-indicator">
+                        <span class="checkbox checked"></span>
+                        <strong style="color: var(--green);">PROFITABLE</strong>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: var(--text-secondary);">
+                        Rare for seed stage: Profitable Year 1, positive cash flow Q4 2026. 77% revenue CAGR. 37% net margin by 2030. LTV:CAC of 23:1 demonstrates capital efficiency.
+                    </p>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 30px;">
+                <strong style="font-size: 1.3em;">✅ RECOMMENDATION: GREENLIGHT</strong><br><br>
+                Karnot represents a rare combination of proven technology, validated commercial traction, exceptional unit economics, and regulatory tailwinds. The dual-track investment structure provides flexibility for both strategic angels and institutional investors. Management has demonstrated execution capability through previous exit and current commercial deployments. Risk profile is below-average for seed stage due to Year 1 profitability and existing revenue.
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="section-card contact-card">
+            <h2>Next Steps</h2>
+            <p style="font-size: 18px; margin: 20px 0; opacity: 0.95;">
+                Ready to discuss this opportunity? Contact Stuart Cox directly for full diligence materials.
+            </p>
+            <a href="mailto:stuart.cox@karnot.com?subject=Green%20Light%20Summary%20Follow-Up" class="contact-btn">📧 stuart.cox@karnot.com</a>
+            <p style="margin-top: 20px; font-size: 16px; opacity: 0.9;">
+                📱 +63 960 289 2001 (WhatsApp Available)
+            </p>
+            <p style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+                Mapandan, Pangasinan, Philippines | Leven, Fife, UK
+            </p>
+        </div>
+    </div>
+</body>
+</html>

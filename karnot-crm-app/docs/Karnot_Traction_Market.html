@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnot Energy Solutions - Traction & Validation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --green: #27ae60;
+            --dark-green: #1e8449;
+            --blue: #2c3e50;
+            --dark-blue: #3d5a6b;
+            --darker-blue: #2d4a58;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --bg-light: #f5f5f7;
+            --border-color: #d2d2d7;
+            --accent: #E67E22;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d5f6d 0%, #1e3a44 100%);
+            color: #fff;
+            padding: 80px 40px;
+            text-align: center;
+        }
+        
+        .teaser-badge {
+            display: inline-block;
+            background: transparent;
+            color: #2ecc71;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 2px solid #2ecc71;
+        }
+        
+        h1 {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -1.5px;
+            line-height: 1.2;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0 auto;
+            line-height: 1.6;
+            max-width: 900px;
+        }
+        
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 60px 22px;
+        }
+        
+        h2 {
+            color: var(--blue);
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .lead {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+        
+        /* Market Stats Bar */
+        .market-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: -30px;
+            margin-bottom: 60px;
+        }
+        
+        .market-pill {
+            background: var(--blue);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .market-pill span { color: #2ecc71; font-weight: 800; }
+        
+        .section-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* TAM/SAM Cards */
+        .tam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .tam-card {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%);
+            border-left: 5px solid var(--green);
+            padding: 30px;
+            border-radius: 12px;
+        }
+        
+        .tam-card h3 {
+            color: var(--blue);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .tam-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--green);
+            margin: 10px 0;
+        }
+        
+        .tam-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        
+        /* Validation Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            border-color: var(--green);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.15);
+        }
+        
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: 8px;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--blue);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .metric-context {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        /* Deployment Cards */
+        .deployment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .deployment-card {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--darker-blue) 100%);
+            border-radius: 12px;
+            padding: 25px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .deployment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .deployment-status {
+            display: inline-block;
+            background: var(--green);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .deployment-status.development {
+            background: #3498db;
+        }
+        
+        .deployment-status.planned {
+            background: #9b59b6;
+        }
+        
+        .deployment-card h3 {
+            color: #2ecc71;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        .deployment-subtitle {
+            font-size: 0.95em;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .deployment-description {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        /* Technical Validation */
+        .validation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+        }
+        
+        .validation-table th {
+            background: var(--blue);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        
+        .validation-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .validation-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .improvement {
+            color: var(--green);
+            font-weight: 700;
+        }
+        
+        /* Feature Box */
+        .feature-box {
+            background: linear-gradient(135deg, rgba(61, 90, 107, 0.08) 0%, rgba(61, 90, 107, 0.03) 100%);
+            border-left: 5px solid var(--dark-blue);
+            padding: 35px;
+            border-radius: 8px;
+            margin: 40px 0;
+        }
+        
+        .feature-box h3 { 
+            margin-top: 0; 
+            margin-bottom: 20px;
+            color: var(--blue);
+        }
+        
+        .feature-box ul {
+            list-style: none;
+            padding: 0;
+            column-count: 2;
+            column-gap: 40px;
+        }
+        
+        .feature-box li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: var(--text-secondary);
+            break-inside: avoid;
+        }
+        
+        .feature-box li:before {
+            content: "⚡";
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-size: 1.2rem;
+        }
+        
+        blockquote {
+            background: var(--bg-light);
+            border-left: 5px solid var(--green);
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            font-style: italic;
+        }
+        
+        blockquote p {
+            font-size: 1.1em;
+            color: var(--blue);
+            margin-bottom: 10px;
+            line-height: 1.7;
+        }
+        
+        blockquote footer {
+            font-style: normal;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            text-align: right;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 36px; }
+            h2 { font-size: 32px; }
+            .header { padding: 60px 20px; }
+            .section-card { padding: 25px; }
+            .feature-box ul { column-count: 1; }
+            .market-bar { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="teaser-badge">COMMERCIAL VALIDATION</div>
+        <h1>Traction & Market Validation</h1>
+        <p class="subtitle">
+            Third-party validated technology | Fortune 500 customer development | $8.66B addressable market<br>
+            <strong>De-risked through Oak Ridge National Lab certification and live enterprise deployments</strong>
+        </p>
+    </div>
+
+    <div class="container">
+
+        <div class="market-bar">
+            <div class="market-pill"><i class="fa-solid fa-building"></i> TAM: <span>$8.66 Billion</span></div>
+            <div class="market-pill"><i class="fa-solid fa-bullseye"></i> SAM Focus: <span>$1.6B Philippines</span></div>
+            <div class="market-pill"><i class="fa-solid fa-chart-line"></i> CAGR: <span>7.2%</span></div>
+        </div>
+
+        <!-- Market Opportunity -->
+        <div class="section-card">
+            <h2>💰 Addressable Market: Southeast Asia Thermal Crisis</h2>
+            <p class="lead">
+                Southeast Asia faces a unique "Thermal Crisis" — highest cooling demand growth globally, yet constrained by the region's highest electricity costs ($0.18–$0.25/kWh) and fragile grid infrastructure. Karnot capitalizes on this disconnection.
+            </p>
+
+            <div class="tam-grid">
+                <div class="tam-card">
+                    <h3>Total Addressable Market (TAM)</h3>
+                    <div class="tam-number">$8.66B</div>
+                    <div class="tam-description">
+                        ASEAN thermal market undergoing "forced upgrade" driven by global HFC phase-down and rising energy costs. Growing at 7.2% CAGR, projected to reach $8.66 Billion by 2030.
+                    </div>
+                </div>
+
+                <div class="tam-card">
+                    <h3>The "Green Premium"</h3>
+                    <div class="tam-number">6.5%</div>
+                    <div class="tam-description">
+                        Natural refrigerant equipment outpacing traditional market (6.5% CAGR) driven by ESG mandates from clients like <strong>Nestlé, Wyeth, and Unilever</strong>.
+                    </div>
+                </div>
+
+                <div class="tam-card">
+                    <h3>Serviceable Addressable Market</h3>
+                    <div class="tam-number">$1.6B</div>
+                    <div class="tam-description">
+                        <strong>Philippines Market:</strong> 120,000 new hotel rooms by 2028. Hospitality, cold storage, and data centers represent $1.6B immediate opportunity.
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-box" style="margin-top: 40px;">
+                <h3>🎯 Strategic Market Positioning</h3>
+                <ul>
+                    <li><strong>Domestic Engine (Track 1):</strong> Value-focused. High-OPEX businesses seeking immediate ROI (75% energy reduction)</li>
+                    <li><strong>Export Engine (Track 2):</strong> Volume-driven. UK/Canada where regulatory compliance and supply chain diversification drive demand</li>
+                    <li><strong>UK "Boiler Swap" Gap:</strong> 250,000+ MCS installations with 43% growth. Our 80°C R290 monoblocks retrofit <em>without</em> replacing radiators</li>
+                    <li><strong>Agri-Tech Integration:</strong> HydroGreen "Vertical Pastures" delivering 22% faster cattle growth through precision climate control</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Technical Validation -->
+        <div class="section-card">
+            <h2>🔬 Third-Party Technical Validation</h2>
+            <p class="lead">
+                Independent validation by Oak Ridge National Laboratory confirms breakthrough performance claims. Split-cycle CO₂ architecture achieves 30-35% higher efficiency than incumbent systems.
+            </p>
+
+            <h3 style="color: var(--blue); margin-top: 30px; margin-bottom: 20px;">
+                <i class="fa-solid fa-medal"></i> US Department of Energy Certification
+            </h3>
+            <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                <strong>Testing Facility:</strong> Oak Ridge National Laboratory (ORNL) — Building Technologies Research & Integration Center<br>
+                <strong>Standard:</strong> AHRI 910-2014 (CO₂ transcritical systems)
+            </p>
+
+            <table class="validation-table">
+                <thead>
+                    <tr>
+                        <th>Performance Metric</th>
+                        <th>Test Condition</th>
+                        <th>Karnot Measured</th>
+                        <th>Industry Average</th>
+                        <th>Improvement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Heating COP</strong></td>
+                        <td>-15°C ambient, 55°C water</td>
+                        <td>3.85</td>
+                        <td>2.90</td>
+                        <td class="improvement">+32.8%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Heating COP</strong></td>
+                        <td>-5°C ambient, 65°C water</td>
+                        <td>4.20</td>
+                        <td>3.20</td>
+                        <td class="improvement">+31.3%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cooling COP</strong></td>
+                        <td>35°C ambient, 7°C water</td>
+                        <td>3.45</td>
+                        <td>2.80</td>
+                        <td class="improvement">+23.2%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Defrost Energy</strong></td>
+                        <td>Per defrost cycle</td>
+                        <td>1.25 kWh</td>
+                        <td>2.50 kWh</td>
+                        <td class="improvement">-50.0%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Defrost Duration</strong></td>
+                        <td>Frost removal time</td>
+                        <td>10 minutes</td>
+                        <td>18 minutes</td>
+                        <td class="improvement">-44.4%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="metrics-grid" style="margin-top: 40px;">
+                <div class="metric-card">
+                    <div class="metric-value">>385%</div>
+                    <div class="metric-label">Heating Efficiency</div>
+                    <div class="metric-context">vs. gas boilers (COP 4.20 = 420% in ideal conditions)</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">8.27</div>
+                    <div class="metric-label">Combined COP</div>
+                    <div class="metric-context">Simultaneous heating + cooling mode</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">121°C</div>
+                    <div class="metric-label">Hot Water Peak</div>
+                    <div class="metric-context">Impossible with HFC systems</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">-30°C</div>
+                    <div class="metric-label">Chilled Water</div>
+                    <div class="metric-context">Deep-freeze capability</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">0%</div>
+                    <div class="metric-label">Capacity Loss</div>
+                    <div class="metric-context">During defrost (vs. 100% loss in reverse-cycle)</div>
+                </div>
+            </div>
+
+            <blockquote style="margin-top: 40px;">
+                <p>"Split cycle architecture achieves 30-35% higher COP than single-stage CO₂ systems. System maintains operation at -25°C ambient with COP >3.0. FLX defrost eliminates heating capacity loss during defrost cycles."</p>
+                <footer>— Oak Ridge National Laboratory, Report ORNL/TM-2021/2145</footer>
+            </blockquote>
+        </div>
+
+        <!-- Proprietary Technology -->
+        <div class="section-card">
+            <h2>🔐 Patent-Protected Competitive Moat</h2>
+            <p class="lead">
+                FLX Defrost™ technology addresses the industry's $8B annual defrost energy waste. Bio-based PCM with graphene enhancement delivers zero-penalty cold-climate operation.
+            </p>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">50%</div>
+                    <div class="metric-label">Defrost Energy Reduction</div>
+                    <div class="metric-context">$1,499/year savings per unit (Canadian climate)</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">98%</div>
+                    <div class="metric-label">PCM Utilization</div>
+                    <div class="metric-context">Graphene-enhanced thermal conductivity: 12-15 W/m·K</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">10 min</div>
+                    <div class="metric-label">Defrost Duration</div>
+                    <div class="metric-context">While maintaining 35kW heating output</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">Patent</div>
+                    <div class="metric-label">PCT/WO2022069581A1</div>
+                    <div class="metric-context">Licensed from University of Glasgow</div>
+                </div>
+            </div>
+
+            <div class="feature-box">
+                <h3>Technical Differentiators vs. Incumbents</h3>
+                <ul>
+                    <li>Simultaneous 121°C heating + -30°C cooling from single compressor</li>
+                    <li>Zero PFAS/"forever chemicals" — future-proof against EU/ECHA bans</li>
+                    <li>Panasonic two-stage rotary compression optimized for CO₂ transcritical cycles</li>
+                    <li>Brazed plate heat exchanger: 12.5m², 160 bar design pressure, 316L stainless</li>
+                    <li>Carel pCO5+ controller with predictive maintenance AI and blockchain carbon credit verification</li>
+                    <li>BOI-SIPP Philippine government incentives: tax holidays, duty-free imports</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Live Deployments -->
+        <div class="section-card">
+            <h2>🚀 Live Commercial Deployments & Enterprise Pipeline</h2>
+            <p class="lead">
+                Active Fortune 500 customer development across aviation MRO, pharmaceutical manufacturing, food processing, and commercial real estate. One completed installation validates technical claims; pipeline demonstrates product-market fit.
+            </p>
+
+            <div class="deployment-grid">
+                <div class="deployment-card">
+                    <span class="deployment-status">✓ LIVE & OPERATIONAL</span>
+                    <h3>Lufthansa Technik Philippines</h3>
+                    <div class="deployment-subtitle">Manila NAIA | Aviation MRO</div>
+                    <div class="deployment-description">
+                        24/7 aircraft maintenance facility. <strong>Verified savings: ₱400,000 annually</strong> plus 25-tonne CO₂ reduction. Redundant hot water for critical operations. Serves as <strong>reference installation for global aviation MROs.</strong>
+                    </div>
+                </div>
+
+                <div class="deployment-card">
+                    <span class="deployment-status development">💼 ACTIVE CUSTOMER DEVELOPMENT</span>
+                    <h3>Wyeth Nutrition (Nestlé)</h3>
+                    <div class="deployment-subtitle">Cabuyao, Laguna | Pharmaceutical-Grade Food Manufacturing</div>
+                    <div class="deployment-description">
+                        Process heating for infant formula production. Combined hot water + cooling solution. <strong>Technical specifications and site assessment phase.</strong> Professional referral via industry network.
+                    </div>
+                </div>
+
+                <div class="deployment-card">
+                    <span class="deployment-status development">💼 ACTIVE CUSTOMER DEVELOPMENT</span>
+                    <h3>Nestlé Ice Cream Manufacturing</h3>
+                    <div class="deployment-subtitle">Laguna, PH | Industrial Deep Freeze</div>
+                    <div class="deployment-description">
+                        High-capacity cooling with simultaneous heat recovery for facility hot water. Demonstrates scalability for demanding industrial applications requiring <strong>-30°C capability.</strong>
+                    </div>
+                </div>
+
+                <div class="deployment-card">
+                    <span class="deployment-status development">💼 ACTIVE CUSTOMER DEVELOPMENT</span>
+                    <h3>Commercial Office Tower</h3>
+                    <div class="deployment-subtitle">Metro Manila | New Construction HVAC</div>
+                    <div class="deployment-description">
+                        Integrated heating, cooling, hot water specification for new-build. Blueprint for commercial real estate targeting <strong>LEED/BERDE green building certifications.</strong>
+                    </div>
+                </div>
+
+                <div class="deployment-card">
+                    <span class="deployment-status planned">🔜 Q2 2026</span>
+                    <h3>Long Beach, California</h3>
+                    <div class="deployment-subtitle">13-Unit Apartment Retrofit | USA Market Entry</div>
+                    <div class="deployment-description">
+                        35kW CO₂ iHEAT with solar integration and thermal storage. <strong>Pending UL/CSA certification.</strong> Blueprint for California electrification mandates and IRA incentives.
+                    </div>
+                </div>
+
+                <div class="deployment-card">
+                    <span class="deployment-status planned">🔜 Q2 2026</span>
+                    <h3>Vancouver (Tundris Inc.)</h3>
+                    <div class="deployment-subtitle">Cold-Climate Validation | Canada</div>
+                    <div class="deployment-description">
+                        35kW unit with <strong>FLX™ Defrost module.</strong> Demonstrates 50% defrost energy reduction critical for Canadian market. Eliminates 10-25% seasonal efficiency losses.
+                    </div>
+                </div>
+
+                <div class="deployment-card">
+                    <span class="deployment-status planned">🔜 2026</span>
+                    <h3>HydroGreen Agri-Tech Integration</h3>
+                    <div class="deployment-subtitle">Mexico & British Columbia | Controlled Agriculture</div>
+                    <div class="deployment-description">
+                        Climate control for vertical fodder systems. <strong>22% faster cattle growth</strong> through precision temperature/humidity control. Demonstrates food-energy nexus opportunity.
+                    </div>
+                </div>
+
+                <div class="deployment-card">
+                    <span class="deployment-status planned">🔜 2026</span>
+                    <h3>PANECO III Virtual Power Plant</h3>
+                    <div class="deployment-subtitle">Urdaneta Area | Grid-Interactive Pilot</div>
+                    <div class="deployment-description">
+                        New housing development with smart grid controllers. Advanced planning with electric cooperative. <strong>Reduces peak demand</strong> while avoiding infrastructure upgrade costs.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Testimonials -->
+        <div class="section-card">
+            <h2>💬 Customer Validation</h2>
+
+            <blockquote>
+                <p>"Real-time visibility into energy costs enables proactive management. The system has exceeded our performance expectations and the energy savings are exactly as projected."</p>
+                <footer>– Facilities Manager, Lufthansa Technik Philippines</footer>
+            </blockquote>
+
+            <blockquote>
+                <p>"We can see applications across our operations to save energy, reduce costs, and support environmental commitments. The technology is proven and the ROI case is compelling."</p>
+                <footer>– Engineering Team, Food Manufacturing (Philippines)</footer>
+            </blockquote>
+
+            <blockquote>
+                <p>"This is exactly the regulation-proof technology we need as PFAS bans approach. The natural refrigerant approach eliminates future compliance risk."</p>
+                <footer>– Sustainability Director, Food Manufacturing (Philippines)</footer>
+            </blockquote>
+        </div>
+
+        <!-- Unit Economics -->
+        <div class="section-card">
+            <h2>📊 Capital-Efficient Growth Model</h2>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">23:1</div>
+                    <div class="metric-label">LTV:CAC Ratio (Export)</div>
+                    <div class="metric-context">$25,000 LTV vs. ~$1,100 projected CAC</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">$515K</div>
+                    <div class="metric-label">2026 Revenue</div>
+                    <div class="metric-context">Conservative launch year with Q4 profitability</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">77%</div>
+                    <div class="metric-label">Revenue CAGR</div>
+                    <div class="metric-context">To $14.8M by 2030</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">~$0</div>
+                    <div class="metric-label">Current CAC</div>
+                    <div class="metric-context">100% referral-driven customer acquisition</div>
+                </div>
+            </div>
+
+            <div class="feature-box" style="margin-top: 40px;">
+                <h3>Revenue Acceleration Drivers</h3>
+                <ul>
+                    <li><strong>2026:</strong> Market validation, certification completion (UL/CSA), partner onboarding</li>
+                    <li><strong>2027:</strong> Local manufacturing begins ($1.9M revenue), equity partner network scales to 30+</li>
+                    <li><strong>2028:</strong> Full-scale production, EaaS program launch ($3.8M revenue)</li>
+                    <li><strong>2030:</strong> Regional dominance across ASEAN/UK/Canada ($14.8M revenue)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Certifications -->
+        <div class="section-card">
+            <h2>🎓 Regulatory & Academic Validation</h2>
+
+            <div class="deployment-grid">
+                <div class="deployment-card" style="background: linear-gradient(135deg, rgba(39, 174, 96, 0.9) 0%, rgba(30, 132, 73, 0.9) 100%);">
+                    <h3 style="color: white;"><i class="fa-solid fa-flask"></i> Oak Ridge National Lab</h3>
+                    <div class="deployment-subtitle" style="color: rgba(255,255,255,0.95);">US Department of Energy</div>
+                    <div class="deployment-description">
+                        Independent validation confirms 30-35% efficiency advantage. Critical for institutional adoption and utility rebate programs.
+                    </div>
+                </div>
+
+                <div class="deployment-card" style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.9) 0%, rgba(41, 128, 185, 0.9) 100%);">
+                    <h3 style="color: white;"><i class="fa-solid fa-certificate"></i> MCS Certification (UK)</h3>
+                    <div class="deployment-subtitle" style="color: rgba(255,255,255,0.95);">Government-Approved Standards</div>
+                    <div class="deployment-description">
+                        Microgeneration Certification Scheme approval. Required for UK government incentive programs and Boiler Upgrade Scheme eligibility.
+                    </div>
+                </div>
+
+                <div class="deployment-card" style="background: linear-gradient(135deg, rgba(155, 89, 182, 0.9) 0%, rgba(142, 68, 173, 0.9) 100%);">
+                    <h3 style="color: white;"><i class="fa-solid fa-graduation-cap"></i> University of Liverpool</h3>
+                    <div class="deployment-subtitle" style="color: rgba(255,255,255,0.95);">Academic R&D Partnership</div>
+                    <div class="deployment-description">
+                        Collaboration with Professor Zhibin Yu (FLX patent licensor), supported by UKRI grants. Next-generation CO₂ optimization.
+                    </div>
+                </div>
+
+                <div class="deployment-card" style="background: linear-gradient(135deg, rgba(230, 126, 34, 0.9) 0%, rgba(211, 84, 0, 0.9) 100%);">
+                    <h3 style="color: white;"><i class="fa-solid fa-landmark"></i> BOI-SIPP Registration</h3>
+                    <div class="deployment-subtitle" style="color: rgba(255,255,255,0.95);">Philippine Government Incentives</div>
+                    <div class="deployment-description">
+                        Strategic Investment Priority Plan enterprise. Tax holidays, duty-free importation, enhanced deductions improve margin structure.
+                    </div>
+                </div>
+
+                <div class="deployment-card" style="background: linear-gradient(135deg, rgba(52, 73, 94, 0.9) 0%, rgba(44, 62, 80, 0.9) 100%);">
+                    <h3 style="color: white;"><i class="fa-solid fa-shield-halved"></i> International Standards</h3>
+                    <div class="deployment-subtitle" style="color: rgba(255,255,255,0.95);">ISO 9001/14001, CE, KEYMARK, TÜV</div>
+                    <div class="deployment-description">
+                        Comprehensive certification across quality management, environmental standards, and safety. De-risks enterprise adoption.
+                    </div>
+                </div>
+
+                <div class="deployment-card" style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.9) 0%, rgba(192, 57, 43, 0.9) 100%);">
+                    <h3 style="color: white;"><i class="fa-solid fa-clipboard-check"></i> UL/CSA (In Progress)</h3>
+                    <div class="deployment-subtitle" style="color: rgba(255,255,255,0.95);">North American Market Entry</div>
+                    <div class="deployment-description">
+                        Active certification for US/Canada markets. Expected Q2 2026 completion unlocks $12B serviceable market.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer style="text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 12px; border-top: 1px solid var(--border-color); margin-top: 80px;">
+        <p><strong>CONFIDENTIAL - DO NOT DISSEMINATE</strong></p>
+        <p>Karnot Energy Solutions Inc. | Investment Memorandum</p>
+        <p style="margin-top: 10px; opacity: 0.6;">
+            Contact: <strong>stuart.cox@karnot.com</strong> | +63 960 289 2001
+        </p>
+    </footer>
+
+</body>
+</html>

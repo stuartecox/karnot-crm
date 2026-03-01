@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Projections Table</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            padding: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        .table-wrapper {
+            background: #ffffff;
+            padding: 0;
+            border-radius: 12px;
+            border-left: 5px solid #2596be;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .financial-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .financial-table thead {
+            background: #2d4a58;
+        }
+        
+        .financial-table th {
+            padding: 18px;
+            text-align: left;
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 16px;
+        }
+        
+        .financial-table th:first-child {
+            text-align: left;
+        }
+        
+        .financial-table th:not(:first-child) {
+            text-align: center;
+        }
+        
+        .financial-table td {
+            padding: 18px;
+            border-bottom: 1px solid #e5e5e5;
+            color: #1d1d1f;
+            font-size: 18px;
+        }
+        
+        .financial-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .financial-table td:first-child {
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+        
+        .financial-table td:not(:first-child) {
+            text-align: center;
+        }
+        
+        .financial-table tbody tr:hover {
+            background: #f5f5f7;
+        }
+        
+        .financial-table .row-gross-profit {
+            background: #e8f5e9;
+        }
+        
+        .financial-table .row-gross-profit td {
+            color: #2e7d32;
+            font-weight: 700;
+        }
+        
+        .financial-table .row-net-profit td {
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+        
+        .financial-table .row-italic td:first-child {
+            font-style: italic;
+            font-weight: 500;
+            color: #6e6e73;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="table-wrapper">
+            <table class="financial-table">
+                <thead>
+                    <tr>
+                        <th>Metric (USD)</th>
+                        <th>2026 (F)</th>
+                        <th>2027 (F)</th>
+                        <th>2028 (F)</th>
+                        <th>2030 (F)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Revenue</td>
+                        <td>$514,832</td>
+                        <td>$1,872,853</td>
+                        <td>$3,818,393</td>
+                        <td>$14,778,831</td>
+                    </tr>
+                    <tr class="row-italic">
+                        <td>Direct Costs</td>
+                        <td>$275,558</td>
+                        <td>$932,656</td>
+                        <td>$1,801,336</td>
+                        <td>$6,673,014</td>
+                    </tr>
+                    <tr class="row-gross-profit">
+                        <td>Gross Profit</td>
+                        <td>$239,274</td>
+                        <td>$940,197</td>
+                        <td>$2,017,057</td>
+                        <td>$8,105,818</td>
+                    </tr>
+                    <tr class="row-italic">
+                        <td>Gross Margin %</td>
+                        <td>46%</td>
+                        <td>50%</td>
+                        <td>53%</td>
+                        <td>55%</td>
+                    </tr>
+                    <tr class="row-italic">
+                        <td>Total Expenses</td>
+                        <td>$507,239</td>
+                        <td>$1,473,890</td>
+                        <td>$2,711,026</td>
+                        <td>$9,303,216</td>
+                    </tr>
+                    <tr class="row-net-profit">
+                        <td>Net Profit</td>
+                        <td>$7,593</td>
+                        <td>$398,962</td>
+                        <td>$1,107,366</td>
+                        <td>$5,475,615</td>
+                    </tr>
+                    <tr class="row-italic">
+                        <td>Dividends Distributed</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td>$442,947</td>
+                        <td>$2,200,000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
