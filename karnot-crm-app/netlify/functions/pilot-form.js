@@ -120,7 +120,7 @@ exports.handler = async (event) => {
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        sender: { name: 'Karnot CRM', email: 'noreply@karnot.com' },
+                        sender: { name: 'Karnot CRM', email: 'info@karnot.com' },
                         to: [{ email: 'stuart.cox@karnot.com', name: 'Stuart Cox' }],
                         subject: formType === 'pilot'
                             ? `🔥 New Pilot Application: ${data.companyName || email}`
