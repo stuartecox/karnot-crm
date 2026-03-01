@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { auth, db } from './firebase'; 
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { 
     collection, 
     onSnapshot, 
@@ -437,6 +437,17 @@ export default function App() {
                         setUserPermissions(userData.permissions || []);
                         // Use teamDataUid if set (staff), otherwise use own uid (admin/owner)
                         setDataUid(userData.teamDataUid || authUser.uid);
+                        // Fix missing/placeholder name and sync Firebase displayName
+                        if (!userData.name || userData.name === 'Unknown' || userData.name === 'unknown') {
+                            const emailPrefix = authUser.email?.split('@')[0] || 'User';
+                            // Convert "stuart.cox" → "Stuart Cox"
+                            const fixedName = authUser.displayName || emailPrefix.split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                            await updateDoc(userRef, { name: fixedName });
+                        }
+                        // Set Firebase Auth displayName from Firestore profile if missing
+                        if (!authUser.displayName && userData.name) {
+                            await updateProfile(authUser, { displayName: userData.name });
+                        }
                     } else {
                         // First-ever login — set as admin with own data
                         await setDoc(userRef, {
