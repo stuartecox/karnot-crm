@@ -166,8 +166,16 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
 
     const loadCampaigns = async () => {
         try {
-            const result = await brevoCall('/emailCampaigns', 'GET', { limit: 50, offset: 0, sort: 'desc' });
-            setCampaigns(result.campaigns || []);
+            const result = await brevoCall('/emailCampaigns', 'GET', { limit: 50, offset: 0, sort: 'desc', statistics: 'campaignStats' });
+            const rawCampaigns = result.campaigns || [];
+            // Brevo list endpoint returns statistics in different shapes —
+            // normalize to ensure inline stats always display
+            const normalized = rawCampaigns.map(c => {
+                // Brevo may return stats as globalStats or statistics or campaignStats
+                const stats = c.statistics || c.globalStats || c.campaignStats || {};
+                return { ...c, statistics: stats };
+            });
+            setCampaigns(normalized);
         } catch (err) { console.error('Load campaigns error:', err); }
     };
 
@@ -278,20 +286,31 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
         setLoading(true); setError('');
         try {
             await brevoCall(`/emailCampaigns/${campaignId}/sendNow`, 'POST');
-            setSuccess('Campaign is being sent!');
+            setSuccess('Campaign is being sent! Stats will appear in a few minutes.');
             setTimeout(() => setSuccess(''), 5000);
             await loadCampaigns();
+            // Auto-refresh stats after 30s and 60s to pick up delivery data
+            setTimeout(() => loadCampaigns(), 30000);
+            setTimeout(() => loadCampaigns(), 60000);
         } catch (err) { setError(err.message); }
         setLoading(false);
     };
 
     const handleViewStats = async (campaign) => {
         setSelectedCampaign(campaign);
+        setCampaignStats(null); // Clear stale stats while loading
         try {
-            const stats = await brevoCall(`/emailCampaigns/${campaign.id}`, 'GET');
-            setCampaignStats(stats);
+            const detailed = await brevoCall(`/emailCampaigns/${campaign.id}`, 'GET');
+            // Normalize stats — Brevo returns different shapes depending on campaign state
+            const stats = detailed.statistics || detailed.globalStats || detailed.campaignStats || {};
+            setCampaignStats({ ...detailed, statistics: stats });
+            // Also update the campaign in the list so inline stats refresh too
+            setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, statistics: stats } : c));
         } catch (err) {
-            setCampaignStats(campaign);
+            console.error('Stats fetch error:', err);
+            setCampaignStats(campaign); // Fallback to what we had
+            setError('Could not fetch latest stats from Brevo. Showing cached data.');
+            setTimeout(() => setError(''), 5000);
         }
     };
 
@@ -482,13 +501,16 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                                                 }`}>{c.status}</span>
                                             </div>
                                             <p className="text-sm text-gray-500">Subject: {c.subject}</p>
-                                            {c.statistics && (
+                                            {c.statistics && (c.statistics.delivered > 0 || c.statistics.sent > 0) && (
                                                 <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                                                    <span className="flex items-center gap-1"><Send size={11} /> {c.statistics.delivered || 0} delivered</span>
-                                                    <span className="flex items-center gap-1"><Eye size={11} /> {c.statistics.uniqueViews || 0} opened</span>
-                                                    <span className="flex items-center gap-1"><MousePointer size={11} /> {c.statistics.uniqueClicks || 0} clicked</span>
+                                                    <span className="flex items-center gap-1"><Send size={11} /> {c.statistics.delivered || c.statistics.sent || 0} delivered</span>
+                                                    <span className="flex items-center gap-1"><Eye size={11} /> {c.statistics.uniqueViews || c.statistics.viewed || 0} opened</span>
+                                                    <span className="flex items-center gap-1"><MousePointer size={11} /> {c.statistics.uniqueClicks || c.statistics.clickers || 0} clicked</span>
                                                     <span className="flex items-center gap-1"><XCircle size={11} /> {c.statistics.hardBounces || 0} bounced</span>
                                                 </div>
+                                            )}
+                                            {c.status === 'sent' && (!c.statistics || (!c.statistics.delivered && !c.statistics.sent)) && (
+                                                <p className="text-[10px] text-amber-500 mt-1">Stats loading — click "Stats" to refresh</p>
                                             )}
                                         </div>
                                         <div className="flex gap-2 ml-4">
@@ -508,21 +530,41 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                     )}
 
                     {/* Stats Panel */}
-                    {selectedCampaign && campaignStats && (
+                    {selectedCampaign && (
                         <Card className="border-2 border-blue-200 bg-blue-50/20">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-bold text-gray-800">Analytics: {selectedCampaign.name}</h3>
-                                <button onClick={() => { setSelectedCampaign(null); setCampaignStats(null); }} className="text-gray-400 hover:text-gray-600"><XCircle size={18} /></button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => handleViewStats(selectedCampaign)}
+                                        className="text-blue-500 hover:text-blue-700 p-1" title="Refresh stats">
+                                        <RefreshCw size={14} />
+                                    </button>
+                                    <button onClick={() => { setSelectedCampaign(null); setCampaignStats(null); }} className="text-gray-400 hover:text-gray-600"><XCircle size={18} /></button>
+                                </div>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <StatCard icon={Send} label="Delivered" value={campaignStats.statistics?.delivered || 0} color="green" />
-                                <StatCard icon={Eye} label="Opened" value={campaignStats.statistics?.uniqueViews || 0} color="blue"
-                                    sub={campaignStats.statistics?.delivered ? `${((campaignStats.statistics.uniqueViews / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
-                                <StatCard icon={MousePointer} label="Clicked" value={campaignStats.statistics?.uniqueClicks || 0} color="purple"
-                                    sub={campaignStats.statistics?.delivered ? `${((campaignStats.statistics.uniqueClicks / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
-                                <StatCard icon={XCircle} label="Bounced" value={(campaignStats.statistics?.hardBounces || 0) + (campaignStats.statistics?.softBounces || 0)} color="orange" />
-                                <StatCard icon={AlertCircle} label="Unsubscribed" value={campaignStats.statistics?.unsubscriptions || 0} color="orange" />
-                            </div>
+                            {!campaignStats ? (
+                                <div className="text-center py-6">
+                                    <RefreshCw size={20} className="animate-spin text-blue-400 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-400">Loading stats from Brevo...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                        <StatCard icon={Send} label="Delivered" value={campaignStats.statistics?.delivered || 0} color="green" />
+                                        <StatCard icon={Eye} label="Opened" value={campaignStats.statistics?.uniqueViews || campaignStats.statistics?.viewed || 0} color="blue"
+                                            sub={campaignStats.statistics?.delivered ? `${(((campaignStats.statistics.uniqueViews || campaignStats.statistics?.viewed || 0) / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
+                                        <StatCard icon={MousePointer} label="Clicked" value={campaignStats.statistics?.uniqueClicks || campaignStats.statistics?.clickers || 0} color="purple"
+                                            sub={campaignStats.statistics?.delivered ? `${(((campaignStats.statistics.uniqueClicks || campaignStats.statistics?.clickers || 0) / campaignStats.statistics.delivered) * 100).toFixed(1)}%` : ''} />
+                                        <StatCard icon={XCircle} label="Bounced" value={(campaignStats.statistics?.hardBounces || 0) + (campaignStats.statistics?.softBounces || 0)} color="orange" />
+                                        <StatCard icon={AlertCircle} label="Unsubscribed" value={campaignStats.statistics?.unsubscriptions || 0} color="orange" />
+                                    </div>
+                                    {selectedCampaign.status === 'sent' && campaignStats.statistics?.delivered === 0 && (
+                                        <p className="text-xs text-amber-600 mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                            Stats may take a few minutes to appear after sending. Click the refresh button to check for updates.
+                                        </p>
+                                    )}
+                                </>
+                            )}
                         </Card>
                     )}
                 </div>
@@ -533,9 +575,13 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                 <div className="space-y-4">
                     <Card>
                         <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <Users size={16} className="text-orange-500" /> Sync CRM Contacts to Brevo
+                            <Users size={16} className="text-orange-500" /> Sync CRM Contacts → Brevo
                         </h3>
-                        <p className="text-sm text-gray-500 mb-4">Push your Sales &amp; CRM contacts to a Brevo list for email campaigns. Attributes (name, company, job title) are automatically mapped.</p>
+                        <p className="text-sm text-gray-500 mb-3">Push your CRM contacts to Brevo for email campaigns. <strong>Your CRM is the master list</strong> — contacts flow one-way from CRM to Brevo. Attributes (name, company, job title) are automatically mapped.</p>
+                        <div className="flex items-center gap-2 mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                            <ArrowRight size={14} className="text-blue-500 flex-shrink-0" />
+                            <p className="text-[11px] text-blue-700"><strong>One-way sync:</strong> CRM → Brevo. Changes in your CRM are pushed to Brevo. Brevo never overwrites your CRM data.</p>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
