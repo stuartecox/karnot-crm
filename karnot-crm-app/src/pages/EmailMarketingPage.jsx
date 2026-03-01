@@ -87,12 +87,41 @@ export default function EmailMarketingPage({ user, contacts = [], companies = []
     const [filterRegion, setFilterRegion] = useState('');    // UK, MALAYSIA, THAILAND, etc.
     const [filterSource, setFilterSource] = useState('');    // UK Trawler, Google Places, etc.
 
-    // Build a company lookup map for fast access
+    // Build a company lookup map for fast access (by id + normalized name)
     const companyMap = useMemo(() => {
         const map = {};
-        companies.forEach(c => { map[c.id] = c; if (c.companyName) map[c.companyName.toLowerCase()] = c; });
+        companies.forEach(c => {
+            if (c.id) map[c.id] = c;
+            if (c.companyName) {
+                const key = c.companyName.toLowerCase().trim();
+                map[key] = c;
+                // Also store without common suffixes for fuzzy matching
+                const stripped = key.replace(/\s*(ltd\.?|inc\.?|llc\.?|plc\.?|corp\.?|co\.?|limited|incorporated)\s*$/i, '').trim();
+                if (stripped && stripped !== key) map[stripped] = c;
+            }
+        });
         return map;
     }, [companies]);
+
+    // Helper: find company for a contact (tries multiple matching strategies)
+    const findCompanyForContact = (contact) => {
+        // 1. Direct ID match
+        if (contact.companyId && companyMap[contact.companyId]) return companyMap[contact.companyId];
+        // 2. Exact name match
+        if (contact.companyName) {
+            const name = contact.companyName.toLowerCase().trim();
+            if (companyMap[name]) return companyMap[name];
+            // 3. Stripped suffix match
+            const stripped = name.replace(/\s*(ltd\.?|inc\.?|llc\.?|plc\.?|corp\.?|co\.?|limited|incorporated)\s*$/i, '').trim();
+            if (stripped && companyMap[stripped]) return companyMap[stripped];
+            // 4. Partial match — contact name contained in a company name or vice versa
+            for (const c of companies) {
+                const cn = c.companyName?.toLowerCase().trim();
+                if (cn && (cn.includes(name) || name.includes(cn))) return c;
+            }
+        }
+        return null;
+    };
 
     // Get unique filter options from companies data
     const filterOptions = useMemo(() => {
@@ -118,13 +147,8 @@ export default function EmailMarketingPage({ user, contacts = [], companies = []
     const enrichedContacts = useMemo(() => {
         let result = contacts.filter(c => c.email);
 
-        // Enrich each contact with their company data
-        result = result.map(c => {
-            const company = (c.companyId && companyMap[c.companyId])
-                || (c.companyName && companyMap[c.companyName.toLowerCase()])
-                || null;
-            return { ...c, _company: company };
-        });
+        // Enrich each contact with their linked company
+        result = result.map(c => ({ ...c, _company: findCompanyForContact(c) }));
 
         // Apply filters — use includes for partial matching (e.g. "ESCO" matches "MNC ESCO")
         if (filterType) {
@@ -148,7 +172,7 @@ export default function EmailMarketingPage({ user, contacts = [], companies = []
         }
 
         return result;
-    }, [contacts, companyMap, filterType, filterRegion, filterSource]);
+    }, [contacts, companies, companyMap, filterType, filterRegion, filterSource]);
 
     const hasActiveFilters = filterType || filterRegion || filterSource;
 
@@ -887,17 +911,18 @@ Now, here is what I need:
                         {/* Diagnostics */}
                         {(() => {
                             const withEmail = contacts.filter(c => c.email).length;
-                            const linked = contacts.filter(c => c.email).filter(c => {
-                                return (c.companyId && companyMap[c.companyId]) ||
-                                       (c.companyName && companyMap[c.companyName.toLowerCase()]);
-                            }).length;
+                            const linked = enrichedContacts.filter(c => c._company).length;
+                            const total = enrichedContacts.length;
                             return (
-                                <div className="text-[10px] text-gray-400 mb-2 flex gap-4">
-                                    <span>{companies.length} companies loaded</span>
+                                <div className="text-[10px] text-gray-400 mb-2 flex flex-wrap gap-4">
+                                    <span>{companies.length} companies in CRM</span>
                                     <span>{withEmail} contacts with email</span>
-                                    <span className={linked < withEmail ? 'text-amber-500 font-bold' : 'text-green-500'}>
-                                        {linked} linked to a company {linked < withEmail && `(${withEmail - linked} unlinked — link via Contacts page)`}
+                                    <span className={linked < total ? 'text-amber-500 font-bold' : 'text-green-500'}>
+                                        {linked}/{total} matched to company {linked < total && `(${total - linked} unmatched)`}
                                     </span>
+                                    {filterOptions.types.length === 0 && companies.length === 0 &&
+                                        <span className="text-red-500 font-bold">No companies found — scrape companies first via UK/ASEAN Export</span>
+                                    }
                                 </div>
                             );
                         })()}
