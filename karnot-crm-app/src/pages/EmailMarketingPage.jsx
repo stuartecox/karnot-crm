@@ -101,6 +101,8 @@ export default function EmailMarketingPage({ user, contacts = [], companies = []
         const sources = new Set();
         companies.forEach(c => {
             if (c.type) types.add(c.type);
+            if (c.installerType) types.add(c.installerType);
+            if (c.industry) types.add(c.industry);
             if (c.region) regions.add(c.region);
             if (c.ukRegion) regions.add(c.ukRegion);
             if (c.source) sources.add(c.source);
@@ -124,9 +126,19 @@ export default function EmailMarketingPage({ user, contacts = [], companies = []
             return { ...c, _company: company };
         });
 
-        // Apply filters
+        // Apply filters — use includes for partial matching (e.g. "ESCO" matches "MNC ESCO")
         if (filterType) {
-            result = result.filter(c => c._company?.type === filterType || c._company?.installerType?.includes(filterType));
+            const ft = filterType.toLowerCase();
+            result = result.filter(c => {
+                const co = c._company;
+                if (!co) return false;
+                return (co.type || '').toLowerCase().includes(ft) ||
+                       (co.installerType || '').toLowerCase().includes(ft) ||
+                       (co.industry || '').toLowerCase().includes(ft) ||
+                       ft === (co.type || '').toLowerCase() ||
+                       ft === (co.installerType || '').toLowerCase() ||
+                       ft === (co.industry || '').toLowerCase();
+            });
         }
         if (filterRegion) {
             result = result.filter(c => c._company?.region === filterRegion || c._company?.ukRegion === filterRegion);
@@ -851,7 +863,7 @@ Now, here is what I need:
                         <p className="text-sm text-gray-500 mb-3">Filter by company type (ESCO, MCS, VIP), region, or source before syncing to Brevo or exporting for Sales Navigator.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                             <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Company Type</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Type / MCS / ESCO</label>
                                 <select value={filterType} onChange={e => setFilterType(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                                     <option value="">All Types</option>
                                     {filterOptions.types.map(t => <option key={t} value={t}>{t}</option>)}
@@ -872,6 +884,23 @@ Now, here is what I need:
                                 </select>
                             </div>
                         </div>
+                        {/* Diagnostics */}
+                        {(() => {
+                            const withEmail = contacts.filter(c => c.email).length;
+                            const linked = contacts.filter(c => c.email).filter(c => {
+                                return (c.companyId && companyMap[c.companyId]) ||
+                                       (c.companyName && companyMap[c.companyName.toLowerCase()]);
+                            }).length;
+                            return (
+                                <div className="text-[10px] text-gray-400 mb-2 flex gap-4">
+                                    <span>{companies.length} companies loaded</span>
+                                    <span>{withEmail} contacts with email</span>
+                                    <span className={linked < withEmail ? 'text-amber-500 font-bold' : 'text-green-500'}>
+                                        {linked} linked to a company {linked < withEmail && `(${withEmail - linked} unlinked — link via Contacts page)`}
+                                    </span>
+                                </div>
+                            );
+                        })()}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <span className={`text-sm font-bold ${hasActiveFilters ? 'text-orange-600' : 'text-gray-500'}`}>
