@@ -92,6 +92,7 @@ import EaaSInvestorCalculator from './components/EaaSInvestorCalculator.jsx';
 
 // --- Social Media & Marketing ---
 import SocialMediaPlanner from './pages/SocialMediaPlanner.jsx';
+import EmailMarketingPage from './pages/EmailMarketingPage.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -229,6 +230,7 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'socialAnalytics', label: 'Analytics Tracker', icon: BarChart2 },
         { view: 'socialCampaigns', label: 'Campaigns', icon: Zap },
         { view: 'socialTraining', label: 'Training Hub', icon: BookOpen },
+        { view: 'emailMarketing', label: 'Email Marketing', icon: Mail, badge: 'BREVO' },
     ];
 
     // Investment Menu
@@ -924,6 +926,10 @@ export default function App() {
 
                 {activeView === 'socialTraining' && (
                     <SocialMediaPlanner user={dataUser} initialTab="training" key="social-training" />
+                )}
+
+                {activeView === 'emailMarketing' && (
+                    <EmailMarketingPage user={dataUser} contacts={contacts} />
                 )}
 
                 {/* 7. QUOTING */}
