@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut as fbSignOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, firebaseConfig } from '../firebase';
 import { Card, Button, Input } from '../data/constants';
-import { Plus, Trash2, Shield, User, X, Users, Lock } from 'lucide-react';
+import { Plus, Trash2, Shield, User, X, Users, Lock, Pencil, Check } from 'lucide-react';
 
 export default function UserManagement({ currentUser }) {
     const [teamMembers, setTeamMembers] = useState([]);
@@ -12,6 +12,8 @@ export default function UserManagement({ currentUser }) {
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'STAFF', permissions: [] });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [editingId, setEditingId] = useState(null);
+    const [editName, setEditName] = useState('');
 
     // Listen to all users in the team
     useEffect(() => {
@@ -103,6 +105,17 @@ export default function UserManagement({ currentUser }) {
                 ? prev.permissions.filter(p => p !== perm)
                 : [...prev.permissions, perm]
         }));
+    };
+
+    const handleSaveName = async (memberId) => {
+        if (!editName.trim()) return;
+        try {
+            await updateDoc(doc(db, "users", memberId), { name: editName.trim() });
+        } catch (err) {
+            console.error("Update name error:", err);
+        }
+        setEditingId(null);
+        setEditName('');
     };
 
     return (
@@ -217,12 +230,37 @@ export default function UserManagement({ currentUser }) {
                                 {member.role === 'ADMIN' ? <Shield size={18} /> : <User size={18} />}
                             </div>
                             <div>
-                                <p className="font-bold text-gray-800">
-                                    {member.name || 'Unknown'}
-                                    {member.id === currentUser.uid && (
-                                        <span className="ml-2 text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-black uppercase">You</span>
-                                    )}
-                                </p>
+                                {editingId === member.id ? (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            value={editName}
+                                            onChange={e => setEditName(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && handleSaveName(member.id)}
+                                            className="border border-gray-300 rounded px-2 py-1 text-sm font-bold w-40"
+                                            autoFocus
+                                        />
+                                        <button onClick={() => handleSaveName(member.id)} className="text-green-600 hover:text-green-800">
+                                            <Check size={16} />
+                                        </button>
+                                        <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <p className="font-bold text-gray-800 flex items-center gap-1.5">
+                                        {member.name || 'Unknown'}
+                                        {member.id === currentUser.uid && (
+                                            <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-black uppercase">You</span>
+                                        )}
+                                        <button
+                                            onClick={() => { setEditingId(member.id); setEditName(member.name || ''); }}
+                                            className="text-gray-300 hover:text-orange-500 transition-colors"
+                                            title="Edit name"
+                                        >
+                                            <Pencil size={12} />
+                                        </button>
+                                    </p>
+                                )}
                                 <p className="text-sm text-gray-500">{member.email}</p>
                             </div>
                         </div>

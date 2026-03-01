@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { auth, db } from './firebase'; 
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { 
     collection, 
     onSnapshot, 
@@ -92,6 +92,7 @@ import EaaSInvestorCalculator from './components/EaaSInvestorCalculator.jsx';
 
 // --- Social Media & Marketing ---
 import SocialMediaPlanner from './pages/SocialMediaPlanner.jsx';
+import EmailMarketingPage from './pages/EmailMarketingPage.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -229,6 +230,7 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'socialAnalytics', label: 'Analytics Tracker', icon: BarChart2 },
         { view: 'socialCampaigns', label: 'Campaigns', icon: Zap },
         { view: 'socialTraining', label: 'Training Hub', icon: BookOpen },
+        { view: 'emailMarketing', label: 'Email Marketing', icon: Mail, badge: 'BREVO' },
     ];
 
     // Investment Menu
@@ -437,6 +439,17 @@ export default function App() {
                         setUserPermissions(userData.permissions || []);
                         // Use teamDataUid if set (staff), otherwise use own uid (admin/owner)
                         setDataUid(userData.teamDataUid || authUser.uid);
+                        // Fix missing/placeholder name and sync Firebase displayName
+                        if (!userData.name || userData.name === 'Unknown' || userData.name === 'unknown') {
+                            const emailPrefix = authUser.email?.split('@')[0] || 'User';
+                            // Convert "stuart.cox" → "Stuart Cox"
+                            const fixedName = authUser.displayName || emailPrefix.split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                            await updateDoc(userRef, { name: fixedName });
+                        }
+                        // Set Firebase Auth displayName from Firestore profile if missing
+                        if (!authUser.displayName && userData.name) {
+                            await updateProfile(authUser, { displayName: userData.name });
+                        }
                     } else {
                         // First-ever login — set as admin with own data
                         await setDoc(userRef, {
@@ -913,6 +926,10 @@ export default function App() {
 
                 {activeView === 'socialTraining' && (
                     <SocialMediaPlanner user={dataUser} initialTab="training" key="social-training" />
+                )}
+
+                {activeView === 'emailMarketing' && (
+                    <EmailMarketingPage user={dataUser} contacts={contacts} />
                 )}
 
                 {/* 7. QUOTING */}
