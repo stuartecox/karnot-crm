@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, Button, Input } from '../data/constants.jsx';
 import {
     Mail, Send, Users, BarChart2, Plus, Trash2, RefreshCw, CheckCircle, AlertCircle,
     Eye, MousePointer, XCircle, Clock, Search, Filter, FileText, Copy, ArrowRight,
-    Zap, List, Layout, ExternalLink, Target, Play, Calendar
+    Zap, List, Layout, ExternalLink, Target, Play, Calendar, Upload, Download, Edit3, Save, X, Code
 } from 'lucide-react';
 import { CAMPAIGN_SEQUENCES, ENERGY_MANAGER_SEQUENCE, ESCO_PARTNER_SEQUENCE } from '../data/campaignTemplates.js';
 import emailTemplateData from '../data/emailTemplates.json';
@@ -82,6 +82,29 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
     const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [campaignStats, setCampaignStats] = useState(null);
 
+    // Template Management
+    const [customTemplates, setCustomTemplates] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('karnot_custom_templates') || '{}'); } catch { return {}; }
+    });
+    const [editingTemplate, setEditingTemplate] = useState(null); // { key, label, html, isNew }
+    const [templatePreviewHtml, setTemplatePreviewHtml] = useState('');
+    const fileInputRef = useRef(null);
+
+    // Persist custom templates
+    useEffect(() => {
+        localStorage.setItem('karnot_custom_templates', JSON.stringify(customTemplates));
+    }, [customTemplates]);
+
+    // Merge built-in + custom templates
+    const allTemplates = useMemo(() => ({
+        ...Object.fromEntries(
+            Object.entries(EMAIL_TEMPLATES).map(([key, t]) => [key, { ...t, builtIn: true }])
+        ),
+        ...Object.fromEntries(
+            Object.entries(customTemplates).map(([key, t]) => [key, { ...t, icon: Upload, color: 'blue', builtIn: false }])
+        )
+    }), [customTemplates]);
+
     useEffect(() => { checkBrevoConnection(); }, []);
 
     const checkBrevoConnection = async () => {
@@ -97,17 +120,27 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
         }
     };
 
+    // Brevo returns stats in nested shapes depending on endpoint/status:
+    //   { statistics: { globalStats: { delivered: 10, ... }, campaignStats: [...] } }
+    //   or { statistics: { delivered: 10, ... } }
+    //   or { globalStats: { delivered: 10, ... } }
+    // This helper flattens to a simple { delivered, uniqueViews, ... } object.
+    const normalizeStats = (campaign) => {
+        const raw = campaign.statistics || campaign.globalStats || campaign.campaignStats || {};
+        // If stats has a nested globalStats object, use that
+        if (raw.globalStats && typeof raw.globalStats === 'object') return raw.globalStats;
+        // If stats has campaignStats array, use first entry
+        if (Array.isArray(raw.campaignStats) && raw.campaignStats.length > 0) return raw.campaignStats[0];
+        // If stats directly has numeric fields, it's already flat
+        if (typeof raw.delivered === 'number' || typeof raw.sent === 'number') return raw;
+        return {};
+    };
+
     const loadCampaigns = async () => {
         try {
-            const result = await brevoCall('/emailCampaigns', 'GET', { limit: 50, offset: 0, sort: 'desc', statistics: 'campaignStats' });
+            const result = await brevoCall('/emailCampaigns', 'GET', { limit: 50, offset: 0, sort: 'desc' });
             const rawCampaigns = result.campaigns || [];
-            // Brevo list endpoint returns statistics in different shapes —
-            // normalize to ensure inline stats always display
-            const normalized = rawCampaigns.map(c => {
-                // Brevo may return stats as globalStats or statistics or campaignStats
-                const stats = c.statistics || c.globalStats || c.campaignStats || {};
-                return { ...c, statistics: stats };
-            });
+            const normalized = rawCampaigns.map(c => ({ ...c, statistics: normalizeStats(c) }));
             setCampaigns(normalized);
         } catch (err) { console.error('Load campaigns error:', err); }
     };
@@ -234,8 +267,7 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
         setCampaignStats(null); // Clear stale stats while loading
         try {
             const detailed = await brevoCall(`/emailCampaigns/${campaign.id}`, 'GET');
-            // Normalize stats — Brevo returns different shapes depending on campaign state
-            const stats = detailed.statistics || detailed.globalStats || detailed.campaignStats || {};
+            const stats = normalizeStats(detailed);
             setCampaignStats({ ...detailed, statistics: stats });
             // Also update the campaign in the list so inline stats refresh too
             setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, statistics: stats } : c));
@@ -248,8 +280,215 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
     };
 
     const applyTemplate = (key) => {
-        const t = EMAIL_TEMPLATES[key];
+        const t = allTemplates[key];
         if (t) setCampaignForm(prev => ({ ...prev, subject: t.subject, htmlContent: t.html }));
+    };
+
+    const handleSaveTemplate = () => {
+        if (!editingTemplate) return;
+        const { key, label, html, subject, desc, tags } = editingTemplate;
+        if (!key || !label || !html) { setError('Template needs a name and HTML content.'); return; }
+
+        if (editingTemplate.builtIn) {
+            // Save as a modified copy of the built-in template
+            const copyKey = `${key}_custom`;
+            setCustomTemplates(prev => ({
+                ...prev,
+                [copyKey]: {
+                    label: `${label} (Modified)`,
+                    desc: desc || '',
+                    tags: tags || ['CUSTOM'],
+                    subject: subject || '',
+                    html
+                }
+            }));
+            setSuccess(`Saved as "${label} (Modified)" — original kept intact.`);
+        } else {
+            setCustomTemplates(prev => ({
+                ...prev,
+                [key]: { label, desc: desc || '', tags: tags || ['CUSTOM'], subject: subject || '', html }
+            }));
+            setSuccess(`Template "${label}" saved!`);
+        }
+        setEditingTemplate(null);
+        setTimeout(() => setSuccess(''), 3000);
+    };
+
+    const handleDeleteTemplate = (key) => {
+        if (!window.confirm('Delete this template? This cannot be undone.')) return;
+        setCustomTemplates(prev => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+        });
+        if (editingTemplate?.key === key) setEditingTemplate(null);
+        setSuccess('Template deleted.');
+        setTimeout(() => setSuccess(''), 3000);
+    };
+
+    const handleUploadTemplate = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.name.endsWith('.html') && !file.name.endsWith('.htm')) {
+            setError('Please upload an HTML file (.html or .htm)');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const html = ev.target.result;
+            const nameBase = file.name.replace(/\.(html|htm)$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const key = `uploaded_${nameBase}_${Date.now()}`;
+            setEditingTemplate({
+                key,
+                label: nameBase.replace(/_/g, ' '),
+                desc: `Uploaded from ${file.name}`,
+                tags: ['UPLOADED'],
+                subject: '',
+                html,
+                isNew: true,
+                builtIn: false
+            });
+            setActiveTab('templates');
+        };
+        reader.readAsText(file);
+        e.target.value = ''; // reset so same file can be re-uploaded
+    };
+
+    const generateAIInstructions = () => {
+        const instructions = `# Karnot Energy Solutions — Email Template Instructions
+# ===================================================
+# Use these instructions with ChatGPT, Claude, or any AI assistant
+# to create or modify HTML email templates for the Karnot CRM.
+#
+# HOW TO USE:
+# 1. Copy everything below and paste it into your AI chat
+# 2. Then describe what you want changed or what new template you need
+# 3. The AI will generate HTML you can upload directly into the CRM
+# ===================================================
+
+You are creating an HTML email template for Karnot Energy Solutions,
+a clean energy company in the Philippines that installs CO2 and R290
+heat pump hot water systems under an Energy-as-a-Service (EaaS) model.
+
+## BRAND GUIDELINES
+
+- Primary color: #ea580c (Karnot orange)
+- Dark background: #1f2937
+- Green accent: #059669 (for energy/savings themes)
+- Purple accent: #7c3aed (for partner/B2B themes)
+- Font: Arial, sans-serif
+- Tone: Professional but approachable, data-driven, confident
+
+## EMAIL TEMPLATE RULES
+
+1. Must be a SINGLE self-contained HTML file with all CSS inline or in a <style> tag
+2. Max width: 600px (standard email width)
+3. Use tables for layout (email clients don't support flexbox/grid)
+4. All CSS must be inline-compatible (Gmail strips <style> tags)
+5. Include both <style> block AND inline styles for maximum compatibility
+6. Images must use absolute URLs (no relative paths)
+7. Must be mobile-responsive (use width:100% on mobile)
+8. Background images are unreliable — use background colors instead
+
+## REQUIRED PERSONALIZATION VARIABLES
+
+Use these exactly as shown — the CRM will replace them:
+- {{ contact.FIRSTNAME }} — recipient's first name
+- {{ contact.LASTNAME }} — recipient's last name
+- {{ contact.COMPANY }} — recipient's company name
+- {{ contact.JOBTITLE }} — recipient's job title
+- {{ unsubscribe }} — unsubscribe link URL (LEGALLY REQUIRED in every email)
+
+## COMPANY INFO FOR CONTENT
+
+- Company: Karnot Energy Solutions Inc.
+- CEO: Stuart Cox (stuart.cox@karnot.com)
+- Websites: karnot.com, iheat.ph
+- Location: Metro Manila, Philippines
+- Registration: BOI-SIPP Registered
+- Technology: CO2 and R290 natural refrigerant heat pumps
+- Model: Energy-as-a-Service (EaaS) — zero upfront cost, 50/50 savings split
+- Key stat: 75% energy savings vs electric/LPG water heaters
+- EaaS revenue: $1,100/month per site recurring
+- Target: Hotels, hospitals, food processing, commercial laundry
+- Fleet metrics: 30-site fleet = $396K/year recurring revenue
+- Carbon impact: 1,890 tonnes CO₂ avoided per year per 30-unit fleet
+
+## TEMPLATE STRUCTURE
+
+Every email should follow this structure:
+1. HEADER — Brand bar with logo text and tagline
+2. GREETING — "Hi {{ contact.FIRSTNAME }}," or "Dear {{ contact.FIRSTNAME }},"
+3. HOOK — Opening line that grabs attention (1-2 sentences)
+4. VALUE — Key benefits or data points (use highlight boxes)
+5. PROOF — Metrics, stats, or social proof
+6. CTA — Clear call-to-action button
+7. SIGN-OFF — Stuart Cox, CEO, Karnot Energy Solutions
+8. FOOTER — Company info + unsubscribe link (REQUIRED)
+
+## EXAMPLE STRUCTURE (simplified)
+
+\`\`\`html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+  .container { max-width: 600px; margin: 0 auto; background: #fff; }
+  .header { background: #ea580c; padding: 30px; text-align: center; }
+  .header h1 { color: #fff; margin: 0; font-size: 24px; }
+  .body { padding: 30px; }
+  .body p { color: #4b5563; font-size: 14px; line-height: 1.6; }
+  .cta { display: block; background: #ea580c; color: #fff !important;
+         text-align: center; padding: 14px 30px; border-radius: 8px;
+         text-decoration: none; font-weight: bold; margin: 25px 0; }
+  .footer { background: #1f2937; padding: 20px; text-align: center;
+            color: #9ca3af; font-size: 12px; }
+  .footer a { color: #ea580c; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>KARNOT ENERGY SOLUTIONS</h1>
+  </div>
+  <div class="body">
+    <p>Hi {{ contact.FIRSTNAME }},</p>
+    <p>[Your content here]</p>
+    <a href="https://iheat.ph" class="cta">Call to Action →</a>
+    <p>Best regards,<br><strong>Stuart Cox</strong><br>CEO, Karnot Energy Solutions</p>
+  </div>
+  <div class="footer">
+    <p>Karnot Energy Solutions · <a href="https://iheat.ph">iheat.ph</a></p>
+    <p><a href="{{ unsubscribe }}">Unsubscribe</a></p>
+  </div>
+</div>
+</body>
+</html>
+\`\`\`
+
+## IMPORTANT NOTES
+
+- ALWAYS include {{ unsubscribe }} — it's legally required
+- Keep subject lines under 50 characters for mobile
+- Use preheader text (first text in body) strategically
+- Test that the email looks good without images loaded
+- The output should be ONLY the HTML code, ready to paste/upload
+
+Now, here is what I need:
+[Describe your email template request here]
+`;
+        const blob = new Blob([instructions], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Karnot-Email-Template-AI-Instructions.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+        setSuccess('AI Instructions downloaded! Open it and paste into ChatGPT or Claude.');
+        setTimeout(() => setSuccess(''), 5000);
     };
 
     // ── NOT CONNECTED ────────────────────────────────
@@ -386,10 +625,10 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
                             <div className="mb-4">
                                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Quick Template</label>
                                 <div className="flex flex-wrap gap-2">
-                                    {Object.entries(EMAIL_TEMPLATES).map(([key, t]) => (
+                                    {Object.entries(allTemplates).map(([key, t]) => (
                                         <button key={key} onClick={() => applyTemplate(key)}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-bold border border-${t.color}-200 bg-${t.color}-50 text-${t.color}-700 hover:bg-${t.color}-100 transition-colors`}>
-                                            <t.icon size={12} className="inline mr-1" /> {t.label}
+                                            {t.builtIn ? <t.icon size={12} className="inline mr-1" /> : <FileText size={12} className="inline mr-1" />} {t.label}
                                         </button>
                                     ))}
                                 </div>
@@ -622,26 +861,151 @@ export default function EmailMarketingPage({ user, contacts = [] }) {
             {/* ═══════ TEMPLATES TAB ═══════ */}
             {activeTab === 'templates' && (
                 <div className="space-y-4">
+                    {/* Action Bar */}
+                    <div className="flex flex-wrap gap-2">
+                        <Button onClick={() => setEditingTemplate({ key: `custom_${Date.now()}`, label: '', desc: '', tags: ['CUSTOM'], subject: '', html: '', isNew: true, builtIn: false })} variant="primary" className="text-xs">
+                            <Plus size={12} className="mr-1" /> New Template
+                        </Button>
+                        <Button onClick={() => fileInputRef.current?.click()} variant="secondary" className="text-xs">
+                            <Upload size={12} className="mr-1" /> Upload HTML
+                        </Button>
+                        <Button onClick={generateAIInstructions} variant="secondary" className="text-xs">
+                            <Download size={12} className="mr-1" /> Download AI Instructions
+                        </Button>
+                        <input ref={fileInputRef} type="file" accept=".html,.htm" onChange={handleUploadTemplate} className="hidden" />
+                    </div>
+
+                    {/* Template Editor */}
+                    {editingTemplate && (
+                        <Card className="border-2 border-purple-200 bg-purple-50/20">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                    <Edit3 size={16} className="text-purple-500" />
+                                    {editingTemplate.isNew ? 'New Template' : `Editing: ${editingTemplate.label}`}
+                                    {editingTemplate.builtIn && <span className="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold ml-2">BUILT-IN — saves as copy</span>}
+                                </h3>
+                                <button onClick={() => setEditingTemplate(null)} className="text-gray-400 hover:text-gray-600"><XCircle size={18} /></button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Template Name *</label>
+                                    <Input value={editingTemplate.label} onChange={e => setEditingTemplate(prev => ({ ...prev, label: e.target.value, key: prev.isNew ? `custom_${e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '_')}` : prev.key }))} placeholder="e.g. March Newsletter" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Default Subject Line</label>
+                                    <Input value={editingTemplate.subject} onChange={e => setEditingTemplate(prev => ({ ...prev, subject: e.target.value }))} placeholder="e.g. Monthly Energy Savings Update" />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Description</label>
+                                    <Input value={editingTemplate.desc} onChange={e => setEditingTemplate(prev => ({ ...prev, desc: e.target.value }))} placeholder="What's this template for?" />
+                                </div>
+                            </div>
+                            <div className="mb-4">
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wide">HTML Content *</label>
+                                    <button onClick={() => {
+                                        const blob = new Blob([editingTemplate.html], { type: 'text/html' });
+                                        const url = URL.createObjectURL(blob);
+                                        window.open(url, '_blank');
+                                    }} className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1" disabled={!editingTemplate.html}>
+                                        <Eye size={12} /> Preview in new tab
+                                    </button>
+                                </div>
+                                <textarea value={editingTemplate.html} onChange={e => setEditingTemplate(prev => ({ ...prev, html: e.target.value }))}
+                                    rows={14} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"
+                                    placeholder="Paste your HTML email content here..." />
+                            </div>
+                            {/* Inline Preview */}
+                            {editingTemplate.html && (
+                                <div className="mb-4">
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Live Preview</label>
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                        <iframe
+                                            srcDoc={editingTemplate.html}
+                                            title="Template Preview"
+                                            className="w-full border-0"
+                                            style={{ height: '380px', pointerEvents: 'none' }}
+                                            sandbox="allow-same-origin"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex gap-2">
+                                <Button onClick={handleSaveTemplate} variant="primary" disabled={!editingTemplate.label || !editingTemplate.html}>
+                                    <Save size={14} className="mr-1" /> {editingTemplate.builtIn ? 'Save as Copy' : 'Save Template'}
+                                </Button>
+                                <Button onClick={() => setEditingTemplate(null)} variant="secondary">Cancel</Button>
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* Template Grid */}
                     <Card>
                         <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><Layout size={16} className="text-purple-500" /> Email Templates</h3>
-                        <p className="text-sm text-gray-500 mb-4">Pre-built templates for your investment outreach. Click to use in a new campaign.</p>
+                        <p className="text-sm text-gray-500 mb-4">Click "Use" to start a campaign, or "Edit" to modify. Custom templates are saved in your browser.</p>
                         <div className="grid gap-4 md:grid-cols-3">
-                            {Object.entries(EMAIL_TEMPLATES).map(([key, t]) => (
-                                <div key={key}
-                                    className={`border-2 border-${t.color}-200 rounded-xl p-4 bg-${t.color}-50/30 hover:shadow-md transition-shadow cursor-pointer`}
-                                    onClick={() => { applyTemplate(key); setShowBuilder(true); setActiveTab('campaigns'); }}>
+                            {Object.entries(allTemplates).map(([key, t]) => (
+                                <div key={key} className={`border-2 border-${t.color}-200 rounded-xl p-4 bg-${t.color}-50/30 hover:shadow-md transition-shadow relative group`}>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <t.icon size={18} className={`text-${t.color}-500`} />
-                                        <h4 className="font-bold text-gray-800">{t.label}</h4>
+                                        {t.builtIn ? <t.icon size={18} className={`text-${t.color}-500`} /> : <Upload size={18} className="text-blue-500" />}
+                                        <h4 className="font-bold text-gray-800 flex-1 truncate">{t.label}</h4>
+                                        {!t.builtIn && (
+                                            <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold flex-shrink-0">CUSTOM</span>
+                                        )}
                                     </div>
                                     <p className="text-xs text-gray-500 mb-3">{t.desc}</p>
-                                    <div className="flex flex-wrap gap-1">
-                                        {t.tags.map(tag => (
+                                    <div className="flex flex-wrap gap-1 mb-3">
+                                        {(t.tags || []).map(tag => (
                                             <span key={tag} className="text-[9px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">{tag}</span>
                                         ))}
                                     </div>
+                                    <div className="flex gap-1.5">
+                                        <button onClick={() => { applyTemplate(key); setShowBuilder(true); setActiveTab('campaigns'); }}
+                                            className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-colors">
+                                            <Play size={10} className="inline mr-1" /> Use
+                                        </button>
+                                        <button onClick={() => setEditingTemplate({ key, ...t, isNew: false })}
+                                            className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-colors">
+                                            <Edit3 size={10} className="inline mr-1" /> Edit
+                                        </button>
+                                        <button onClick={() => {
+                                            const blob = new Blob([t.html], { type: 'text/html' });
+                                            const url = URL.createObjectURL(blob);
+                                            window.open(url, '_blank');
+                                        }}
+                                            className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                                            <Eye size={10} className="inline mr-1" /> Preview
+                                        </button>
+                                        {!t.builtIn && (
+                                            <button onClick={() => handleDeleteTemplate(key)}
+                                                className="px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-400 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors">
+                                                <Trash2 size={10} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
+                        </div>
+                    </Card>
+
+                    {/* AI Instructions Card */}
+                    <Card className="border-2 border-indigo-200 bg-indigo-50/20">
+                        <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2"><Code size={16} className="text-indigo-500" /> Need a New Template?</h3>
+                        <p className="text-sm text-gray-500 mb-3">
+                            Download the AI Instructions file, paste it into ChatGPT or Claude, describe what you want, and get ready-to-upload HTML back.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            <Button onClick={generateAIInstructions} variant="primary" className="text-xs bg-indigo-600 hover:bg-indigo-700">
+                                <Download size={12} className="mr-1" /> Download AI Instructions (.txt)
+                            </Button>
+                            <Button onClick={() => fileInputRef.current?.click()} variant="secondary" className="text-xs">
+                                <Upload size={12} className="mr-1" /> Upload AI-Generated HTML
+                            </Button>
+                        </div>
+                        <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                            <p className="text-xs text-indigo-800">
+                                <strong>Workflow:</strong> Download instructions → Paste into AI chat → Describe your email → Copy the HTML output → Upload here or paste into the editor above.
+                            </p>
                         </div>
                     </Card>
 
