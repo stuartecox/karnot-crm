@@ -111,6 +111,14 @@ const REQUIRED_PROFESSIONALS = [
         estimatedRetainer: '₱25,000-50,000/month for regular imports, or ₱3,000-8,000 per shipment',
         findWhere: 'Chamber of Customs Brokers (CCBI), PHILCABOA (Philippine Association of Customs Brokers)',
         criticalNote: 'Filing customs entries without a licensed broker is ILLEGAL under RA 9280 (Customs Brokers Act).',
+        fbSearchTerms: ['customs broker Philippines', 'licensed customs broker Manila', 'CCBI customs broker', 'customs brokerage services Philippines', 'BOC accredited broker'],
+        fbPages: [
+            { name: 'Chamber of Customs Brokers Inc (CCBI)', type: 'Association', note: 'Main professional body — message for member directory' },
+            { name: 'Philippine Association of Customs Brokers (PHILCABOA)', type: 'Association', note: 'Ask for brokers experienced with BOI-registered importers' },
+            { name: 'Bureau of Customs Philippines', type: 'Government', note: 'Official BOC page — posts updates on regulations, CAOs, advisories' },
+            { name: 'PRC - Professional Regulation Commission', type: 'Government', note: 'Verify broker license numbers here' },
+        ],
+        verifyHow: 'ALWAYS verify PRC license at prc.gov.ph before engaging. Ask for: PRC ID number, BOC accreditation, years of experience with BOI enterprises.',
     },
     {
         role: 'Freight Forwarder / Logistics Partner',
@@ -120,6 +128,14 @@ const REQUIRED_PROFESSIONALS = [
         estimatedRetainer: 'Project-based. Sea freight Manila-SG: $600-1,200/20ft. Air freight: $3-8/kg.',
         findWhere: 'Supply Chain Management Association of the Philippines (SCMAP), PhilExport',
         criticalNote: 'Choose forwarder with experience in heavy industrial equipment (HVAC systems are oversized/heavy).',
+        fbSearchTerms: ['freight forwarder Philippines', 'logistics company Manila', 'SCMAP Philippines', 'cargo shipping Philippines', 'international freight Manila Cebu'],
+        fbPages: [
+            { name: 'SCMAP - Supply Chain Management Association of the Philippines', type: 'Association', note: 'Industry body — can recommend vetted forwarders' },
+            { name: 'PhilExport', type: 'Association', note: 'Philippine Exporters Confederation — members include logistics providers' },
+            { name: 'MARINA Philippines', type: 'Government', note: 'Verify sea freight accreditation' },
+            { name: 'Asian Terminals Inc', type: 'Port Operator', note: 'Manila South Harbor — for port operations contacts' },
+        ],
+        verifyHow: 'Ask for: MARINA/CAB accreditation, cargo insurance coverage, references from similar-sized importers, experience with oversized industrial equipment.',
     },
     {
         role: 'Import/Export Compliance Officer (In-house)',
@@ -129,6 +145,14 @@ const REQUIRED_PROFESSIONALS = [
         estimatedRetainer: '₱30,000-60,000/month salary (depending on experience)',
         findWhere: 'LinkedIn, Jobstreet, Indeed PH — search "Import Export Coordinator" or "Customs Compliance Officer"',
         criticalNote: 'As volume grows, in-house capability is essential. One mistake at customs can cost more than a year of salary.',
+        fbSearchTerms: ['import export jobs Philippines', 'customs compliance officer hiring', 'logistics coordinator Manila'],
+        fbPages: [
+            { name: 'Jobstreet Philippines', type: 'Job Board', note: 'Post job ad — most PH applicants still use Jobstreet + FB groups' },
+            { name: 'Indeed Philippines Jobs', type: 'Job Board', note: 'Secondary job board' },
+            { name: 'Import Export Philippines (FB Groups)', type: 'FB Group', note: 'Multiple groups with 50K+ members — post "hiring" to find candidates' },
+            { name: 'Customs Brokers Philippines (FB Groups)', type: 'FB Group', note: 'Licensed brokers looking for employment — great talent pool' },
+        ],
+        verifyHow: 'Look for: Previous experience at BOI/PEZA-registered company, knowledge of E2M system, familiarity with HS classification. Licensed customs broker is ideal.',
     },
     {
         role: 'Trade Lawyer (Tariff & Customs Specialist)',
@@ -138,7 +162,31 @@ const REQUIRED_PROFESSIONALS = [
         estimatedRetainer: '₱15,000-30,000/month retainer or ₱5,000-15,000/hour for specialized work',
         findWhere: 'Integrated Bar of the Philippines (IBP), referrals from customs brokers',
         criticalNote: 'Only needed when you face disputes, audits, or complex classifications. Not needed day-to-day initially.',
+        fbSearchTerms: ['trade lawyer Philippines', 'customs law firm Manila', 'BOI legal consultant', 'tariff specialist lawyer Philippines'],
+        fbPages: [
+            { name: 'Integrated Bar of the Philippines (IBP)', type: 'Association', note: 'Official bar — can verify membership and recommend specialists' },
+            { name: 'Philippine Chamber of Commerce and Industry (PCCI)', type: 'Association', note: 'Has legal committee — can recommend trade lawyers' },
+            { name: 'DTI Philippines', type: 'Government', note: 'Dept of Trade & Industry — for trade regulation queries' },
+        ],
+        verifyHow: 'Verify IBP membership. Ask for: Case history with customs disputes, BOI compliance experience, familiarity with CREATE MORE Act.',
     },
+];
+
+// ─── KEY ASSOCIATIONS & BODIES (FACEBOOK-BASED) ──────────────────────
+const PH_ASSOCIATIONS = [
+    { name: 'Bureau of Customs (BOC)', type: 'Government', platform: 'Facebook + Website', fbSearch: 'Bureau of Customs Philippines', website: 'customs.gov.ph', purpose: 'All customs clearance, import/export entries, regulations, CAOs', priority: 'CRITICAL' },
+    { name: 'Board of Investments (BOI)', type: 'Government', platform: 'Facebook + Website', fbSearch: 'Board of Investments Philippines', website: 'boi.gov.ph', purpose: 'SIPP registration, ATI applications, annual reporting, tax incentives', priority: 'CRITICAL' },
+    { name: 'DTI - Bureau of Philippine Standards', type: 'Government', platform: 'Website', fbSearch: 'DTI Philippines', website: 'bps.dti.gov.ph', purpose: 'Import Commodity Clearance (ICC) for HVAC/R products', priority: 'CRITICAL' },
+    { name: 'DOE - Department of Energy', type: 'Government', platform: 'Facebook + Website', fbSearch: 'Department of Energy Philippines', website: 'doe.gov.ph', purpose: 'Energy labeling (PELP) for AC/refrigeration equipment', priority: 'CRITICAL' },
+    { name: 'DENR-EMB', type: 'Government', platform: 'Facebook + Website', fbSearch: 'DENR EMB Philippines', website: 'emb.gov.ph', purpose: 'Refrigerant import clearance (HCFCs, HFCs), Kigali compliance', priority: 'HIGH' },
+    { name: 'PRC - Professional Regulation Commission', type: 'Government', platform: 'Website', fbSearch: 'PRC Philippines', website: 'prc.gov.ph', purpose: 'Verify customs broker license numbers', priority: 'HIGH' },
+    { name: 'CCBI - Chamber of Customs Brokers', type: 'Association', platform: 'Facebook Only', fbSearch: 'Chamber of Customs Brokers Inc', website: 'N/A — Facebook page only', purpose: 'Find licensed customs brokers, industry updates, member directory', priority: 'HIGH' },
+    { name: 'PHILCABOA', type: 'Association', platform: 'Facebook Only', fbSearch: 'PHILCABOA customs brokers', website: 'N/A — Facebook page only', purpose: 'Philippine Association of Customs Brokers — alternative to CCBI', priority: 'HIGH' },
+    { name: 'SCMAP', type: 'Association', platform: 'Facebook + Website', fbSearch: 'SCMAP Philippines', website: 'scmap.org', purpose: 'Supply chain/logistics professionals, forwarder recommendations', priority: 'MEDIUM' },
+    { name: 'PhilExport', type: 'Association', platform: 'Facebook + Website', fbSearch: 'PhilExport', website: 'philexport.ph', purpose: 'Exporter community, trade fairs, logistics partner recommendations', priority: 'MEDIUM' },
+    { name: 'PCCI - PH Chamber of Commerce', type: 'Association', platform: 'Facebook + Website', fbSearch: 'Philippine Chamber of Commerce', website: 'philippinechamber.com', purpose: 'Broad business network, trade events, legal referrals', priority: 'MEDIUM' },
+    { name: 'Tariff Commission', type: 'Government', platform: 'Website', fbSearch: 'Tariff Commission Philippines', website: 'tariffcommission.gov.ph', purpose: 'HS code rulings, tariff rate inquiries, safeguard investigations', priority: 'MEDIUM' },
+    { name: 'MARINA', type: 'Government', platform: 'Facebook + Website', fbSearch: 'MARINA Philippines', website: 'marina.gov.ph', purpose: 'Maritime industry, verify freight forwarder accreditation', priority: 'LOW' },
 ];
 
 // ─── IMPORT PROCESS FLOWCHART DATA ─────────────────────────────────────
@@ -175,6 +223,10 @@ export default function ImportExportCompliancePage({ user }) {
     const [showAddShipment, setShowAddShipment] = useState(false);
     const [newShipment, setNewShipment] = useState({ reference: '', supplier: '', description: '', hsCode: '', incoterm: 'FOB', status: 'ordered', etd: '', eta: '', value: '', dutyFree: false, notes: '' });
     const [hsSearch, setHsSearch] = useState('');
+    const [brokerContacts, setBrokerContacts] = useState([]);
+    const [showAddContact, setShowAddContact] = useState(false);
+    const [newContact, setNewContact] = useState({ name: '', company: '', role: 'customs_broker', phone: '', email: '', fbPage: '', prcLicense: '', notes: '', status: 'prospect', rating: 0 });
+    const [contactSearch, setContactSearch] = useState('');
 
     // Load data from Firestore
     useEffect(() => {
@@ -201,6 +253,13 @@ export default function ImportExportCompliancePage({ user }) {
             query(collection(db, "users", user.uid, "custom_import_tasks")),
             snap => {
                 setCustomTasks(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+            }
+        ));
+
+        unsubs.push(onSnapshot(
+            query(collection(db, "users", user.uid, "broker_contacts"), orderBy("createdAt", "desc")),
+            snap => {
+                setBrokerContacts(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
             }
         ));
 
@@ -255,6 +314,43 @@ export default function ImportExportCompliancePage({ user }) {
         });
     };
 
+    // Add broker/forwarder contact
+    const addBrokerContact = async () => {
+        if (!user?.uid || !newContact.name) return;
+        await addDoc(collection(db, "users", user.uid, "broker_contacts"), {
+            ...newContact,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        setNewContact({ name: '', company: '', role: 'customs_broker', phone: '', email: '', fbPage: '', prcLicense: '', notes: '', status: 'prospect', rating: 0 });
+        setShowAddContact(false);
+    };
+
+    // Update contact
+    const updateContactStatus = async (id, status) => {
+        if (!user?.uid) return;
+        await updateDoc(doc(db, "users", user.uid, "broker_contacts", id), { status, updatedAt: serverTimestamp() });
+    };
+
+    // Delete contact
+    const deleteBrokerContact = async (id) => {
+        if (!user?.uid) return;
+        if (confirm('Delete this contact?')) {
+            await deleteDoc(doc(db, "users", user.uid, "broker_contacts", id));
+        }
+    };
+
+    // Update contact rating
+    const updateContactRating = async (id, rating) => {
+        if (!user?.uid) return;
+        await updateDoc(doc(db, "users", user.uid, "broker_contacts", id), { rating, updatedAt: serverTimestamp() });
+    };
+
+    // Filtered contacts
+    const filteredContacts = contactSearch
+        ? brokerContacts.filter(c => c.name?.toLowerCase().includes(contactSearch.toLowerCase()) || c.company?.toLowerCase().includes(contactSearch.toLowerCase()) || c.role?.includes(contactSearch.toLowerCase()))
+        : brokerContacts;
+
     // Filtered HS codes
     const filteredHS = hsSearch
         ? KARNOT_HS_CODES.filter(h => h.hsCode.includes(hsSearch) || h.description.toLowerCase().includes(hsSearch.toLowerCase()) || h.products.toLowerCase().includes(hsSearch.toLowerCase()))
@@ -269,7 +365,8 @@ export default function ImportExportCompliancePage({ user }) {
         { id: 'process', label: 'Import Process Flow', icon: Ship },
         { id: 'hscodes', label: 'HS Codes & Tariffs', icon: Hash },
         { id: 'shipments', label: `Shipment Tracker (${shipments.length})`, icon: Package },
-        { id: 'professionals', label: 'Required Professionals', icon: Users },
+        { id: 'directory', label: `Contacts Directory (${brokerContacts.length})`, icon: ClipboardList },
+        { id: 'professionals', label: 'Find Professionals', icon: Users },
         { id: 'regulations', label: 'Key Laws', icon: Scale },
     ];
 
@@ -630,13 +727,279 @@ export default function ImportExportCompliancePage({ user }) {
                 </div>
             )}
 
-            {/* ═══════ REQUIRED PROFESSIONALS ═══════ */}
+            {/* ═══════ CONTACTS DIRECTORY ═══════ */}
+            {activeTab === 'directory' && (
+                <div className="space-y-3">
+                    <Card className="bg-blue-50 border-blue-200">
+                        <div className="flex items-start gap-2">
+                            <ClipboardList size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="font-black text-blue-800 text-sm mb-1">Broker, Forwarder & Compliance Contacts Directory</h3>
+                                <p className="text-xs text-blue-700">Save contacts you find from Facebook pages, referrals, and associations. Track their status from prospect to engaged. Always verify PRC licenses before engaging customs brokers.</p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Search contacts..."
+                                value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
+                        </div>
+                        <Button onClick={() => setShowAddContact(!showAddContact)} variant="primary" className="text-xs">
+                            <Plus size={12} className="mr-1" /> Add Contact
+                        </Button>
+                    </div>
+
+                    {showAddContact && (
+                        <Card className="border-2 border-blue-300 bg-blue-50">
+                            <h4 className="font-black text-sm text-blue-800 mb-3">Add Broker / Forwarder / Professional Contact</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Contact Name *</label>
+                                    <Input value={newContact.name} onChange={e => setNewContact(p => ({ ...p, name: e.target.value }))} placeholder="Juan Dela Cruz" className="text-xs" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Company / Firm</label>
+                                    <Input value={newContact.company} onChange={e => setNewContact(p => ({ ...p, company: e.target.value }))} placeholder="ABC Brokerage Services" className="text-xs" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Role / Type</label>
+                                    <select value={newContact.role} onChange={e => setNewContact(p => ({ ...p, role: e.target.value }))} className="w-full border border-gray-200 rounded-lg p-2 text-xs">
+                                        <option value="customs_broker">Licensed Customs Broker</option>
+                                        <option value="freight_forwarder">Freight Forwarder</option>
+                                        <option value="compliance_officer">Compliance Officer (Hire)</option>
+                                        <option value="trade_lawyer">Trade Lawyer</option>
+                                        <option value="shipping_line">Shipping Line Agent</option>
+                                        <option value="trucking">Trucking / Inland Transport</option>
+                                        <option value="warehouse">Warehouse / Storage</option>
+                                        <option value="insurance">Cargo Insurance</option>
+                                        <option value="government">Government Contact (BOC/BOI/DTI)</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Phone / Mobile</label>
+                                    <Input value={newContact.phone} onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))} placeholder="+63 917 123 4567" className="text-xs" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Email</label>
+                                    <Input value={newContact.email} onChange={e => setNewContact(p => ({ ...p, email: e.target.value }))} placeholder="juan@broker.ph" className="text-xs" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Facebook Page / Messenger</label>
+                                    <Input value={newContact.fbPage} onChange={e => setNewContact(p => ({ ...p, fbPage: e.target.value }))} placeholder="fb.com/abcbrokerage or Messenger name" className="text-xs" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">PRC License # (Brokers)</label>
+                                    <Input value={newContact.prcLicense} onChange={e => setNewContact(p => ({ ...p, prcLicense: e.target.value }))} placeholder="PRC-XXXX" className="text-xs" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Status</label>
+                                    <select value={newContact.status} onChange={e => setNewContact(p => ({ ...p, status: e.target.value }))} className="w-full border border-gray-200 rounded-lg p-2 text-xs">
+                                        <option value="prospect">Prospect — Found, not contacted</option>
+                                        <option value="contacted">Contacted — Awaiting response</option>
+                                        <option value="meeting">Meeting Scheduled</option>
+                                        <option value="quoting">Quoting — Getting rates</option>
+                                        <option value="engaged">Engaged — Active working relationship</option>
+                                        <option value="rejected">Rejected — Not suitable</option>
+                                        <option value="backup">Backup — Keep on file</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Found Via</label>
+                                    <select value={newContact.foundVia || ''} onChange={e => setNewContact(p => ({ ...p, foundVia: e.target.value }))} className="w-full border border-gray-200 rounded-lg p-2 text-xs">
+                                        <option value="">Select source...</option>
+                                        <option value="facebook_page">Facebook Page</option>
+                                        <option value="facebook_group">Facebook Group</option>
+                                        <option value="fb_messenger">FB Messenger</option>
+                                        <option value="referral">Referral / Word of Mouth</option>
+                                        <option value="linkedin">LinkedIn</option>
+                                        <option value="website">Website / Google</option>
+                                        <option value="association">Association (CCBI/SCMAP/etc)</option>
+                                        <option value="jobstreet">Jobstreet / Indeed</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="mt-3">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase">Notes (rates, experience, specialization, red flags)</label>
+                                <textarea className="w-full border border-gray-200 rounded-lg p-2 text-xs h-16" value={newContact.notes} onChange={e => setNewContact(p => ({ ...p, notes: e.target.value }))} placeholder="e.g. Specializes in BOI importers. Quoted ₱5,000/entry. 15 years experience. Found via CCBI Facebook page..." />
+                            </div>
+                            <div className="flex gap-2 mt-3">
+                                <Button onClick={addBrokerContact} variant="primary" className="text-xs" disabled={!newContact.name}><Save size={12} className="mr-1" /> Save Contact</Button>
+                                <Button onClick={() => setShowAddContact(false)} variant="secondary" className="text-xs">Cancel</Button>
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* Contact Stats */}
+                    {brokerContacts.length > 0 && (
+                        <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+                            {[
+                                { label: 'Total', count: brokerContacts.length, color: 'bg-gray-100 text-gray-700' },
+                                { label: 'Prospects', count: brokerContacts.filter(c => c.status === 'prospect').length, color: 'bg-blue-50 text-blue-700' },
+                                { label: 'Contacted', count: brokerContacts.filter(c => c.status === 'contacted').length, color: 'bg-yellow-50 text-yellow-700' },
+                                { label: 'Quoting', count: brokerContacts.filter(c => c.status === 'quoting').length, color: 'bg-orange-50 text-orange-700' },
+                                { label: 'Engaged', count: brokerContacts.filter(c => c.status === 'engaged').length, color: 'bg-green-50 text-green-700' },
+                                { label: 'Brokers', count: brokerContacts.filter(c => c.role === 'customs_broker').length, color: 'bg-purple-50 text-purple-700' },
+                                { label: 'Forwarders', count: brokerContacts.filter(c => c.role === 'freight_forwarder').length, color: 'bg-cyan-50 text-cyan-700' },
+                            ].map(s => (
+                                <div key={s.label} className={`${s.color} rounded-lg p-2 text-center`}>
+                                    <div className="text-sm font-black">{s.count}</div>
+                                    <div className="text-[9px] font-bold uppercase">{s.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Contact List */}
+                    {filteredContacts.length > 0 ? (
+                        <div className="space-y-2">
+                            {filteredContacts.map(c => {
+                                const roleLabels = {
+                                    customs_broker: { label: 'CUSTOMS BROKER', color: 'bg-purple-100 text-purple-700' },
+                                    freight_forwarder: { label: 'FREIGHT FORWARDER', color: 'bg-cyan-100 text-cyan-700' },
+                                    compliance_officer: { label: 'COMPLIANCE OFFICER', color: 'bg-blue-100 text-blue-700' },
+                                    trade_lawyer: { label: 'TRADE LAWYER', color: 'bg-indigo-100 text-indigo-700' },
+                                    shipping_line: { label: 'SHIPPING LINE', color: 'bg-teal-100 text-teal-700' },
+                                    trucking: { label: 'TRUCKING', color: 'bg-amber-100 text-amber-700' },
+                                    warehouse: { label: 'WAREHOUSE', color: 'bg-gray-100 text-gray-700' },
+                                    insurance: { label: 'INSURANCE', color: 'bg-emerald-100 text-emerald-700' },
+                                    government: { label: 'GOVERNMENT', color: 'bg-red-100 text-red-700' },
+                                    other: { label: 'OTHER', color: 'bg-gray-100 text-gray-600' },
+                                };
+                                const statusColors = {
+                                    prospect: 'bg-blue-100 text-blue-600',
+                                    contacted: 'bg-yellow-100 text-yellow-700',
+                                    meeting: 'bg-orange-100 text-orange-700',
+                                    quoting: 'bg-amber-100 text-amber-700',
+                                    engaged: 'bg-green-100 text-green-700',
+                                    rejected: 'bg-red-100 text-red-600',
+                                    backup: 'bg-gray-100 text-gray-500',
+                                };
+                                const roleInfo = roleLabels[c.role] || roleLabels.other;
+
+                                return (
+                                    <Card key={c._id} className="hover:shadow-md transition-shadow">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-black text-sm text-gray-800">{c.name}</span>
+                                                    {c.company && <span className="text-xs text-gray-500">@ {c.company}</span>}
+                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${roleInfo.color}`}>{roleInfo.label}</span>
+                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${statusColors[c.status] || statusColors.prospect}`}>{c.status?.toUpperCase()}</span>
+                                                    {c.prcLicense && <span className="text-[9px] font-mono bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200">PRC: {c.prcLicense}</span>}
+                                                </div>
+                                                <div className="flex gap-3 mt-1.5 flex-wrap">
+                                                    {c.phone && <span className="text-[10px] text-gray-500 flex items-center gap-1"><Phone size={10} /> {c.phone}</span>}
+                                                    {c.email && <span className="text-[10px] text-gray-500 flex items-center gap-1"><Mail size={10} /> {c.email}</span>}
+                                                    {c.fbPage && <span className="text-[10px] text-blue-500 flex items-center gap-1 font-bold">FB: {c.fbPage}</span>}
+                                                    {c.foundVia && <span className="text-[9px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">Found via: {c.foundVia.replace(/_/g, ' ')}</span>}
+                                                </div>
+                                                {/* Star rating */}
+                                                <div className="flex items-center gap-1 mt-1">
+                                                    {[1,2,3,4,5].map(star => (
+                                                        <button key={star} onClick={() => updateContactRating(c._id, star)}
+                                                            className={`text-sm ${star <= (c.rating || 0) ? 'text-yellow-400' : 'text-gray-200'} hover:text-yellow-400 transition-colors`}>
+                                                            ★
+                                                        </button>
+                                                    ))}
+                                                    {c.rating > 0 && <span className="text-[9px] text-gray-400 ml-1">{c.rating}/5</span>}
+                                                </div>
+                                                {c.notes && <p className="text-[10px] text-gray-500 mt-1 bg-gray-50 p-2 rounded">{c.notes}</p>}
+                                            </div>
+                                            <div className="flex items-center gap-1 ml-3">
+                                                <select value={c.status} onChange={e => updateContactStatus(c._id, e.target.value)}
+                                                    className="text-[10px] border border-gray-200 rounded px-1 py-0.5">
+                                                    {['prospect','contacted','meeting','quoting','engaged','rejected','backup'].map(st => (
+                                                        <option key={st} value={st}>{st}</option>
+                                                    ))}
+                                                </select>
+                                                <button onClick={() => deleteBrokerContact(c._id)} className="text-gray-300 hover:text-red-500 p-1"><Trash2 size={12} /></button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <Card className="text-center py-8 text-gray-400">
+                            <Users size={40} className="mx-auto mb-2 opacity-50" />
+                            <p className="text-sm font-bold">No contacts saved yet</p>
+                            <p className="text-xs">Use the "Find Professionals" tab to search Facebook pages, then save contacts here</p>
+                        </Card>
+                    )}
+                </div>
+            )}
+
+            {/* ═══════ FIND PROFESSIONALS (FACEBOOK REALITY) ═══════ */}
             {activeTab === 'professionals' && (
                 <div className="space-y-3">
-                    <Card className="bg-purple-50 border-purple-200">
-                        <h3 className="font-black text-purple-800 text-sm mb-1">Required Professionals for Import/Export Operations</h3>
-                        <p className="text-xs text-purple-700">The Philippines requires <strong>PRC-licensed customs brokers</strong> to file all import/export entries. Operating without one is a criminal offense under RA 9280.</p>
+                    {/* Facebook Reality Warning */}
+                    <Card className="bg-blue-900 text-white border-0">
+                        <div className="flex items-start gap-3">
+                            <div className="text-2xl flex-shrink-0">f</div>
+                            <div>
+                                <h3 className="font-black text-sm mb-1">The Philippines Facebook Reality</h3>
+                                <p className="text-xs text-blue-200 mb-2">Most Philippine trade associations, customs brokerages, and freight forwarders operate primarily through <strong className="text-white">Facebook Pages and Messenger</strong> — not traditional websites. This is normal. Facebook IS the business internet in PH.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                    <div className="bg-blue-800 rounded-lg p-2">
+                                        <span className="font-bold text-blue-200">How to find professionals:</span>
+                                        <ul className="mt-1 space-y-0.5 text-blue-300">
+                                            <li>1. Search Facebook for the terms below</li>
+                                            <li>2. Message the Facebook Page directly</li>
+                                            <li>3. Ask for member directories / referrals</li>
+                                            <li>4. Join FB Groups for import/export community</li>
+                                            <li>5. Save contacts in the Directory tab</li>
+                                        </ul>
+                                    </div>
+                                    <div className="bg-blue-800 rounded-lg p-2">
+                                        <span className="font-bold text-blue-200">Due diligence (stay squeaky clean):</span>
+                                        <ul className="mt-1 space-y-0.5 text-blue-300">
+                                            <li>1. ALWAYS verify PRC license at prc.gov.ph</li>
+                                            <li>2. Ask for BOC accreditation certificate</li>
+                                            <li>3. Request 3 client references</li>
+                                            <li>4. Check if they handle BOI-registered imports</li>
+                                            <li>5. Get written quotes — no verbal-only deals</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </Card>
+
+                    {/* Government & Association Directory */}
+                    <Card>
+                        <h3 className="font-black text-sm text-gray-800 mb-3 flex items-center gap-2">
+                            <Building size={16} className="text-blue-600" />
+                            Key Government Agencies & Associations
+                        </h3>
+                        <div className="space-y-1.5">
+                            {PH_ASSOCIATIONS.map((assoc, i) => (
+                                <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors">
+                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${assoc.priority === 'CRITICAL' ? 'bg-red-500' : assoc.priority === 'HIGH' ? 'bg-orange-500' : assoc.priority === 'MEDIUM' ? 'bg-blue-500' : 'bg-gray-400'}`} />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-black text-xs text-gray-800">{assoc.name}</span>
+                                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${assoc.type === 'Government' ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-600'}`}>{assoc.type}</span>
+                                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${assoc.platform.includes('Facebook Only') ? 'bg-blue-100 text-blue-700' : 'bg-green-50 text-green-600'}`}>{assoc.platform}</span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 mt-0.5">{assoc.purpose}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0 space-y-0.5">
+                                        <div className="text-[9px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">FB: {assoc.fbSearch}</div>
+                                        {assoc.website !== 'N/A — Facebook page only' && (
+                                            <div className="text-[9px] text-green-600 font-mono">{assoc.website}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+
+                    {/* Professional Roles with Facebook Search Terms */}
+                    <h3 className="font-black text-sm text-gray-800 uppercase mt-4">Required Professionals & How to Find Them</h3>
 
                     {REQUIRED_PROFESSIONALS.map((pro, i) => (
                         <Card key={i} className={`cursor-pointer transition-all ${expandedPro === i ? 'ring-2 ring-purple-300' : ''}`}>
@@ -659,7 +1022,7 @@ export default function ImportExportCompliancePage({ user }) {
                             </button>
 
                             {expandedPro === i && (
-                                <div className="mt-3 space-y-2 pl-13">
+                                <div className="mt-3 space-y-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
                                             <h5 className="text-[10px] font-bold text-gray-400 uppercase mb-1">License Required</h5>
@@ -670,10 +1033,44 @@ export default function ImportExportCompliancePage({ user }) {
                                             <p className="text-xs text-gray-700 bg-gray-50 p-2 rounded">{pro.scope}</p>
                                         </div>
                                     </div>
+
+                                    {/* Facebook Search Terms */}
                                     <div>
-                                        <h5 className="text-[10px] font-bold text-gray-400 uppercase mb-1">Where to Find</h5>
-                                        <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded">{pro.findWhere}</p>
+                                        <h5 className="text-[10px] font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">Facebook Search Terms (copy & paste into FB search)</h5>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {pro.fbSearchTerms?.map((term, j) => (
+                                                <button key={j} onClick={() => navigator.clipboard?.writeText(term)}
+                                                    className="text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors font-bold cursor-pointer"
+                                                    title="Click to copy">
+                                                    "{term}"
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
+
+                                    {/* Key Facebook Pages */}
+                                    <div>
+                                        <h5 className="text-[10px] font-bold text-blue-500 uppercase mb-1">Key Facebook Pages & Groups to Contact</h5>
+                                        <div className="space-y-1">
+                                            {pro.fbPages?.map((fb, j) => (
+                                                <div key={j} className="flex items-center gap-2 bg-blue-50 rounded-lg p-2">
+                                                    <div className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">f</div>
+                                                    <div className="flex-1">
+                                                        <span className="text-xs font-bold text-blue-800">{fb.name}</span>
+                                                        <span className={`text-[8px] font-bold ml-1 px-1 py-0.5 rounded ${fb.type === 'Government' ? 'bg-red-100 text-red-600' : fb.type === 'FB Group' ? 'bg-green-100 text-green-600' : fb.type === 'Job Board' ? 'bg-orange-100 text-orange-600' : 'bg-purple-100 text-purple-600'}`}>{fb.type}</span>
+                                                        <p className="text-[10px] text-blue-600 mt-0.5">{fb.note}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Verification */}
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                                        <h5 className="text-[10px] font-bold text-green-700 uppercase mb-1">How to Verify (Stay Clean)</h5>
+                                        <p className="text-xs text-green-700">{pro.verifyHow}</p>
+                                    </div>
+
                                     <div className="bg-red-50 border border-red-200 rounded-lg p-2">
                                         <p className="text-xs text-red-700 font-bold flex items-center gap-1"><AlertCircle size={12} /> {pro.criticalNote}</p>
                                     </div>
