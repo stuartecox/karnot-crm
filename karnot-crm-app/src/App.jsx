@@ -98,6 +98,8 @@ import EmailMarketingPage from './pages/EmailMarketingPage.jsx';
 import HROnboardingPage from './pages/HROnboardingPage.jsx';
 import PhilippinesHRTraining from './pages/PhilippinesHRTraining.jsx';
 import DailyTasksDashboard from './pages/DailyTasksDashboard.jsx';
+import ProfessionalServices from './pages/ProfessionalServices.jsx';
+import RegulatoryIndustryPage from './pages/RegulatoryIndustryPage.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -117,7 +119,7 @@ import {
     MapPin, Wrench, Briefcase, FileText, Target, Package, 
     UserCheck, Calendar as CalendarIcon, CheckCircle, Globe, Upload, Sparkles,
     DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap,
-    Share2, Linkedin, BookOpen, Layout, Image
+    Share2, Linkedin, BookOpen, Layout, Image, Scale, Shield
 } from 'lucide-react'; 
 
 // ==========================================
@@ -204,7 +206,8 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'leadGenerator', label: 'Lead Generator', icon: Target },
         { view: 'smartScraper', label: 'Text Scraper', icon: Sparkles, badge: 'AI' },
         { view: 'boiLeads', label: 'BOI Projects', icon: Building, badge: 'NEW' },
-        { view: 'pezaZones', label: 'PEZA Zones', icon: HardHat, badge: 'NEW' }
+        { view: 'pezaZones', label: 'PEZA Zones', icon: HardHat, badge: 'NEW' },
+        { view: 'regulatory', label: 'Regulatory & Industry', icon: Shield, badge: 'NEW' }
     ];
 
     // Export Operations Menu
@@ -854,6 +857,7 @@ export default function App() {
                 {activeView === 'boiLeads' && <BOIProjectLeads territories={territories} user={dataUser} />}
                 
                 {activeView === 'pezaZones' && <PEZAZones territories={territories} user={dataUser} />}
+                {activeView === 'regulatory' && <RegulatoryIndustryPage user={dataUser} />}
 
                 {/* 6B. EXPORT OPERATIONS */}
                 {activeView === 'aseanExport' && (
@@ -1061,6 +1065,9 @@ export default function App() {
                                 <Button onClick={() => setSubView('management')} variant={subView === 'management' ? 'primary' : 'secondary'} className="border-indigo-200 text-indigo-700 bg-indigo-50">
                                     <BarChart2 size={14} className="mr-1" /> Mgmt. Accounts
                                 </Button>
+                                <Button onClick={() => setSubView('profServices')} variant={subView === 'profServices' ? 'primary' : 'secondary'} className="border-slate-200 text-slate-700 bg-slate-50">
+                                    <Scale size={14} className="mr-1" /> Lawyer & Accountant
+                                </Button>
                             </div>
                         </div>
 
@@ -1108,13 +1115,17 @@ export default function App() {
                         )}
 
                         {subView === 'management' && (
-                            <ManagementAccounts 
+                            <ManagementAccounts
                                 user={dataUser}
                                 quotes={quotes}
                                 ledgerEntries={ledgerEntries}
                                 opportunities={opportunities}
                                 serviceInvoices={serviceInvoices}
                             />
+                        )}
+
+                        {subView === 'profServices' && (
+                            <ProfessionalServices user={dataUser} />
                         )}
                     </div>
                 )}
