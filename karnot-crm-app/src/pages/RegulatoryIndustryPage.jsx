@@ -274,8 +274,11 @@ export default function RegulatoryIndustryPage({ user }) {
     };
 
     // ─── Scrape org website ────────────────────────────────────
+    const [scrapeResult, setScrapeResult] = useState(null); // {orgAcronym, success, message, suggestion}
+
     const scrapeOrg = async (org) => {
         setScrapingOrg(org.acronym);
+        setScrapeResult(null);
         try {
             const res = await fetch('/.netlify/functions/scrape-org', {
                 method: 'POST',
@@ -287,12 +290,24 @@ export default function RegulatoryIndustryPage({ user }) {
                 await setDoc(doc(db, "users", user.uid, "org_scraped_data", org.acronym), {
                     ...data, orgAcronym: org.acronym, savedAt: serverTimestamp()
                 });
-                alert(`Scraped ${org.acronym} successfully! Found ${data.emails?.length || 0} emails, ${data.phones?.length || 0} phones, ${data.news?.length || 0} news items.`);
+                setScrapeResult({
+                    orgAcronym: org.acronym, success: true,
+                    message: `Scraped ${org.acronym} via ${data.fetchMethod || 'direct'}! Found ${data.emails?.length || 0} emails, ${data.phones?.length || 0} phones, ${data.news?.length || 0} news, ${data.socialLinks ? Object.keys(data.socialLinks).length : 0} social links.`,
+                });
             } else {
-                alert(`Could not scrape ${org.acronym}: ${data.error || 'Unknown error'}`);
+                setScrapeResult({
+                    orgAcronym: org.acronym, success: false,
+                    message: data.error || 'Unknown error',
+                    suggestion: data.suggestion || 'Try visiting the website manually.',
+                    errorType: data.errorType,
+                });
             }
         } catch (err) {
-            alert(`Scrape failed for ${org.acronym}: ${err.message}`);
+            setScrapeResult({
+                orgAcronym: org.acronym, success: false,
+                message: err.message,
+                suggestion: 'Network error. Check your connection and try again.',
+            });
         } finally {
             setScrapingOrg(null);
         }
@@ -630,6 +645,26 @@ export default function RegulatoryIndustryPage({ user }) {
                                                     </a>
                                                 )}
                                             </div>
+                                            {/* Scrape Result Inline Message */}
+                                            {scrapeResult && scrapeResult.orgAcronym === org.acronym && (
+                                                <div className={`mt-2 p-3 rounded-lg text-xs flex items-start gap-2 ${
+                                                    scrapeResult.success ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-amber-50 border border-amber-200 text-amber-800'
+                                                }`}>
+                                                    {scrapeResult.success ? <Check size={14} className="flex-shrink-0 mt-0.5" /> : <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />}
+                                                    <div className="flex-1">
+                                                        <p className="font-bold">{scrapeResult.message}</p>
+                                                        {scrapeResult.suggestion && (
+                                                            <p className="mt-1 text-[10px] opacity-80">{scrapeResult.suggestion}</p>
+                                                        )}
+                                                        {!scrapeResult.success && scrapeResult.errorType === 'blocked' && (
+                                                            <p className="mt-1 text-[10px] font-bold">
+                                                                Tip: Use the LinkedIn parser on the Contacts tab to add people instead. Many PH org websites block automated access.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <button onClick={() => setScrapeResult(null)} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -766,9 +801,26 @@ export default function RegulatoryIndustryPage({ user }) {
                                                 </Button>
                                             </div>
 
+                                            {/* Scrape Result for Scraped Data tab */}
+                                            {scrapeResult && scrapeResult.orgAcronym === org.acronym && (
+                                                <div className={`p-3 rounded-lg text-xs flex items-start gap-2 ${
+                                                    scrapeResult.success ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-amber-50 border border-amber-200 text-amber-800'
+                                                }`}>
+                                                    {scrapeResult.success ? <Check size={14} className="flex-shrink-0 mt-0.5" /> : <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />}
+                                                    <div className="flex-1">
+                                                        <p className="font-bold">{scrapeResult.message}</p>
+                                                        {scrapeResult.suggestion && <p className="mt-1 text-[10px] opacity-80">{scrapeResult.suggestion}</p>}
+                                                        {!scrapeResult.success && scrapeResult.errorType === 'blocked' && (
+                                                            <p className="mt-1 text-[10px] font-bold">Tip: Use the Contacts tab LinkedIn parser instead.</p>
+                                                        )}
+                                                    </div>
+                                                    <button onClick={() => setScrapeResult(null)} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                                                </div>
+                                            )}
+
                                             {scraped ? (
                                                 <div className="space-y-3">
-                                                    <div className="text-[10px] text-gray-400">Scraped: {scraped.scrapedAt ? new Date(scraped.scrapedAt).toLocaleString() : 'Unknown'}</div>
+                                                    <div className="text-[10px] text-gray-400">Scraped: {scraped.scrapedAt ? new Date(scraped.scrapedAt).toLocaleString() : 'Unknown'}{scraped.fetchMethod ? ` (via ${scraped.fetchMethod})` : ''}</div>
 
                                                     {/* Emails */}
                                                     {scraped.emails?.length > 0 && (
@@ -846,6 +898,36 @@ export default function RegulatoryIndustryPage({ user }) {
                                                                     <span key={cat} className="text-[10px] bg-orange-50 text-orange-700 px-2 py-1 rounded font-bold">
                                                                         {cat}: {Array.isArray(terms) ? terms.join(', ') : terms}
                                                                     </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Social Links */}
+                                                    {scraped.socialLinks && Object.keys(scraped.socialLinks).length > 0 && (
+                                                        <div>
+                                                            <h5 className="text-[10px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><Globe size={10} /> Social Media</h5>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {Object.entries(scraped.socialLinks).map(([platform, link]) => (
+                                                                    <a key={platform} href={link} target="_blank" rel="noopener noreferrer"
+                                                                        className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100 font-bold capitalize flex items-center gap-1">
+                                                                        <ExternalLink size={10} />{platform}
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Important Links */}
+                                                    {scraped.importantLinks?.length > 0 && (
+                                                        <div>
+                                                            <h5 className="text-[10px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><ExternalLink size={10} /> Important Pages</h5>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {scraped.importantLinks.map((link, i) => (
+                                                                    <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+                                                                        className="text-[10px] bg-gray-50 text-gray-700 px-2 py-1 rounded hover:bg-gray-100 border border-gray-200">
+                                                                        {link.text}
+                                                                    </a>
                                                                 ))}
                                                             </div>
                                                         </div>
