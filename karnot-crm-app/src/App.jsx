@@ -96,6 +96,8 @@ import EmailMarketingPage from './pages/EmailMarketingPage.jsx';
 
 // --- HR & Onboarding ---
 import HROnboardingPage from './pages/HROnboardingPage.jsx';
+import PhilippinesHRTraining from './pages/PhilippinesHRTraining.jsx';
+import DailyTasksDashboard from './pages/DailyTasksDashboard.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -263,6 +265,7 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
     const hrMenu = [
         { view: 'hrOnboarding', label: 'HR & Onboarding', icon: Users, badge: 'NEW' },
         { view: 'payroll', label: 'Payroll Manager', icon: DollarSign },
+        { view: 'hrTraining', label: 'PH HR Training', icon: BookOpen, badge: 'NEW' },
     ];
 
     return (
@@ -318,12 +321,19 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                 <nav className="flex flex-wrap gap-2 items-center border-t border-gray-100 pt-3">
                     
                     {/* Dashboard */}
-                    <Button 
-                        onClick={() => setActiveView('dashboard')} 
-                        variant={activeView === 'dashboard' ? 'primary' : 'secondary'} 
+                    <Button
+                        onClick={() => setActiveView('dashboard')}
+                        variant={activeView === 'dashboard' ? 'primary' : 'secondary'}
                         className="font-bold uppercase text-[10px] tracking-widest h-9"
                     >
                         <BarChart2 className="mr-1.5" size={14} /> Dashboard
+                    </Button>
+                    <Button
+                        onClick={() => setActiveView('dailyTasks')}
+                        variant={activeView === 'dailyTasks' ? 'primary' : 'secondary'}
+                        className="font-bold uppercase text-[10px] tracking-widest h-9 border-orange-200 text-orange-700"
+                    >
+                        <CheckCircle className="mr-1.5" size={14} /> My Tasks
                     </Button>
 
                     <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
@@ -720,6 +730,16 @@ export default function App() {
                     />
                 )}
                 
+                {/* 1B. DAILY TASKS DASHBOARD */}
+                {activeView === 'dailyTasks' && (
+                    <DailyTasksDashboard
+                        user={dataUser}
+                        appointments={appointments}
+                        opportunities={opportunities}
+                        onNavigate={(view) => setActiveView(view)}
+                    />
+                )}
+
                 {/* 2. SALES FUNNEL */}
                 {activeView === 'funnel' && (
                     <FunnelPage 
@@ -945,6 +965,9 @@ export default function App() {
                 {/* HR & ONBOARDING */}
                 {activeView === 'hrOnboarding' && (
                     <HROnboardingPage user={dataUser} />
+                )}
+                {activeView === 'hrTraining' && (
+                    <PhilippinesHRTraining />
                 )}
                 {activeView === 'payroll' && (
                     <PayrollManager user={dataUser} />

@@ -28,6 +28,44 @@ const LEAVE_TYPES = [
 const TRAINING_TYPES = ['Technical', 'Safety/OSH', 'Compliance', 'Soft Skills', 'Leadership', 'Product', 'Certification'];
 const DISCIPLINE_TYPES = ['Verbal Warning', 'Written Warning (NTE)', 'Suspension', 'Final Warning', 'Termination'];
 
+// ─── KPI Categories for Appraisals ──────────────────────────────────────
+const KPI_CATEGORIES = [
+    { key: 'quality', label: 'Quality of Work', description: 'Accuracy, thoroughness, standards' },
+    { key: 'productivity', label: 'Productivity', description: 'Output volume, efficiency, deadlines' },
+    { key: 'attendance', label: 'Attendance & Punctuality', description: 'Reliability, timeliness' },
+    { key: 'teamwork', label: 'Teamwork & Collaboration', description: 'Communication, cooperation' },
+    { key: 'initiative', label: 'Initiative & Problem Solving', description: 'Proactivity, creativity' },
+    { key: 'technical', label: 'Technical Skills', description: 'Job-specific competencies' },
+    { key: 'customer', label: 'Customer Focus', description: 'Client satisfaction, responsiveness' },
+    { key: 'safety', label: 'Safety & Compliance', description: 'OSH adherence, policy compliance' },
+];
+
+// ─── Nearest Tuesday Calculator ─────────────────────────────────────────
+const getNearestTuesday = (date) => {
+    const d = new Date(date);
+    const day = d.getDay(); // 0=Sun, 1=Mon, 2=Tue, ...
+    const diff = (2 - day + 7) % 7 || 7; // days until next Tuesday (if already Tue, go to next)
+    if (day === 2) return d.toISOString().split('T')[0]; // already Tuesday
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split('T')[0];
+};
+
+const getAppraisalDates = (dateHired) => {
+    if (!dateHired) return { threeMonth: null, sixMonth: null };
+    const hired = new Date(dateHired);
+
+    const threeMonthRaw = new Date(hired);
+    threeMonthRaw.setMonth(threeMonthRaw.getMonth() + 3);
+
+    const sixMonthRaw = new Date(hired);
+    sixMonthRaw.setMonth(sixMonthRaw.getMonth() + 6);
+
+    return {
+        threeMonth: getNearestTuesday(threeMonthRaw),
+        sixMonth: getNearestTuesday(sixMonthRaw)
+    };
+};
+
 const DOCUMENT_CHECKLIST = {
     'Government IDs': [
         { key: 'tinCard', label: 'TIN Card / Number' },
@@ -145,7 +183,7 @@ export default function HROnboardingPage({ user }) {
 
     // Sub-forms
     const [leaveForm, setLeaveForm] = useState({ type: 'sil', startDate: '', endDate: '', days: 1, notes: '' });
-    const [perfForm, setPerfForm] = useState({ period: '', rating: 3, reviewer: '', strengths: '', improvements: '', goals: '', notes: '' });
+    const [perfForm, setPerfForm] = useState({ period: '', rating: 3, reviewer: '', strengths: '', improvements: '', goals: '', notes: '', kpis: KPI_CATEGORIES.map(k => ({ key: k.key, label: k.label, target: '', actual: '', score: 3 })) });
     const [trainingForm, setTrainingForm] = useState({ title: '', date: '', provider: '', hours: '', type: 'Technical', notes: '' });
     const [disciplineForm, setDisciplineForm] = useState({ type: 'Verbal Warning', offense: '', action: '', notes: '' });
 
@@ -208,7 +246,18 @@ export default function HROnboardingPage({ user }) {
             } else {
                 data.createdAt = serverTimestamp();
                 const ref = await addDoc(collection(db, "users", user.uid, "employees"), data);
-                setSuccess(`Added ${form.firstName} ${form.lastName} to the team!`);
+                // Auto-schedule 3-month and 6-month appraisals
+                const empName = `${form.firstName} ${form.lastName}`;
+                if (data.dateHired && ['Probationary'].includes(data.status || data.employmentType)) {
+                    const count = await scheduleAppraisals(empName, data.dateHired, ref.id);
+                    if (count > 0) {
+                        setSuccess(`Added ${empName} to the team! ${count} appraisal(s) scheduled on nearest Tuesdays in Calendar & Tasks.`);
+                    } else {
+                        setSuccess(`Added ${empName} to the team!`);
+                    }
+                } else {
+                    setSuccess(`Added ${empName} to the team!`);
+                }
                 setSelectedEmployee({ id: ref.id, ...data });
             }
             setShowForm(false); setEditingId(null); setForm({ ...EMPTY_EMPLOYEE });
@@ -268,6 +317,66 @@ export default function HROnboardingPage({ user }) {
             await updateDoc(doc(db, "users", user.uid, "employees", empId), { leaveBalances: balances });
             if (selectedEmployee?.id === empId) setSelectedEmployee(prev => ({ ...prev, leaveBalances: balances }));
         } catch (err) { setError('Failed to update: ' + err.message); }
+    };
+
+    // ─── Schedule Appraisals to Calendar & Tasks ─────────────────────────
+    const scheduleAppraisals = async (empName, dateHired, empId) => {
+        if (!dateHired || !user?.uid) return;
+        const dates = getAppraisalDates(dateHired);
+        const today = new Date().toISOString().split('T')[0];
+
+        const appraisals = [
+            { label: '3-Month Probationary Appraisal', date: dates.threeMonth, period: '3-Month' },
+            { label: '6-Month Probationary Appraisal', date: dates.sixMonth, period: '6-Month' },
+        ];
+
+        let scheduledCount = 0;
+        for (const appraisal of appraisals) {
+            if (!appraisal.date || appraisal.date < today) continue;
+
+            // Add to Ops Calendar
+            await addDoc(collection(db, "users", user.uid, "calendar_events"), {
+                title: `${appraisal.label} — ${empName}`,
+                type: 'OPERATION',
+                category: 'Meeting',
+                priority: 'High',
+                start: `${appraisal.date}T09:00:00`,
+                end: `${appraisal.date}T10:00:00`,
+                allDay: false,
+                description: `${appraisal.period} performance appraisal for ${empName}. Review KPIs, set targets for next period. Hired: ${dateHired}.`,
+                location: 'Office',
+                assignedTo: '',
+                employeeId: empId
+            });
+
+            // Add to Business Tasks
+            await addDoc(collection(db, "users", user.uid, "tasks"), {
+                title: `${appraisal.label} — ${empName}`,
+                category: 'ADMIN',
+                status: 'NEW',
+                priority: 'HIGH',
+                createdDate: today,
+                dueDate: appraisal.date,
+                completedDate: '',
+                assignedTo: '',
+                owner: '',
+                description: `Conduct ${appraisal.period} probationary appraisal for ${empName}. Set KPI targets, review performance, and determine regularization path. Date hired: ${dateHired}.`,
+                notes: `Nearest Tuesday scheduling. Original ${appraisal.period} date adjusted to Tuesday.`,
+                estimatedHours: 1,
+                actualHours: 0,
+                progress: 0,
+                tags: ['HR', 'Appraisal', appraisal.period],
+                relatedProjectId: '',
+                relatedCompanyId: '',
+                relatedOpportunityId: '',
+                employeeId: empId,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+
+            scheduledCount++;
+        }
+        return scheduledCount;
     };
 
     // ─── Render ──────────────────────────────────────────────────────────
@@ -627,8 +736,48 @@ export default function HROnboardingPage({ user }) {
             {/* ═══════ PERFORMANCE TAB ═══════ */}
             {activeTab === 'performance' && (
                 <div className="space-y-4">
+                    {/* Appraisal Schedule Info */}
+                    {selectedEmployee && selectedEmployee.dateHired && (
+                        <Card className="bg-blue-50/30 border-blue-200">
+                            <SectionHeader icon={Calendar} title="Appraisal Schedule" sub="Auto-calculated from hire date — nearest Tuesday" color="blue" />
+                            {(() => {
+                                const dates = getAppraisalDates(selectedEmployee.dateHired);
+                                const today = new Date().toISOString().split('T')[0];
+                                return (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div className="bg-white rounded-lg p-3 border border-blue-100 text-center">
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase">Date Hired</div>
+                                            <div className="text-sm font-black text-gray-800 mt-1">{selectedEmployee.dateHired}</div>
+                                        </div>
+                                        <div className={`bg-white rounded-lg p-3 border text-center ${dates.threeMonth < today ? 'border-green-200' : 'border-orange-200'}`}>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase">3-Month Appraisal</div>
+                                            <div className={`text-sm font-black mt-1 ${dates.threeMonth < today ? 'text-green-600' : 'text-orange-600'}`}>{dates.threeMonth}</div>
+                                            <div className="text-[9px] text-gray-400 mt-0.5">{dates.threeMonth < today ? 'Due / Overdue' : 'Upcoming'} (Tuesday)</div>
+                                        </div>
+                                        <div className={`bg-white rounded-lg p-3 border text-center ${dates.sixMonth < today ? 'border-green-200' : 'border-purple-200'}`}>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase">6-Month Appraisal</div>
+                                            <div className={`text-sm font-black mt-1 ${dates.sixMonth < today ? 'text-green-600' : 'text-purple-600'}`}>{dates.sixMonth}</div>
+                                            <div className="text-[9px] text-gray-400 mt-0.5">{dates.sixMonth < today ? 'Due / Overdue' : 'Upcoming'} (Tuesday)</div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                            <div className="mt-3">
+                                <Button onClick={async () => {
+                                    const empName = `${selectedEmployee.firstName} ${selectedEmployee.lastName}`;
+                                    const count = await scheduleAppraisals(empName, selectedEmployee.dateHired, selectedEmployee.id);
+                                    if (count > 0) setSuccess(`${count} appraisal(s) scheduled in Calendar & Tasks for ${empName}`);
+                                    else setSuccess('No future appraisals to schedule (dates already passed).');
+                                    setTimeout(() => setSuccess(''), 4000);
+                                }} variant="primary" className="text-xs">
+                                    <Calendar size={12} className="mr-1" /> Re-schedule Appraisals to Calendar & Tasks
+                                </Button>
+                            </div>
+                        </Card>
+                    )}
+
                     <Card>
-                        <SectionHeader icon={Target} title="Performance Appraisals" sub="Probationary employees: evaluate at 1st, 3rd, and 5th month before regularization" />
+                        <SectionHeader icon={Target} title="Performance Appraisals with KPIs" sub="Set KPI targets at appraisal time — evaluate at 3-month and 6-month reviews" />
                         {!selectedEmployee ? (
                             <div className="text-center py-8 text-gray-400"><Target size={32} className="mx-auto mb-2 opacity-30" /><p className="text-sm font-bold">Select an employee from the Directory tab first</p></div>
                         ) : (
@@ -637,9 +786,9 @@ export default function HROnboardingPage({ user }) {
                                 <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 mb-4">
                                     <h4 className="text-xs font-bold text-gray-600 uppercase mb-2">Add Performance Review</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                                        <FormField label="Review Period"><input className={inputClass} value={perfForm.period} onChange={e => setPerfForm(p => ({ ...p, period: e.target.value }))} placeholder="e.g. Q1 2026, Probation Month 3" /></FormField>
+                                        <FormField label="Review Period"><input className={inputClass} value={perfForm.period} onChange={e => setPerfForm(p => ({ ...p, period: e.target.value }))} placeholder="e.g. 3-Month Probation, Q1 2026" /></FormField>
                                         <FormField label="Reviewer"><input className={inputClass} value={perfForm.reviewer} onChange={e => setPerfForm(p => ({ ...p, reviewer: e.target.value }))} placeholder="Stuart Cox" /></FormField>
-                                        <FormField label="Rating (1-5)">
+                                        <FormField label="Overall Rating (1-5)">
                                             <div className="flex items-center gap-2">
                                                 {[1, 2, 3, 4, 5].map(i => (
                                                     <button key={i} onClick={() => setPerfForm(p => ({ ...p, rating: i }))} className="focus:outline-none">
@@ -650,13 +799,80 @@ export default function HROnboardingPage({ user }) {
                                             </div>
                                         </FormField>
                                     </div>
+
+                                    {/* KPI Targets Section */}
+                                    <div className="mb-3">
+                                        <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2 flex items-center gap-1"><Target size={12} /> KPI Targets & Scores</h4>
+                                        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                            <table className="w-full text-xs">
+                                                <thead className="bg-gray-50 text-gray-500 font-bold uppercase">
+                                                    <tr>
+                                                        <th className="p-2 text-left">KPI</th>
+                                                        <th className="p-2 text-left">Target</th>
+                                                        <th className="p-2 text-left">Actual Result</th>
+                                                        <th className="p-2 text-center">Score (1-5)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(perfForm.kpis || []).map((kpi, idx) => (
+                                                        <tr key={kpi.key} className="border-t border-gray-100">
+                                                            <td className="p-2">
+                                                                <span className="font-bold text-gray-700">{kpi.label}</span>
+                                                                <span className="block text-[9px] text-gray-400">{KPI_CATEGORIES.find(k => k.key === kpi.key)?.description}</span>
+                                                            </td>
+                                                            <td className="p-2">
+                                                                <input className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+                                                                    value={kpi.target} placeholder="e.g. 95% accuracy"
+                                                                    onChange={e => {
+                                                                        const updated = [...perfForm.kpis];
+                                                                        updated[idx] = { ...updated[idx], target: e.target.value };
+                                                                        setPerfForm(p => ({ ...p, kpis: updated }));
+                                                                    }} />
+                                                            </td>
+                                                            <td className="p-2">
+                                                                <input className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+                                                                    value={kpi.actual} placeholder="e.g. 92% achieved"
+                                                                    onChange={e => {
+                                                                        const updated = [...perfForm.kpis];
+                                                                        updated[idx] = { ...updated[idx], actual: e.target.value };
+                                                                        setPerfForm(p => ({ ...p, kpis: updated }));
+                                                                    }} />
+                                                            </td>
+                                                            <td className="p-2 text-center">
+                                                                <div className="flex items-center justify-center gap-0.5">
+                                                                    {[1, 2, 3, 4, 5].map(s => (
+                                                                        <button key={s} onClick={() => {
+                                                                            const updated = [...perfForm.kpis];
+                                                                            updated[idx] = { ...updated[idx], score: s };
+                                                                            setPerfForm(p => ({ ...p, kpis: updated }));
+                                                                        }} className="focus:outline-none">
+                                                                            <Star size={12} className={s <= kpi.score ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <p className="text-[9px] text-gray-400 mt-1">Set targets at appraisal time. Fill in actuals when reviewing. Avg KPI score auto-calculates overall rating.</p>
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                         <FormField label="Strengths"><textarea className={inputClass + ' h-16'} value={perfForm.strengths} onChange={e => setPerfForm(p => ({ ...p, strengths: e.target.value }))} /></FormField>
                                         <FormField label="Areas for Improvement"><textarea className={inputClass + ' h-16'} value={perfForm.improvements} onChange={e => setPerfForm(p => ({ ...p, improvements: e.target.value }))} /></FormField>
                                         <FormField label="Goals for Next Period"><textarea className={inputClass + ' h-16'} value={perfForm.goals} onChange={e => setPerfForm(p => ({ ...p, goals: e.target.value }))} /></FormField>
                                     </div>
-                                    <Button onClick={() => { addArrayItem(selectedEmployee.id, 'performanceReviews', perfForm); setPerfForm({ period: '', rating: 3, reviewer: '', strengths: '', improvements: '', goals: '', notes: '' }); }} variant="primary" className="text-xs">
-                                        <Plus size={12} className="mr-1" /> Save Review
+                                    <Button onClick={() => {
+                                        // Calculate average KPI score as overall rating
+                                        const kpisWithData = (perfForm.kpis || []).filter(k => k.target || k.actual);
+                                        const avgScore = kpisWithData.length > 0 ? Math.round(kpisWithData.reduce((sum, k) => sum + k.score, 0) / kpisWithData.length) : perfForm.rating;
+                                        const reviewData = { ...perfForm, rating: avgScore };
+                                        addArrayItem(selectedEmployee.id, 'performanceReviews', reviewData);
+                                        setPerfForm({ period: '', rating: 3, reviewer: '', strengths: '', improvements: '', goals: '', notes: '', kpis: KPI_CATEGORIES.map(k => ({ key: k.key, label: k.label, target: '', actual: '', score: 3 })) });
+                                    }} variant="primary" className="text-xs">
+                                        <Plus size={12} className="mr-1" /> Save Review with KPIs
                                     </Button>
                                 </div>
 
@@ -676,6 +892,24 @@ export default function HROnboardingPage({ user }) {
                                                         <button onClick={() => removeArrayItem(selectedEmployee.id, 'performanceReviews', pr.id)} className="text-red-300 hover:text-red-500"><Trash2 size={12} /></button>
                                                     </div>
                                                 </div>
+                                                {/* KPI Summary */}
+                                                {pr.kpis && pr.kpis.some(k => k.target || k.actual) && (
+                                                    <div className="mb-2 bg-gray-50 rounded-lg p-2">
+                                                        <h5 className="text-[10px] font-bold text-orange-600 uppercase mb-1">KPI Results</h5>
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                                                            {pr.kpis.filter(k => k.target || k.actual).map(k => (
+                                                                <div key={k.key} className="bg-white rounded p-1.5 border border-gray-100">
+                                                                    <div className="text-[9px] font-bold text-gray-600">{k.label}</div>
+                                                                    {k.target && <div className="text-[9px] text-blue-500">Target: {k.target}</div>}
+                                                                    {k.actual && <div className="text-[9px] text-green-600">Actual: {k.actual}</div>}
+                                                                    <div className="flex gap-0.5 mt-0.5">
+                                                                        {[1,2,3,4,5].map(s => <Star key={s} size={8} className={s <= k.score ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />)}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div className="grid grid-cols-3 gap-2 text-xs">
                                                     {pr.strengths && <div><span className="font-bold text-green-600">Strengths:</span> <span className="text-gray-600">{pr.strengths}</span></div>}
                                                     {pr.improvements && <div><span className="font-bold text-orange-600">Improve:</span> <span className="text-gray-600">{pr.improvements}</span></div>}

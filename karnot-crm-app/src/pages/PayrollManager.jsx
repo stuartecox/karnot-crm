@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Button, Input } from '../data/constants.jsx'; 
-import { 
-    Users, Calculator, PiggyBank, Building, Wallet, 
-    ArrowRight, Save, Trash2, TrendingDown, AlertCircle, FileText 
+import { Card, Button, Input } from '../data/constants.jsx';
+import {
+    Users, Calculator, PiggyBank, Building, Wallet,
+    ArrowRight, Save, Trash2, TrendingDown, AlertCircle, FileText,
+    UserCheck, ChevronDown, Link2
 } from 'lucide-react';
-import { db } from '../firebase'; 
+import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 
 // --- PHILIPPINE TAX CONSTANTS (2025 Estimates) ---
@@ -17,24 +18,31 @@ const TAX_TABLE = [
     { limit: Infinity, rate: 0.35, base: 2202500 }
 ];
 
-const DIVIDEND_TAX_RATE = 0.10; 
+const DIVIDEND_TAX_RATE = 0.10;
 
 const PayrollManager = ({ user }) => {
     const [activeTab, setActiveTab] = useState('Process');
     const [payrollHistory, setPayrollHistory] = useState([]);
-    
+    const [employees, setEmployees] = useState([]);
+
     // PAYROLL FORM STATE
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [entry, setEntry] = useState({
         name: '',
         role: '',
-        department: 'Operations', 
+        department: 'Operations',
         basicPay: 0,
         allowance: 0,
-        overtime: 0
+        overtime: 0,
+        employeeId: '',
+        tinNumber: '',
+        sssNumber: '',
+        philhealthNumber: '',
+        pagibigNumber: ''
     });
 
     // TAX OPTIMIZER STATE
-    const [targetIncome, setTargetIncome] = useState(2000000); 
+    const [targetIncome, setTargetIncome] = useState(2000000);
 
     // --- 1. FETCH DATA ---
     useEffect(() => {
@@ -46,9 +54,58 @@ const PayrollManager = ({ user }) => {
         return () => unsub();
     }, [user]);
 
+    // FETCH HR EMPLOYEES
+    useEffect(() => {
+        if (!user) return;
+        const q = query(collection(db, "users", user.uid, "employees"), orderBy("lastName", "asc"));
+        const unsub = onSnapshot(q, (snap) => {
+            setEmployees(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        });
+        return () => unsub();
+    }, [user]);
+
+    // --- AUTO-POPULATE FROM EMPLOYEE SELECTION ---
+    const handleEmployeeSelect = (empId) => {
+        setSelectedEmployeeId(empId);
+        if (!empId) {
+            setEntry({ name: '', role: '', department: 'Operations', basicPay: 0, allowance: 0, overtime: 0, employeeId: '', tinNumber: '', sssNumber: '', philhealthNumber: '', pagibigNumber: '' });
+            return;
+        }
+        const emp = employees.find(e => e.id === empId);
+        if (emp) {
+            const dept = ['Operations', 'Engineering'].includes(emp.department) ? 'Operations' : 'Admin';
+            setEntry({
+                name: `${emp.firstName} ${emp.lastName}`,
+                role: emp.position || '',
+                department: dept,
+                basicPay: emp.basicSalary || 0,
+                allowance: 0,
+                overtime: 0,
+                employeeId: emp.id,
+                tinNumber: emp.tinNumber || '',
+                sssNumber: emp.sssNumber || '',
+                philhealthNumber: emp.philhealthNumber || '',
+                pagibigNumber: emp.pagibigNumber || ''
+            });
+        }
+    };
+
+    // --- EMPLOYEE PAYROLL SUMMARY ---
+    const employeePayrollSummary = useMemo(() => {
+        const summary = {};
+        employees.forEach(emp => {
+            const empName = `${emp.firstName} ${emp.lastName}`;
+            const records = payrollHistory.filter(p => p.employeeId === emp.id || p.staffName === empName);
+            const totalGross = records.reduce((sum, p) => sum + (p.basic + (p.allowance || 0)), 0);
+            const totalNet = records.reduce((sum, p) => sum + p.netPayToStaff, 0);
+            const totalTax = records.reduce((sum, p) => sum + p.taxWithheld, 0);
+            summary[emp.id] = { records: records.length, totalGross, totalNet, totalTax, employee: emp };
+        });
+        return summary;
+    }, [employees, payrollHistory]);
+
     // --- 2. CALCULATORS ---
     const calculateGovtContributions = (grossPay) => {
-        // 2025 SSS/PhilHealth/Pag-IBIG Logic
         const sssCredit = Math.min(grossPay, 30000);
         const sssEE = sssCredit * 0.045;
         const sssER = sssCredit * 0.095;
@@ -58,7 +115,7 @@ const PayrollManager = ({ user }) => {
         const phEE = phTotal / 2;
         const phER = phTotal / 2;
 
-        const piEE = 100; // Standard minimum
+        const piEE = 100;
         const piER = 100;
 
         return { sssEE, sssER, phEE, phER, piEE, piER };
@@ -67,7 +124,7 @@ const PayrollManager = ({ user }) => {
     const calculateWithholdingTax = (taxableIncome) => {
         const annualIncome = taxableIncome * 12;
         let tax = 0;
-        
+
         for (let i = TAX_TABLE.length - 1; i >= 0; i--) {
             if (annualIncome > TAX_TABLE[i].limit) {
                 const bracket = TAX_TABLE[i];
@@ -75,26 +132,45 @@ const PayrollManager = ({ user }) => {
                 break;
             }
         }
-        return tax / 12; 
+        return tax / 12;
     };
 
     // --- 3. BIR FORM GENERATOR ---
     const birData = useMemo(() => {
-        // Filter for current month/year for 1601-C
-        const currentMonth = new Date().getMonth(); 
+        const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
-        
+
         const monthlyRecords = payrollHistory.filter(p => {
             const d = new Date(p.date);
             return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
         });
 
-        const totalCompensation = monthlyRecords.reduce((sum, p) => sum + (p.basic + p.allowance), 0);
+        const totalCompensation = monthlyRecords.reduce((sum, p) => sum + (p.basic + (p.allowance || 0)), 0);
         const totalTaxWithheld = monthlyRecords.reduce((sum, p) => sum + p.taxWithheld, 0);
-        
-        // Annual for 1604-C / 2316
+
         const annualRecords = payrollHistory.filter(p => new Date(p.date).getFullYear() === currentYear);
         const annualTaxWithheld = annualRecords.reduce((sum, p) => sum + p.taxWithheld, 0);
+
+        // Build alphalist data from annual records grouped by employee
+        const alphalist = {};
+        annualRecords.forEach(p => {
+            const key = p.employeeId || p.staffName;
+            if (!alphalist[key]) {
+                alphalist[key] = {
+                    name: p.staffName,
+                    employeeId: p.employeeId,
+                    tinNumber: p.tinNumber || '',
+                    totalGross: 0,
+                    totalAllowance: 0,
+                    totalTax: 0,
+                    count: 0
+                };
+            }
+            alphalist[key].totalGross += (p.basic + (p.allowance || 0));
+            alphalist[key].totalAllowance += (p.allowance || 0);
+            alphalist[key].totalTax += p.taxWithheld;
+            alphalist[key].count++;
+        });
 
         return {
             month: new Date().toLocaleString('default', { month: 'long' }),
@@ -104,10 +180,11 @@ const PayrollManager = ({ user }) => {
                 deadline: `10th of next month`
             },
             form1604C: {
-                totalEmployees: new Set(annualRecords.map(p => p.staffName)).size,
+                totalEmployees: new Set(annualRecords.map(p => p.employeeId || p.staffName)).size,
                 totalTaxRemitted: annualTaxWithheld,
                 deadline: `Jan 31, ${currentYear + 1}`
-            }
+            },
+            alphalist: Object.values(alphalist)
         };
     }, [payrollHistory]);
 
@@ -117,29 +194,36 @@ const PayrollManager = ({ user }) => {
 
         const gross = parseFloat(entry.basicPay) + parseFloat(entry.allowance) + parseFloat(entry.overtime);
         const contribs = calculateGovtContributions(parseFloat(entry.basicPay));
-        
-        const taxable = gross - (contribs.sssEE + contribs.phEE + contribs.piEE); 
+
+        const taxable = gross - (contribs.sssEE + contribs.phEE + contribs.piEE);
         const tax = calculateWithholdingTax(taxable);
-        
+
         const netPay = gross - (contribs.sssEE + contribs.phEE + contribs.piEE + tax);
         const totalEmployerCost = gross + contribs.sssER + contribs.phER + contribs.piER;
 
         const payrollRecord = {
             staffName: entry.name,
             role: entry.role,
-            type: entry.department === 'Operations' ? 'DIRECT' : 'ADMIN', 
-            amount: totalEmployerCost, 
+            type: entry.department === 'Operations' ? 'DIRECT' : 'ADMIN',
+            amount: totalEmployerCost,
             netPayToStaff: netPay,
             taxWithheld: tax,
             basic: parseFloat(entry.basicPay),
             allowance: parseFloat(entry.allowance),
             deductions: { ...contribs, tax },
             date: new Date().toISOString().split('T')[0],
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            // HR Link fields
+            employeeId: entry.employeeId || null,
+            tinNumber: entry.tinNumber || '',
+            sssNumber: entry.sssNumber || '',
+            philhealthNumber: entry.philhealthNumber || '',
+            pagibigNumber: entry.pagibigNumber || ''
         };
 
         await addDoc(collection(db, "users", user.uid, "payroll_log"), payrollRecord);
-        setEntry({ ...entry, name: '', basicPay: 0, allowance: 0, overtime: 0 });
+        setEntry({ name: '', role: '', department: entry.department, basicPay: 0, allowance: 0, overtime: 0, employeeId: '', tinNumber: '', sssNumber: '', philhealthNumber: '', pagibigNumber: '' });
+        setSelectedEmployeeId('');
     };
 
     const handleDelete = async (id) => {
@@ -151,32 +235,33 @@ const PayrollManager = ({ user }) => {
     // --- 5. OPTIMIZER LOGIC ---
     const optimizer = useMemo(() => {
         const annualTarget = parseFloat(targetIncome) || 0;
-        
-        // Scenario A: Salary Only
+
         let taxSalaryOnly = 0;
         const sortedTable = [...TAX_TABLE].sort((a,b) => a.limit - b.limit);
         for(let i=0; i<sortedTable.length; i++) {
             if(annualTarget <= sortedTable[i].limit) {
                 const prev = i === 0 ? { limit: 0, base: 0, rate: 0 } : sortedTable[i-1];
-                taxSalaryOnly = prev.base + ((annualTarget - prev.limit) * sortedTable[i].rate); 
+                taxSalaryOnly = prev.base + ((annualTarget - prev.limit) * sortedTable[i].rate);
                 break;
             } else if (i === sortedTable.length -1) {
-                 const max = sortedTable[sortedTable.length - 2]; 
+                 const max = sortedTable[sortedTable.length - 2];
                  taxSalaryOnly = max.base + ((annualTarget - max.limit) * 0.35);
             }
         }
         const netSalaryOnly = annualTarget - taxSalaryOnly;
 
-        // Scenario B: Optimized (Salary + Dividend)
-        const optimalSalary = 250000; // Tax Exempt Cap
+        const optimalSalary = 250000;
         const dividendPart = Math.max(0, annualTarget - optimalSalary);
         const taxOnDividend = dividendPart * DIVIDEND_TAX_RATE;
-        const totalTaxOptimized = taxOnDividend; 
+        const totalTaxOptimized = taxOnDividend;
         const netOptimized = annualTarget - totalTaxOptimized;
         const savings = netOptimized - netSalaryOnly;
 
         return { taxSalaryOnly, netSalaryOnly, taxOnDividend, totalTaxOptimized, netOptimized, savings };
     }, [targetIncome]);
+
+    // Active employees for dropdown
+    const activeEmployees = employees.filter(e => ['Active', 'Probationary'].includes(e.status));
 
     return (
         <div className="space-y-6">
@@ -189,22 +274,29 @@ const PayrollManager = ({ user }) => {
                     <div>
                         <h1 className="text-2xl font-black text-gray-800 uppercase tracking-tight">Payroll & Compliance</h1>
                         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-                            BIR Forms 1601-C, 2316 • Dividends Strategy
+                            BIR Forms 1601-C, 2316 • Linked to HR • Dividends Strategy
                         </p>
                     </div>
                 </div>
-                <div className="flex gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
-                    {['Process', 'Compliance', 'Tax Strategy'].map(tab => (
-                        <button 
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
-                                activeTab === tab ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                            }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-4">
+                    {activeEmployees.length > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-green-600 font-bold bg-green-50 px-3 py-1.5 rounded-full">
+                            <Link2 size={12} /> {activeEmployees.length} HR Employees Linked
+                        </div>
+                    )}
+                    <div className="flex gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
+                        {['Process', 'Roster', 'Compliance', 'Tax Strategy'].map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                                    activeTab === tab ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -214,12 +306,45 @@ const PayrollManager = ({ user }) => {
                     <Card className="lg:col-span-1 p-6 border-t-4 border-purple-500">
                         <h3 className="font-black text-gray-700 uppercase text-xs tracking-widest mb-6">New Payslip</h3>
                         <div className="space-y-4">
-                            <Input label="Employee Name" value={entry.name} onChange={e => setEntry({...entry, name: e.target.value})} />
+                            {/* Employee Dropdown - linked to HR */}
+                            {activeEmployees.length > 0 ? (
+                                <div>
+                                    <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Select Employee (from HR)</label>
+                                    <select
+                                        className="w-full p-3 border border-gray-300 rounded-xl bg-white text-sm font-bold"
+                                        value={selectedEmployeeId}
+                                        onChange={e => handleEmployeeSelect(e.target.value)}
+                                    >
+                                        <option value="">-- Select Employee --</option>
+                                        {activeEmployees.map(emp => (
+                                            <option key={emp.id} value={emp.id}>
+                                                {emp.firstName} {emp.lastName} — {emp.position} ({emp.department})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {selectedEmployeeId && (
+                                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-green-700">
+                                                <UserCheck size={10} /> Linked to HR record
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-1 mt-1 text-[10px] text-gray-500">
+                                                {entry.tinNumber && <span>TIN: {entry.tinNumber}</span>}
+                                                {entry.sssNumber && <span>SSS: {entry.sssNumber}</span>}
+                                                {entry.philhealthNumber && <span>PH: {entry.philhealthNumber}</span>}
+                                                {entry.pagibigNumber && <span>HDMF: {entry.pagibigNumber}</span>}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <Input label="Employee Name" value={entry.name} onChange={e => setEntry({...entry, name: e.target.value})} />
+                            )}
+
                             <div className="grid grid-cols-2 gap-3">
                                 <Input label="Role" value={entry.role} onChange={e => setEntry({...entry, role: e.target.value})} />
                                 <div>
                                     <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Department</label>
-                                    <select 
+                                    <select
                                         className="w-full p-3 border border-gray-300 rounded-xl bg-white text-sm font-bold"
                                         value={entry.department}
                                         onChange={e => setEntry({...entry, department: e.target.value})}
@@ -234,7 +359,26 @@ const PayrollManager = ({ user }) => {
                                 <Input label="Non-Tax Allowance" type="number" value={entry.allowance} onChange={e => setEntry({...entry, allowance: e.target.value})} />
                                 <Input label="Overtime" type="number" value={entry.overtime} onChange={e => setEntry({...entry, overtime: e.target.value})} />
                             </div>
-                            
+
+                            {/* Live Preview */}
+                            {entry.basicPay > 0 && (() => {
+                                const gross = parseFloat(entry.basicPay) + parseFloat(entry.allowance || 0) + parseFloat(entry.overtime || 0);
+                                const contribs = calculateGovtContributions(parseFloat(entry.basicPay));
+                                const taxable = gross - (contribs.sssEE + contribs.phEE + contribs.piEE);
+                                const tax = calculateWithholdingTax(taxable);
+                                const net = gross - (contribs.sssEE + contribs.phEE + contribs.piEE + tax);
+                                return (
+                                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs space-y-1">
+                                        <div className="flex justify-between"><span className="text-gray-500">Gross</span><span className="font-bold">₱{gross.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-500">SSS (EE)</span><span className="text-red-500">-₱{contribs.sssEE.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-500">PhilHealth (EE)</span><span className="text-red-500">-₱{contribs.phEE.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-500">Pag-IBIG (EE)</span><span className="text-red-500">-₱{contribs.piEE.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-500">Withholding Tax</span><span className="text-red-500">-₱{tax.toLocaleString()}</span></div>
+                                        <div className="flex justify-between border-t border-purple-200 pt-1 mt-1"><span className="font-bold text-purple-700">Net Pay</span><span className="font-black text-green-600">₱{net.toLocaleString()}</span></div>
+                                    </div>
+                                );
+                            })()}
+
                             <Button onClick={handleProcessPayroll} variant="primary" className="w-full mt-4">Process & Log</Button>
                         </div>
                     </Card>
@@ -246,9 +390,11 @@ const PayrollManager = ({ user }) => {
                                 <thead className="bg-gray-50 text-gray-500 font-black uppercase text-xs">
                                     <tr>
                                         <th className="p-3 text-left">Staff</th>
+                                        <th className="p-3 text-left">Role</th>
                                         <th className="p-3 text-right">Gross</th>
                                         <th className="p-3 text-right">Withholding Tax</th>
                                         <th className="p-3 text-right">Net Pay</th>
+                                        <th className="p-3 text-center">HR</th>
                                         <th className="p-3"></th>
                                     </tr>
                                 </thead>
@@ -256,9 +402,17 @@ const PayrollManager = ({ user }) => {
                                     {payrollHistory.map(p => (
                                         <tr key={p.id} className="hover:bg-gray-50">
                                             <td className="p-3 font-bold text-gray-800">{p.staffName}</td>
-                                            <td className="p-3 text-right">₱{(p.basic + p.allowance).toLocaleString()}</td>
+                                            <td className="p-3 text-gray-500 text-xs">{p.role || '—'}</td>
+                                            <td className="p-3 text-right">₱{(p.basic + (p.allowance || 0)).toLocaleString()}</td>
                                             <td className="p-3 text-right text-red-500">({p.taxWithheld.toLocaleString()})</td>
                                             <td className="p-3 text-right font-black text-green-600">₱{p.netPayToStaff.toLocaleString()}</td>
+                                            <td className="p-3 text-center">
+                                                {p.employeeId ? (
+                                                    <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">Linked</span>
+                                                ) : (
+                                                    <span className="text-[9px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">Manual</span>
+                                                )}
+                                            </td>
                                             <td className="p-3 text-right">
                                                 <button onClick={() => handleDelete(p.id)} className="text-gray-300 hover:text-red-500"><Trash2 size={16}/></button>
                                             </td>
@@ -269,6 +423,76 @@ const PayrollManager = ({ user }) => {
                         </div>
                     </Card>
                 </div>
+            )}
+
+            {/* TAB: EMPLOYEE ROSTER (Payroll Summary linked to HR) */}
+            {activeTab === 'Roster' && (
+                <Card className="p-6">
+                    <h3 className="font-black text-gray-700 uppercase text-xs tracking-widest mb-6">Employee Payroll Roster (from HR)</h3>
+                    {activeEmployees.length === 0 ? (
+                        <div className="text-center py-12 text-gray-400">
+                            <Users size={40} className="mx-auto mb-3 opacity-30" />
+                            <p className="font-bold">No employees in HR system</p>
+                            <p className="text-xs mt-1">Add employees in the HR & Onboarding page first</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 text-gray-500 font-black uppercase text-xs">
+                                    <tr>
+                                        <th className="p-3 text-left">Employee</th>
+                                        <th className="p-3 text-left">Position</th>
+                                        <th className="p-3 text-left">Department</th>
+                                        <th className="p-3 text-right">Basic Salary</th>
+                                        <th className="p-3 text-left">TIN</th>
+                                        <th className="p-3 text-left">SSS</th>
+                                        <th className="p-3 text-center">Payslips</th>
+                                        <th className="p-3 text-right">YTD Gross</th>
+                                        <th className="p-3 text-right">YTD Net</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {activeEmployees.map(emp => {
+                                        const summary = employeePayrollSummary[emp.id] || { records: 0, totalGross: 0, totalNet: 0, totalTax: 0 };
+                                        return (
+                                            <tr key={emp.id} className="hover:bg-gray-50">
+                                                <td className="p-3 font-bold text-gray-800">{emp.firstName} {emp.lastName}</td>
+                                                <td className="p-3 text-gray-500">{emp.position || '—'}</td>
+                                                <td className="p-3">
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                                        ['Operations', 'Engineering'].includes(emp.department)
+                                                            ? 'bg-blue-100 text-blue-700'
+                                                            : 'bg-purple-100 text-purple-700'
+                                                    }`}>{emp.department}</span>
+                                                </td>
+                                                <td className="p-3 text-right font-bold">₱{(emp.basicSalary || 0).toLocaleString()}</td>
+                                                <td className="p-3 text-xs text-gray-400">{emp.tinNumber || '—'}</td>
+                                                <td className="p-3 text-xs text-gray-400">{emp.sssNumber || '—'}</td>
+                                                <td className="p-3 text-center">
+                                                    <span className={`text-xs font-bold ${summary.records > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                                                        {summary.records}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-right text-sm">{summary.totalGross > 0 ? `₱${summary.totalGross.toLocaleString()}` : '—'}</td>
+                                                <td className="p-3 text-right font-bold text-green-600">{summary.totalNet > 0 ? `₱${summary.totalNet.toLocaleString()}` : '—'}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                                <tfoot className="bg-gray-50 font-black text-sm">
+                                    <tr>
+                                        <td className="p-3" colSpan="3">TOTALS</td>
+                                        <td className="p-3 text-right">₱{activeEmployees.reduce((s, e) => s + (e.basicSalary || 0), 0).toLocaleString()}</td>
+                                        <td colSpan="2"></td>
+                                        <td className="p-3 text-center">{Object.values(employeePayrollSummary).reduce((s, v) => s + v.records, 0)}</td>
+                                        <td className="p-3 text-right">₱{Object.values(employeePayrollSummary).reduce((s, v) => s + v.totalGross, 0).toLocaleString()}</td>
+                                        <td className="p-3 text-right text-green-600">₱{Object.values(employeePayrollSummary).reduce((s, v) => s + v.totalNet, 0).toLocaleString()}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    )}
+                </Card>
             )}
 
             {/* TAB: COMPLIANCE (BIR FORMS) */}
@@ -282,7 +506,7 @@ const PayrollManager = ({ user }) => {
                                 <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-black uppercase">Monthly</span>
                             </div>
                             <p className="text-sm text-gray-600 mb-6">Monthly Remittance of Income Taxes Withheld on Compensation.</p>
-                            
+
                             <div className="bg-gray-50 p-4 rounded-xl space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="font-bold text-gray-500">For Month Of:</span>
@@ -309,7 +533,7 @@ const PayrollManager = ({ user }) => {
                                 <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-black uppercase">Annual</span>
                             </div>
                             <p className="text-sm text-gray-600 mb-6">Annual Information Return of Income Taxes Withheld on Compensation.</p>
-                            
+
                             <div className="bg-gray-50 p-4 rounded-xl space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="font-bold text-gray-500">Total Employees:</span>
@@ -326,7 +550,7 @@ const PayrollManager = ({ user }) => {
                         </Card>
                     </div>
 
-                    {/* ALPHALIST GENERATOR */}
+                    {/* ALPHALIST GENERATOR - Now populated from real data */}
                     <Card className="p-6">
                         <div className="flex items-center gap-2 mb-6">
                             <FileText className="text-green-500"/>
@@ -337,21 +561,32 @@ const PayrollManager = ({ user }) => {
                                 <thead className="bg-gray-50 border-b font-black text-gray-500 uppercase">
                                     <tr>
                                         <th className="p-3">Employee Name</th>
+                                        <th className="p-3">TIN</th>
                                         <th className="p-3">Gross Comp.</th>
-                                        <th className="p-3">Non-Taxable (13th/De Minimis)</th>
+                                        <th className="p-3">Non-Taxable (Allowances)</th>
                                         <th className="p-3">Taxable Comp.</th>
-                                        <th className="p-3">Tax Due</th>
                                         <th className="p-3">Tax Withheld</th>
-                                        <th className="p-3">Status</th>
+                                        <th className="p-3">Payslips</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {/* Aggregating logic would go here in production */}
-                                    <tr>
-                                        <td colSpan="7" className="p-4 text-center text-gray-400 italic">
-                                            Aggregated annual data for Alphalist generation will appear here.
-                                        </td>
-                                    </tr>
+                                    {birData.alphalist.length > 0 ? birData.alphalist.map((emp, i) => (
+                                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                                            <td className="p-3 font-bold text-gray-800">{emp.name}</td>
+                                            <td className="p-3 text-gray-500">{emp.tinNumber || '—'}</td>
+                                            <td className="p-3">₱{emp.totalGross.toLocaleString()}</td>
+                                            <td className="p-3 text-green-600">₱{emp.totalAllowance.toLocaleString()}</td>
+                                            <td className="p-3">₱{(emp.totalGross - emp.totalAllowance).toLocaleString()}</td>
+                                            <td className="p-3 font-bold text-red-600">₱{emp.totalTax.toLocaleString()}</td>
+                                            <td className="p-3 text-center">{emp.count}</td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="7" className="p-4 text-center text-gray-400 italic">
+                                                Process payroll entries to populate Alphalist data.
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -368,15 +603,15 @@ const PayrollManager = ({ user }) => {
                             <Calculator size={24}/>
                             <h3 className="font-black uppercase tracking-widest">Dividend Strategy Calculator</h3>
                         </div>
-                        
+
                         <div className="space-y-6">
                             <div>
                                 <label className="text-xs font-black uppercase text-indigo-300 mb-2 block">Target Annual Personal Income</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300 font-bold text-xl">₱</span>
-                                    <input 
-                                        type="number" 
-                                        value={targetIncome} 
+                                    <input
+                                        type="number"
+                                        value={targetIncome}
                                         onChange={e => setTargetIncome(e.target.value)}
                                         className="w-full pl-10 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-2xl font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
                                     />
