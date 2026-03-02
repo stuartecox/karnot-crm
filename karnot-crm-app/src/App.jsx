@@ -94,6 +94,9 @@ import EaaSInvestorCalculator from './components/EaaSInvestorCalculator.jsx';
 import SocialMediaPlanner from './pages/SocialMediaPlanner.jsx';
 import EmailMarketingPage from './pages/EmailMarketingPage.jsx';
 
+// --- HR & Onboarding ---
+import HROnboardingPage from './pages/HROnboardingPage.jsx';
+
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
 // ==========================================
@@ -253,7 +256,13 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'coldRoomCalc', label: 'Cold Room', icon: Calculator },
         { view: 'rsrhCalc', label: 'RSRH Cattle', icon: Target },
         // --- ADDED NEW SOLVIVA CALCULATOR HERE ---
-        { view: 'solvivaCalc', label: 'Solviva Partner', icon: Zap, badge: 'NEW' } 
+        { view: 'solvivaCalc', label: 'Solviva Partner', icon: Zap, badge: 'NEW' }
+    ];
+
+    // HR & People Menu
+    const hrMenu = [
+        { view: 'hrOnboarding', label: 'HR & Onboarding', icon: Users, badge: 'NEW' },
+        { view: 'payroll', label: 'Payroll Manager', icon: DollarSign },
     ];
 
     return (
@@ -353,6 +362,7 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                     />
                     
                     <DropdownMenu label="Calculators" icon={Calculator} items={calculatorsMenu} activeView={activeView} setActiveView={setActiveView} />
+                    <DropdownMenu label="HR & People" icon={UserCheck} items={hrMenu} activeView={activeView} setActiveView={setActiveView} />
 
                     {/* Accounts (Admin + users with accounts permission) */}
                     {(userRole === 'ADMIN' || userPermissions.includes('accounts')) && (
@@ -930,6 +940,14 @@ export default function App() {
 
                 {activeView === 'emailMarketing' && (
                     <EmailMarketingPage user={dataUser} contacts={contacts} companies={companies} />
+                )}
+
+                {/* HR & ONBOARDING */}
+                {activeView === 'hrOnboarding' && (
+                    <HROnboardingPage user={dataUser} />
+                )}
+                {activeView === 'payroll' && (
+                    <PayrollManager user={dataUser} />
                 )}
 
                 {/* 7. QUOTING */}
