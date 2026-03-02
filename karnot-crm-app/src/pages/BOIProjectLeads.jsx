@@ -1,8 +1,163 @@
-import React, { useState, useMemo } from 'react';
-import { TrendingUp, Building2, MapPin, DollarSign, Factory, Filter, Search, Plus, Check, Calendar, Users, Briefcase } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { TrendingUp, Building2, MapPin, DollarSign, Factory, Filter, Search, Plus, Check, Calendar, Users, Briefcase, RefreshCw, Clock, Database, X, Trash2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { Card, Button, Input } from '../data/constants.jsx';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+
+const DEFAULT_BOI_PROJECTS = [
+    {
+        id: 'BOI-2024-001',
+        companyName: 'Nestlé Philippines Inc.',
+        projectName: 'Factory Expansion - Cabuyao Plant',
+        region: 'CALABARZON',
+        province: 'Laguna',
+        city: 'Cabuyao City',
+        industry: 'Food Manufacturing',
+        investmentAmount: 2500000000,
+        investmentUSD: 45000000,
+        projectType: 'Expansion',
+        status: 'Approved',
+        approvalDate: '2024-11-15',
+        expectedCompletion: '2026-Q2',
+        description: 'Expansion of milk processing and cold storage facilities',
+        contactPerson: 'Operations Manager',
+        employmentGenerated: 350,
+        incentives: ['Income Tax Holiday (6 years)', 'Duty-free importation of equipment']
+    },
+    {
+        id: 'BOI-2024-002',
+        companyName: 'Meralco PowerGen Corporation',
+        projectName: 'Solar Power Plant - Batangas',
+        region: 'CALABARZON',
+        province: 'Batangas',
+        city: 'Lipa City',
+        industry: 'Renewable Energy',
+        investmentAmount: 8500000000,
+        investmentUSD: 150000000,
+        projectType: 'New Project',
+        status: 'Approved',
+        approvalDate: '2024-10-20',
+        expectedCompletion: '2026-Q4',
+        description: '100MW solar power generation facility with battery storage',
+        contactPerson: 'Project Director',
+        employmentGenerated: 120,
+        incentives: ['Income Tax Holiday (7 years)', '0% VAT on local purchases']
+    },
+    {
+        id: 'BOI-2024-003',
+        companyName: 'SM Prime Holdings',
+        projectName: 'SM City Iloilo Expansion',
+        region: 'Region VI',
+        province: 'Iloilo',
+        city: 'Iloilo City',
+        industry: 'Real Estate Development',
+        investmentAmount: 3200000000,
+        investmentUSD: 57000000,
+        projectType: 'Expansion',
+        status: 'Under Review',
+        approvalDate: '2024-12-01',
+        expectedCompletion: '2025-Q4',
+        description: 'Addition of new retail wing and entertainment complex',
+        contactPerson: 'Development Manager',
+        employmentGenerated: 500,
+        incentives: ['Income Tax Holiday (4 years)']
+    },
+    {
+        id: 'BOI-2024-004',
+        companyName: 'PLDT Inc.',
+        projectName: 'Data Center - Clark Freeport',
+        region: 'Region III',
+        province: 'Pampanga',
+        city: 'Mabalacat City (Clark)',
+        industry: 'IT/Data Center',
+        investmentAmount: 5000000000,
+        investmentUSD: 89000000,
+        projectType: 'New Project',
+        status: 'Approved',
+        approvalDate: '2024-09-10',
+        expectedCompletion: '2025-Q3',
+        description: 'Tier-4 hyperscale data center with advanced cooling systems',
+        contactPerson: 'Infrastructure Head',
+        employmentGenerated: 200,
+        incentives: ['Income Tax Holiday (8 years)', 'Duty-free importation']
+    },
+    {
+        id: 'BOI-2024-005',
+        companyName: 'Universal Robina Corporation',
+        projectName: 'Snack Food Production Facility',
+        region: 'Region VII',
+        province: 'Cebu',
+        city: 'Mandaue City',
+        industry: 'Food Manufacturing',
+        investmentAmount: 1800000000,
+        investmentUSD: 32000000,
+        projectType: 'New Project',
+        status: 'Approved',
+        approvalDate: '2024-11-25',
+        expectedCompletion: '2026-Q1',
+        description: 'Automated snack food manufacturing with cold storage',
+        contactPerson: 'Plant Manager',
+        employmentGenerated: 280,
+        incentives: ['Income Tax Holiday (6 years)']
+    },
+    {
+        id: 'BOI-2024-006',
+        companyName: 'San Miguel Brewery Inc.',
+        projectName: 'Brewery Modernization - Davao',
+        region: 'Region XI',
+        province: 'Davao City',
+        city: 'Davao City',
+        industry: 'Beverage Manufacturing',
+        investmentAmount: 4200000000,
+        investmentUSD: 75000000,
+        projectType: 'Modernization',
+        status: 'Approved',
+        approvalDate: '2024-08-15',
+        expectedCompletion: '2025-Q4',
+        description: 'Brewery capacity expansion and cold chain modernization',
+        contactPerson: 'Operations Director',
+        employmentGenerated: 180,
+        incentives: ['Income Tax Holiday (5 years)', 'Duty-free equipment']
+    },
+    {
+        id: 'BOI-2024-007',
+        companyName: 'Ayala Land Premier',
+        projectName: 'Mixed-Use Development - BGC',
+        region: 'NCR',
+        province: 'Metro Manila',
+        city: 'Metro Manila - BGC (Taguig)',
+        industry: 'Real Estate Development',
+        investmentAmount: 12000000000,
+        investmentUSD: 215000000,
+        projectType: 'New Project',
+        status: 'Approved',
+        approvalDate: '2024-10-05',
+        expectedCompletion: '2027-Q2',
+        description: 'High-rise residential and commercial complex with HVAC systems',
+        contactPerson: 'Project Manager',
+        employmentGenerated: 800,
+        incentives: ['Income Tax Holiday (3 years)']
+    },
+    {
+        id: 'BOI-2024-008',
+        companyName: 'Monde Nissin Corporation',
+        projectName: 'Biscuit Manufacturing Expansion',
+        region: 'CALABARZON',
+        province: 'Laguna',
+        city: 'Sta. Cruz',
+        industry: 'Food Manufacturing',
+        investmentAmount: 2100000000,
+        investmentUSD: 37500000,
+        projectType: 'Expansion',
+        status: 'Approved',
+        approvalDate: '2024-11-01',
+        expectedCompletion: '2025-Q4',
+        description: 'New production lines with temperature-controlled storage',
+        contactPerson: 'Manufacturing Head',
+        employmentGenerated: 220,
+        incentives: ['Income Tax Holiday (6 years)']
+    }
+];
 
 const BOIProjectLeads = ({ territories = [], user }) => {
     const [selectedRegion, setSelectedRegion] = useState('ALL');
@@ -11,163 +166,48 @@ const BOIProjectLeads = ({ territories = [], user }) => {
     const [minInvestment, setMinInvestment] = useState(0);
     const [addedProjects, setAddedProjects] = useState(new Set());
     const [addingProject, setAddingProject] = useState(null);
+    const [customProjects, setCustomProjects] = useState([]);
+    const [lastUpdated, setLastUpdated] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [showAddProject, setShowAddProject] = useState(false);
+    const [expandedProject, setExpandedProject] = useState(null);
+    const [newProject, setNewProject] = useState({
+        companyName: '', projectName: '', region: '', province: '', city: '',
+        industry: '', investmentAmount: '', investmentUSD: '', projectType: 'New Project',
+        status: 'Under Review', approvalDate: '', expectedCompletion: '',
+        description: '', contactPerson: '', employmentGenerated: '', incentives: ''
+    });
 
-    // MOCK BOI PROJECT DATA (In production, this would come from BOI API/Database)
-    // Source: Based on typical BOI-registered projects
-    const boiProjects = [
-        {
-            id: 'BOI-2024-001',
-            companyName: 'Nestlé Philippines Inc.',
-            projectName: 'Factory Expansion - Cabuyao Plant',
-            region: 'CALABARZON',
-            province: 'Laguna',
-            city: 'Cabuyao City',
-            industry: 'Food Manufacturing',
-            investmentAmount: 2500000000, // PHP
-            investmentUSD: 45000000,
-            projectType: 'Expansion',
-            status: 'Approved',
-            approvalDate: '2024-11-15',
-            expectedCompletion: '2026-Q2',
-            description: 'Expansion of milk processing and cold storage facilities',
-            contactPerson: 'Operations Manager',
-            employmentGenerated: 350,
-            incentives: ['Income Tax Holiday (6 years)', 'Duty-free importation of equipment']
-        },
-        {
-            id: 'BOI-2024-002',
-            companyName: 'Meralco PowerGen Corporation',
-            projectName: 'Solar Power Plant - Batangas',
-            region: 'CALABARZON',
-            province: 'Batangas',
-            city: 'Lipa City',
-            industry: 'Renewable Energy',
-            investmentAmount: 8500000000,
-            investmentUSD: 150000000,
-            projectType: 'New Project',
-            status: 'Approved',
-            approvalDate: '2024-10-20',
-            expectedCompletion: '2026-Q4',
-            description: '100MW solar power generation facility with battery storage',
-            contactPerson: 'Project Director',
-            employmentGenerated: 120,
-            incentives: ['Income Tax Holiday (7 years)', '0% VAT on local purchases']
-        },
-        {
-            id: 'BOI-2024-003',
-            companyName: 'SM Prime Holdings',
-            projectName: 'SM City Iloilo Expansion',
-            region: 'Region VI',
-            province: 'Iloilo',
-            city: 'Iloilo City',
-            industry: 'Real Estate Development',
-            investmentAmount: 3200000000,
-            investmentUSD: 57000000,
-            projectType: 'Expansion',
-            status: 'Under Review',
-            approvalDate: '2024-12-01',
-            expectedCompletion: '2025-Q4',
-            description: 'Addition of new retail wing and entertainment complex',
-            contactPerson: 'Development Manager',
-            employmentGenerated: 500,
-            incentives: ['Income Tax Holiday (4 years)']
-        },
-        {
-            id: 'BOI-2024-004',
-            companyName: 'PLDT Inc.',
-            projectName: 'Data Center - Clark Freeport',
-            region: 'Region III',
-            province: 'Pampanga',
-            city: 'Mabalacat City (Clark)',
-            industry: 'IT/Data Center',
-            investmentAmount: 5000000000,
-            investmentUSD: 89000000,
-            projectType: 'New Project',
-            status: 'Approved',
-            approvalDate: '2024-09-10',
-            expectedCompletion: '2025-Q3',
-            description: 'Tier-4 hyperscale data center with advanced cooling systems',
-            contactPerson: 'Infrastructure Head',
-            employmentGenerated: 200,
-            incentives: ['Income Tax Holiday (8 years)', 'Duty-free importation']
-        },
-        {
-            id: 'BOI-2024-005',
-            companyName: 'Universal Robina Corporation',
-            projectName: 'Snack Food Production Facility',
-            region: 'Region VII',
-            province: 'Cebu',
-            city: 'Mandaue City',
-            industry: 'Food Manufacturing',
-            investmentAmount: 1800000000,
-            investmentUSD: 32000000,
-            projectType: 'New Project',
-            status: 'Approved',
-            approvalDate: '2024-11-25',
-            expectedCompletion: '2026-Q1',
-            description: 'Automated snack food manufacturing with cold storage',
-            contactPerson: 'Plant Manager',
-            employmentGenerated: 280,
-            incentives: ['Income Tax Holiday (6 years)']
-        },
-        {
-            id: 'BOI-2024-006',
-            companyName: 'San Miguel Brewery Inc.',
-            projectName: 'Brewery Modernization - Davao',
-            region: 'Region XI',
-            province: 'Davao City',
-            city: 'Davao City',
-            industry: 'Beverage Manufacturing',
-            investmentAmount: 4200000000,
-            investmentUSD: 75000000,
-            projectType: 'Modernization',
-            status: 'Approved',
-            approvalDate: '2024-08-15',
-            expectedCompletion: '2025-Q4',
-            description: 'Brewery capacity expansion and cold chain modernization',
-            contactPerson: 'Operations Director',
-            employmentGenerated: 180,
-            incentives: ['Income Tax Holiday (5 years)', 'Duty-free equipment']
-        },
-        {
-            id: 'BOI-2024-007',
-            companyName: 'Ayala Land Premier',
-            projectName: 'Mixed-Use Development - BGC',
-            region: 'NCR',
-            province: 'Metro Manila',
-            city: 'Metro Manila - BGC (Taguig)',
-            industry: 'Real Estate Development',
-            investmentAmount: 12000000000,
-            investmentUSD: 215000000,
-            projectType: 'New Project',
-            status: 'Approved',
-            approvalDate: '2024-10-05',
-            expectedCompletion: '2027-Q2',
-            description: 'High-rise residential and commercial complex with HVAC systems',
-            contactPerson: 'Project Manager',
-            employmentGenerated: 800,
-            incentives: ['Income Tax Holiday (3 years)']
-        },
-        {
-            id: 'BOI-2024-008',
-            companyName: 'Monde Nissin Corporation',
-            projectName: 'Biscuit Manufacturing Expansion',
-            region: 'CALABARZON',
-            province: 'Laguna',
-            city: 'Sta. Cruz',
-            industry: 'Food Manufacturing',
-            investmentAmount: 2100000000,
-            investmentUSD: 37500000,
-            projectType: 'Expansion',
-            status: 'Approved',
-            approvalDate: '2024-11-01',
-            expectedCompletion: '2025-Q4',
-            description: 'New production lines with temperature-controlled storage',
-            contactPerson: 'Manufacturing Head',
-            employmentGenerated: 220,
-            incentives: ['Income Tax Holiday (6 years)']
-        }
-    ];
+    // Load custom projects from Firestore
+    useEffect(() => {
+        if (!user) return;
+        const unsub = onSnapshot(
+            collection(db, 'users', user.uid, 'boi_custom_projects'),
+            (snap) => {
+                const projects = snap.docs.map(d => ({ ...d.data(), _firestoreId: d.id, isCustom: true }));
+                setCustomProjects(projects);
+                if (snap.docs.length > 0) {
+                    const latest = snap.docs.reduce((max, d) => {
+                        const ts = d.data().updatedAt?.toDate?.() || d.data().createdAt?.toDate?.();
+                        return ts && ts > max ? ts : max;
+                    }, new Date(0));
+                    if (latest > new Date(0)) setLastUpdated(latest);
+                }
+            }
+        );
+        return () => unsub();
+    }, [user]);
+
+    // Merge default + custom projects
+    const boiProjects = useMemo(() => {
+        return [...DEFAULT_BOI_PROJECTS, ...customProjects.map(cp => ({
+            ...cp,
+            investmentAmount: Number(cp.investmentAmount) || 0,
+            investmentUSD: Number(cp.investmentUSD) || 0,
+            employmentGenerated: Number(cp.employmentGenerated) || 0,
+            incentives: Array.isArray(cp.incentives) ? cp.incentives : (cp.incentives || '').split(',').map(s => s.trim()).filter(Boolean)
+        }))];
+    }, [customProjects]);
 
     const regions = ['ALL', 'NCR', 'CALABARZON', 'Region III', 'Region VI', 'Region VII', 'Region XI'];
     const industries = ['ALL', 'Food Manufacturing', 'Beverage Manufacturing', 'Real Estate Development', 'IT/Data Center', 'Renewable Energy'];
@@ -177,15 +217,75 @@ const BOIProjectLeads = ({ territories = [], user }) => {
         return boiProjects.filter(project => {
             const matchesRegion = selectedRegion === 'ALL' || project.region === selectedRegion;
             const matchesIndustry = selectedIndustry === 'ALL' || project.industry === selectedIndustry;
-            const matchesSearch = searchTerm === '' || 
+            const matchesSearch = searchTerm === '' ||
                 project.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 project.city.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesInvestment = project.investmentAmount >= minInvestment;
-            
+
             return matchesRegion && matchesIndustry && matchesSearch && matchesInvestment;
         });
-    }, [selectedRegion, selectedIndustry, searchTerm, minInvestment]);
+    }, [selectedRegion, selectedIndustry, searchTerm, minInvestment, boiProjects]);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            setLastUpdated(new Date());
+            await new Promise(r => setTimeout(r, 800));
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    const handleAddProject = async () => {
+        if (!user || !newProject.companyName || !newProject.projectName) return;
+        const projectId = `BOI-CUSTOM-${Date.now()}`;
+        await addDoc(collection(db, 'users', user.uid, 'boi_custom_projects'), {
+            id: projectId,
+            companyName: newProject.companyName,
+            projectName: newProject.projectName,
+            region: newProject.region,
+            province: newProject.province,
+            city: newProject.city,
+            industry: newProject.industry,
+            investmentAmount: Number(newProject.investmentAmount) || 0,
+            investmentUSD: Number(newProject.investmentUSD) || 0,
+            projectType: newProject.projectType,
+            status: newProject.status,
+            approvalDate: newProject.approvalDate,
+            expectedCompletion: newProject.expectedCompletion,
+            description: newProject.description,
+            contactPerson: newProject.contactPerson,
+            employmentGenerated: Number(newProject.employmentGenerated) || 0,
+            incentives: newProject.incentives ? newProject.incentives.split(',').map(s => s.trim()) : [],
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        setNewProject({
+            companyName: '', projectName: '', region: '', province: '', city: '',
+            industry: '', investmentAmount: '', investmentUSD: '', projectType: 'New Project',
+            status: 'Under Review', approvalDate: '', expectedCompletion: '',
+            description: '', contactPerson: '', employmentGenerated: '', incentives: ''
+        });
+        setShowAddProject(false);
+    };
+
+    const handleDeleteCustomProject = async (project) => {
+        if (!user || !project._firestoreId) return;
+        if (!window.confirm(`Delete custom project "${project.projectName}"?`)) return;
+        await deleteDoc(doc(db, 'users', user.uid, 'boi_custom_projects', project._firestoreId));
+    };
+
+    const handleUpdateProjectStatus = async (project, newStatus) => {
+        if (!user || !project._firestoreId) return;
+        await setDoc(doc(db, 'users', user.uid, 'boi_custom_projects', project._firestoreId), {
+            ...project,
+            _firestoreId: undefined,
+            isCustom: undefined,
+            status: newStatus,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    };
 
     const handleAddToCompanies = async (project) => {
         if (!user) {
@@ -213,11 +313,11 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                 investmentUSD: project.investmentUSD,
                 expectedCompletion: project.expectedCompletion,
                 contactPerson: project.contactPerson,
-                notes: `BOI Project: ${project.projectName}\nInvestment: ₱${(project.investmentAmount / 1000000).toFixed(1)}M\nExpected Completion: ${project.expectedCompletion}`,
+                notes: `BOI Project: ${project.projectName}\nInvestment: PHP ${(project.investmentAmount / 1000000).toFixed(1)}M\nExpected Completion: ${project.expectedCompletion}`,
                 createdAt: serverTimestamp()
             });
 
-            alert(`✅ ${project.companyName} added to Companies!`);
+            alert(`${project.companyName} added to Companies!`);
             setAddedProjects(prev => new Set(prev).add(project.id));
         } catch (error) {
             console.error('Error adding to companies:', error);
@@ -234,9 +334,27 @@ const BOIProjectLeads = ({ territories = [], user }) => {
         <div className="w-full space-y-6">
             {/* Header */}
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 text-white">
-                <div className="flex items-center gap-3 mb-2">
-                    <TrendingUp size={32} />
-                    <h1 className="text-3xl font-black uppercase tracking-tight">BOI Project Leads</h1>
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                        <TrendingUp size={32} />
+                        <h1 className="text-3xl font-black uppercase tracking-tight">BOI Project Leads</h1>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {lastUpdated && (
+                            <div className="flex items-center gap-1 text-emerald-100 text-xs">
+                                <Clock size={12} />
+                                <span>Updated: {lastUpdated.toLocaleDateString()} {lastUpdated.toLocaleTimeString()}</span>
+                            </div>
+                        )}
+                        <Button
+                            onClick={handleRefresh}
+                            className="bg-white/20 hover:bg-white/30 text-white border-none text-xs"
+                            disabled={isRefreshing}
+                        >
+                            <RefreshCw size={14} className={`mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+                        </Button>
+                    </div>
                 </div>
                 <p className="text-emerald-100 text-sm font-bold">
                     Track BOI-registered investment projects and identify high-value leads
@@ -244,7 +362,7 @@ const BOIProjectLeads = ({ territories = [], user }) => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                     <div className="flex items-center justify-between">
                         <div>
@@ -284,7 +402,137 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                         <Check size={32} className="text-orange-400" />
                     </div>
                 </Card>
+
+                <Card className="p-4 bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-gray-500">Custom Projects</p>
+                            <p className="text-3xl font-black text-cyan-700">{customProjects.length}</p>
+                        </div>
+                        <Database size={32} className="text-cyan-400" />
+                    </div>
+                </Card>
             </div>
+
+            {/* Action Button */}
+            <div className="flex gap-3">
+                <Button
+                    variant="primary"
+                    className="text-xs"
+                    onClick={() => setShowAddProject(!showAddProject)}
+                >
+                    <Plus size={14} className="mr-1" />
+                    Add New BOI Project
+                </Button>
+            </div>
+
+            {/* Add Project Form */}
+            {showAddProject && (
+                <Card className="p-6 border-2 border-emerald-300 bg-emerald-50">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-black text-gray-800 uppercase text-sm">Add New BOI Project Lead</h3>
+                        <button onClick={() => setShowAddProject(false)} className="text-gray-400 hover:text-gray-600">
+                            <X size={18} />
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Company Name *</label>
+                            <input value={newProject.companyName} onChange={e => setNewProject(p => ({ ...p, companyName: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. Jollibee Foods Corp" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Project Name *</label>
+                            <input value={newProject.projectName} onChange={e => setNewProject(p => ({ ...p, projectName: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. Commissary Expansion" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Industry</label>
+                            <input value={newProject.industry} onChange={e => setNewProject(p => ({ ...p, industry: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. Food Manufacturing" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Region</label>
+                            <select value={newProject.region} onChange={e => setNewProject(p => ({ ...p, region: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm bg-white">
+                                <option value="">-- Select --</option>
+                                {regions.filter(r => r !== 'ALL').map(r => <option key={r} value={r}>{r}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Province</label>
+                            <input value={newProject.province} onChange={e => setNewProject(p => ({ ...p, province: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. Cavite" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">City</label>
+                            <input value={newProject.city} onChange={e => setNewProject(p => ({ ...p, city: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. Imus City" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Investment (PHP)</label>
+                            <input type="number" value={newProject.investmentAmount} onChange={e => setNewProject(p => ({ ...p, investmentAmount: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. 1000000000" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Investment (USD)</label>
+                            <input type="number" value={newProject.investmentUSD} onChange={e => setNewProject(p => ({ ...p, investmentUSD: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. 18000000" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Project Type</label>
+                            <select value={newProject.projectType} onChange={e => setNewProject(p => ({ ...p, projectType: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm bg-white">
+                                <option value="New Project">New Project</option>
+                                <option value="Expansion">Expansion</option>
+                                <option value="Modernization">Modernization</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Status</label>
+                            <select value={newProject.status} onChange={e => setNewProject(p => ({ ...p, status: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm bg-white">
+                                <option value="Under Review">Under Review</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Approval Date</label>
+                            <input type="date" value={newProject.approvalDate} onChange={e => setNewProject(p => ({ ...p, approvalDate: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Expected Completion</label>
+                            <input value={newProject.expectedCompletion} onChange={e => setNewProject(p => ({ ...p, expectedCompletion: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. 2026-Q3" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Contact Person</label>
+                            <input value={newProject.contactPerson} onChange={e => setNewProject(p => ({ ...p, contactPerson: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. Project Director" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Jobs Generated</label>
+                            <input type="number" value={newProject.employmentGenerated} onChange={e => setNewProject(p => ({ ...p, employmentGenerated: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. 300" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Incentives (comma-sep)</label>
+                            <input value={newProject.incentives} onChange={e => setNewProject(p => ({ ...p, incentives: e.target.value }))}
+                                className="w-full p-2 border rounded-lg text-sm" placeholder="e.g. ITH 6 years, Duty-free" />
+                        </div>
+                    </div>
+                    <div className="mb-4">
+                        <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Description</label>
+                        <textarea value={newProject.description} onChange={e => setNewProject(p => ({ ...p, description: e.target.value }))}
+                            className="w-full p-2 border rounded-lg text-sm" rows={2} placeholder="Project description..." />
+                    </div>
+                    <Button variant="primary" className="text-xs" onClick={handleAddProject} disabled={!newProject.companyName || !newProject.projectName}>
+                        <Plus size={14} className="mr-1" /> Save Project Lead
+                    </Button>
+                </Card>
+            )}
 
             {/* Filters */}
             <Card className="p-6">
@@ -328,10 +576,10 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                             className="w-full p-3 border border-gray-300 rounded-xl bg-white font-bold text-sm"
                         >
                             <option value={0}>All Projects</option>
-                            <option value={1000000000}>₱1B+</option>
-                            <option value={2000000000}>₱2B+</option>
-                            <option value={5000000000}>₱5B+</option>
-                            <option value={10000000000}>₱10B+</option>
+                            <option value={1000000000}>PHP 1B+</option>
+                            <option value={2000000000}>PHP 2B+</option>
+                            <option value={5000000000}>PHP 5B+</option>
+                            <option value={10000000000}>PHP 10B+</option>
                         </select>
                     </div>
 
@@ -352,12 +600,14 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                 {filteredProjects.map(project => {
                     const isAdded = addedProjects.has(project.id);
                     const isAdding = addingProject === project.id;
+                    const isExpanded = expandedProject === project.id;
 
                     return (
-                        <Card 
-                            key={project.id} 
+                        <Card
+                            key={project.id}
                             className={`p-6 transition-all ${
-                                isAdded ? 'border-2 border-green-300 bg-green-50' : 'hover:shadow-lg'
+                                isAdded ? 'border-2 border-green-300 bg-green-50' :
+                                project.isCustom ? 'border-2 border-cyan-200 bg-cyan-50' : 'hover:shadow-lg'
                             }`}
                         >
                             <div className="flex justify-between items-start mb-4">
@@ -369,9 +619,14 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                                                 <Check size={10} /> ADDED
                                             </span>
                                         )}
+                                        {project.isCustom && (
+                                            <span className="bg-cyan-500 text-white px-2 py-0.5 rounded-full text-[9px] font-black">CUSTOM</span>
+                                        )}
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-black ${
-                                            project.status === 'Approved' 
-                                                ? 'bg-green-100 text-green-700' 
+                                            project.status === 'Approved'
+                                                ? 'bg-green-100 text-green-700'
+                                                : project.status === 'Completed'
+                                                ? 'bg-blue-100 text-blue-700'
                                                 : 'bg-yellow-100 text-yellow-700'
                                         }`}>
                                             {project.status}
@@ -380,12 +635,17 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                                     <p className="text-sm font-bold text-gray-600 mb-1">{project.projectName}</p>
                                     <p className="text-xs text-gray-500 flex items-center gap-1">
                                         <MapPin size={12} />
-                                        {project.city}, {project.province} · {project.region}
+                                        {project.city}, {project.province} - {project.region}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-black uppercase text-gray-400">Investment</p>
-                                    <p className="text-2xl font-black text-emerald-600">₱{(project.investmentAmount / 1000000000).toFixed(2)}B</p>
+                                    <p className="text-2xl font-black text-emerald-600">
+                                        {project.investmentAmount >= 1000000000
+                                            ? `PHP ${(project.investmentAmount / 1000000000).toFixed(2)}B`
+                                            : `PHP ${(project.investmentAmount / 1000000).toFixed(1)}M`
+                                        }
+                                    </p>
                                     <p className="text-xs text-gray-500">${(project.investmentUSD / 1000000).toFixed(1)}M USD</p>
                                 </div>
                             </div>
@@ -421,13 +681,61 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                                 <p className="text-sm text-gray-700 font-medium">{project.description}</p>
                             </div>
 
+                            {/* Expandable incentives & details */}
+                            {isExpanded && (
+                                <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-4">
+                                    <p className="text-[10px] font-black uppercase text-gray-500 mb-2">BOI Incentives</p>
+                                    <div className="space-y-1">
+                                        {(Array.isArray(project.incentives) ? project.incentives : []).map((inc, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-sm">
+                                                <Check size={12} className="text-amber-600" />
+                                                <span className="font-bold text-gray-700">{inc}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {project.contactPerson && (
+                                        <div className="mt-3 pt-3 border-t border-amber-200">
+                                            <p className="text-xs text-gray-600">
+                                                <span className="font-black">Contact:</span> {project.contactPerson}
+                                            </p>
+                                            <p className="text-xs text-gray-600">
+                                                <span className="font-black">Approval:</span> {project.approvalDate}
+                                            </p>
+                                            <p className="text-xs text-gray-600">
+                                                <span className="font-black">Type:</span> {project.projectType}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {project.isCustom && (
+                                        <div className="mt-3 pt-3 border-t border-amber-200">
+                                            <p className="text-[10px] font-black uppercase text-gray-400 mb-2">Update Status</p>
+                                            <div className="flex gap-2">
+                                                {['Under Review', 'Approved', 'Completed'].map(st => (
+                                                    <button key={st}
+                                                        onClick={() => handleUpdateProjectStatus(project, st)}
+                                                        className={`text-xs px-3 py-1 rounded-lg font-bold border ${
+                                                            project.status === st
+                                                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                                                : 'bg-white text-gray-600 border-gray-300 hover:border-emerald-400'
+                                                        }`}
+                                                    >
+                                                        {st}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="flex gap-2">
                                 <Button
                                     variant="secondary"
                                     className="flex-1 text-xs"
+                                    onClick={() => setExpandedProject(isExpanded ? null : project.id)}
                                 >
-                                    <Briefcase size={12} className="mr-1" />
-                                    View BOI Details
+                                    {isExpanded ? <ChevronUp size={12} className="mr-1" /> : <ChevronDown size={12} className="mr-1" />}
+                                    {isExpanded ? 'Hide Details' : 'View Details'}
                                 </Button>
                                 <Button
                                     variant="primary"
@@ -449,6 +757,15 @@ const BOIProjectLeads = ({ territories = [], user }) => {
                                         </>
                                     )}
                                 </Button>
+                                {project.isCustom && (
+                                    <Button
+                                        variant="secondary"
+                                        className="text-xs text-red-500 hover:bg-red-50"
+                                        onClick={() => handleDeleteCustomProject(project)}
+                                    >
+                                        <Trash2 size={12} />
+                                    </Button>
+                                )}
                             </div>
                         </Card>
                     );
