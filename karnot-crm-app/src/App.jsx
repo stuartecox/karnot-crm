@@ -100,6 +100,7 @@ import PhilippinesHRTraining from './pages/PhilippinesHRTraining.jsx';
 import DailyTasksDashboard from './pages/DailyTasksDashboard.jsx';
 import ProfessionalServices from './pages/ProfessionalServices.jsx';
 import RegulatoryIndustryPage from './pages/RegulatoryIndustryPage.jsx';
+import ImportExportCompliancePage from './pages/ImportExportCompliancePage.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -119,7 +120,7 @@ import {
     MapPin, Wrench, Briefcase, FileText, Target, Package, 
     UserCheck, Calendar as CalendarIcon, CheckCircle, Globe, Upload, Sparkles,
     DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap,
-    Share2, Linkedin, BookOpen, Layout, Image, Scale, Shield
+    Share2, Linkedin, BookOpen, Layout, Image, Scale, Shield, Ship, Anchor
 } from 'lucide-react'; 
 
 // ==========================================
@@ -217,7 +218,8 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'exportCompanies', label: 'Companies', icon: Building },
         { view: 'exportContacts', label: 'Contacts', icon: Users },
         { view: 'exportCallCentre', label: 'Call Centre', icon: Phone },
-        { view: 'escoImport', label: 'Import ESCOs', icon: Upload, badge: 'AI' }
+        { view: 'escoImport', label: 'Import ESCOs', icon: Upload, badge: 'AI' },
+        { view: 'importExportCompliance', label: 'Import/Export Compliance', icon: Ship, badge: 'BOC' }
     ];
 
     // Operations Menu (Recurring Revenue)
@@ -893,6 +895,10 @@ export default function App() {
 
                 {activeView === 'escoImport' && (
                     <ESCOImportEnrichmentTool user={dataUser} />
+                )}
+
+                {activeView === 'importExportCompliance' && (
+                    <ImportExportCompliancePage user={dataUser} />
                 )}
                 
                 {activeView === 'rsrhCalc' && (
