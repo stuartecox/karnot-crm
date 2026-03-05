@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iSAVE — Technical White Paper · Business Summary · IP Draft</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue:#007aff; --green:#34c759; --gold:#FFB800;
+            --orange:#F56600; --purple:#6B21A8; --teal:#0D9488;
+            --red:#CE1126; --dark:#1d1d1f; --mid:#6e6e73;
+            --light:#f5f5f7; --white:#fff; --border:#d2d2d7;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--light);color:var(--dark);line-height:1.7;}
+
+        /* ── NAV TABS ── */
+        .tabs{position:sticky;top:0;z-index:100;background:#1d1d1f;display:flex;gap:0;border-bottom:2px solid #333;}
+        .tab{padding:14px 28px;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);cursor:pointer;text-decoration:none;transition:all .2s;border-bottom:3px solid transparent;margin-bottom:-2px;}
+        .tab:hover{color:#fff;}
+        .tab.active{color:#fff;border-bottom-color:var(--blue);}
+
+        /* ── HERO ── */
+        .hero{background:linear-gradient(160deg,#050510 0%,#0a1628 40%,#0d3060 75%,#1a5a2a 100%);color:#fff;padding:90px 24px 70px;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:"";position:absolute;inset:0;background:url('data:image/svg+xml,<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="g" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0L0 0 0 80" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/></pattern></defs><rect width="100%25" height="100%25" fill="url(%23g)"/></svg>');}
+        .hero-inner{position:relative;z-index:1;max-width:1000px;margin:0 auto;}
+        .doc-class{display:inline-block;padding:6px 16px;background:rgba(255,255,255,.12);border-radius:4px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;font-family:'JetBrains Mono',monospace;}
+        .hero h1{font-family:'Playfair Display',serif;font-size:54px;font-weight:800;line-height:1.1;margin-bottom:16px;}
+        .hero .sub{font-size:18px;opacity:.85;margin-bottom:8px;}
+        .hero .meta{font-size:13px;opacity:.6;font-family:'JetBrains Mono',monospace;margin-bottom:36px;}
+        .hero-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+        .hb{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:700;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);}
+
+        /* ── SECTION LAYOUT ── */
+        .section{padding:72px 24px;scroll-margin-top:52px;}
+        .section-inner{max-width:1100px;margin:0 auto;}
+        .bg-white{background:#fff;}
+        .bg-light{background:var(--light);}
+
+        /* ── CHAPTER HEADERS ── */
+        .chapter{margin-bottom:56px;}
+        .chapter-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--blue);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+        .chapter h2{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;margin-bottom:12px;line-height:1.2;}
+        .chapter .lead{font-size:18px;color:var(--mid);max-width:720px;line-height:1.7;}
+        .chapter.center{text-align:center;}
+        .chapter.center .lead{margin:0 auto;}
+
+        /* ── BODY TEXT ── */
+        .body-text{font-size:15px;line-height:1.85;color:#2c2c2e;max-width:820px;}
+        .body-text + .body-text{margin-top:16px;}
+        .body-text strong{color:var(--dark);}
+
+        /* ── GRIDS ── */
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+        .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+        /* ── CARDS ── */
+        .card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 3px 12px rgba(0,0,0,.07);}
+        .card h3{font-size:17px;font-weight:700;margin-bottom:8px;}
+        .card p{font-size:14px;color:var(--mid);line-height:1.7;}
+        .card ul{list-style:none;padding:0;margin-top:10px;}
+        .card li{font-size:13px;color:var(--mid);padding:5px 0 5px 18px;position:relative;border-bottom:1px solid var(--light);}
+        .card li:last-child{border-bottom:none;}
+        .card li::before{content:"→";position:absolute;left:0;color:var(--blue);}
+
+        /* ── SPEC TABLE ── */
+        .tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.07);font-size:13px;}
+        .tbl th{background:var(--dark);color:#fff;padding:12px 16px;text-align:left;font-weight:600;}
+        .tbl td{padding:11px 16px;border-bottom:1px solid var(--light);vertical-align:top;}
+        .tbl tr:last-child td{border-bottom:none;}
+        .tbl tr:hover td{background:#fafafa;}
+        .tbl td:first-child{font-weight:600;width:26%;}
+
+        /* ── DARK SECTION ── */
+        .ds{padding:72px 24px;color:#fff;}
+        .ds-blue{background:linear-gradient(135deg,#0051a5,#007aff);}
+        .ds-dark{background:linear-gradient(135deg,#050510,#1e3a5f);}
+        .ds-purple{background:linear-gradient(135deg,#3b0764,#6b21a8);}
+        .ds-green{background:linear-gradient(135deg,#064e3b,#059669);}
+        .ds-carbon{background:linear-gradient(135deg,#111827,#1f2937);}
+        .dc{background:rgba(255,255,255,.1);border-radius:14px;padding:24px;border:1px solid rgba(255,255,255,.12);}
+        .dc h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:8px;}
+        .dc p,.dc li{font-size:13px;color:rgba(255,255,255,.82);line-height:1.7;}
+        .dc ul{list-style:none;padding:0;margin-top:8px;}
+        .dc li{padding:5px 0 5px 18px;position:relative;border-bottom:1px solid rgba(255,255,255,.08);}
+        .dc li:last-child{border-bottom:none;}
+        .dc li::before{content:"→";position:absolute;left:0;color:var(--gold);}
+
+        /* ── DONGLE DIAGRAM ── */
+        .dongle-wrap{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:32px 0;}
+        .dbox{padding:16px 20px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;}
+        .darrow{font-size:28px;color:var(--mid);padding:0 8px;align-self:center;}
+        .d-hp{background:#dbeafe;color:#1e40af;border:2px solid #93c5fd;}
+        .d-rs{background:#fef9c3;color:#713f12;border:2px solid #fde68a;}
+        .d-bridge{background:#0051a5;color:#fff;border:2px dashed #60a5fa;padding:20px 28px;}
+        .d-eth{background:#d1fae5;color:#065f46;border:2px solid #6ee7b7;}
+        .d-sw{background:#ede9fe;color:#5b21b6;border:2px solid #c4b5fd;}
+        .d-gw{background:#F56600;color:#fff;border:2px solid #f97316;}
+
+        /* ── CODE ── */
+        .code{background:#0f172a;color:#7dd3fc;font-family:'JetBrains Mono',monospace;font-size:12px;padding:22px 24px;border-radius:12px;overflow-x:auto;line-height:1.9;margin:16px 0;}
+        .c-g{color:#4ade80;} .c-y{color:#fde68a;} .c-p{color:#f9a8d4;} .c-m{color:#94a3b8;}
+
+        /* ── BADGES ── */
+        .b{display:inline-block;padding:2px 9px;border-radius:8px;font-size:11px;font-weight:700;margin:2px;}
+        .b-b{background:#dbeafe;color:#1e40af;} .b-g{background:#d1fae5;color:#065f46;}
+        .b-o{background:#fed7aa;color:#9a3412;} .b-p{background:#ede9fe;color:#5b21b6;}
+        .b-t{background:#ccfbf1;color:#134e4a;} .b-r{background:#fee2e2;color:#991b1b;}
+        .b-y{background:#fef9c3;color:#713f12;} .b-k{background:#1d1d1f;color:#fff;}
+
+        /* ── PATENT CLAIM ── */
+        .claim{background:#fff;border-radius:14px;padding:28px;border-left:5px solid var(--purple);box-shadow:0 3px 12px rgba(0,0,0,.07);margin-bottom:16px;}
+        .claim-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--purple);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;}
+        .claim h4{font-size:16px;font-weight:700;margin-bottom:10px;}
+        .claim p{font-size:13px;color:var(--mid);line-height:1.8;}
+        .claim ol{margin-top:10px;padding-left:20px;}
+        .claim ol li{font-size:13px;color:var(--mid);line-height:1.8;margin-bottom:6px;}
+
+        /* ── CALLOUT ── */
+        .callout{border-radius:12px;padding:18px 22px;margin:16px 0;font-size:14px;line-height:1.7;}
+        .c-blue{background:#eff6ff;border-left:4px solid var(--blue);color:#1e40af;}
+        .c-green{background:#f0fdf4;border-left:4px solid var(--green);color:#166534;}
+        .c-orange{background:#fff7ed;border-left:4px solid var(--orange);color:#9a3412;}
+        .c-purple{background:#faf5ff;border-left:4px solid var(--purple);color:#5b21b6;}
+
+        /* ── REVENUE TABLE ── */
+        .rev-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--light);padding:12px 16px;}
+        .rev-head{background:var(--dark);color:#fff;border-radius:10px 10px 0 0;padding:12px 16px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;font-size:12px;font-weight:700;}
+        .rev-body{background:#fff;border-radius:0 0 10px 10px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.07);}
+        .rev-total{background:#eff6ff;font-weight:700;}
+
+        /* ── FOOTER ── */
+        footer{background:#050510;color:rgba(255,255,255,.5);padding:48px 24px;text-align:center;}
+        footer h3{color:#fff;font-size:20px;font-weight:700;margin-bottom:8px;}
+        footer p{font-size:13px;line-height:1.8;}
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr;}.hero h1{font-size:34px;}.tabs{overflow-x:auto;}.tab{white-space:nowrap;}}
+    </style>
+</head>
+<body>
+
+<!-- NAVIGATION TABS -->
+<nav class="tabs">
+  <a href="#wp" class="tab active">📄 White Paper</a>
+  <a href="#bridge" class="tab">🔌 iSAVE Bridge</a>
+  <a href="#biz" class="tab">💼 Business Summary</a>
+  <a href="#patent" class="tab">⚖️ IP / Patent Draft</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="doc-class">Document No. KES-001 · CONFIDENTIAL · Feb 2026</div>
+    <h1>iSAVE Intelligent Energy<br>Asset Management Platform</h1>
+    <p class="sub">Technical White Paper · Business Summary · Intellectual Property Draft</p>
+    <p class="meta">Karnot Energy Solutions INC &nbsp;·&nbsp; stuart@karnot.com &nbsp;·&nbsp; Version 1.0</p>
+    <div class="hero-badges">
+      <div class="hb" style="background:rgba(0,122,255,.25);">IEEE 2030.5 · OpenADR 2.0b</div>
+      <div class="hb" style="background:rgba(52,199,89,.25);">SG-Ready Compliant</div>
+      <div class="hb" style="background:rgba(107,33,168,.25);">Rubidex Blockchain</div>
+      <div class="hb" style="background:rgba(13,148,136,.25);">Utterberry IoT Sensors</div>
+      <div class="hb" style="background:rgba(245,102,0,.25);">Kraken FLEX API</div>
+      <div class="hb" style="background:rgba(206,17,38,.25);">🇵🇭 Philippines First</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     PART 1: TECHNICAL WHITE PAPER
+══════════════════════════════════════════════════ -->
+<div id="wp"></div>
+
+<section class="section bg-white">
+  <div class="section-inner">
+    <div class="chapter center">
+      <div class="chapter-num">Part One</div>
+      <h2>Technical White Paper</h2>
+      <p class="lead">A complete engineering description of the iSAVE platform — architecture, protocols, hardware, software, and integration interfaces</p>
+    </div>
+
+    <!-- ABSTRACT -->
+    <div style="background:var(--light);border-radius:16px;padding:36px;max-width:820px;margin:0 auto 52px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--mid);letter-spacing:2px;margin-bottom:12px;">ABSTRACT</div>
+      <p class="body-text">This paper presents the iSAVE platform — an integrated edge-to-cloud energy asset management system developed by Karnot Energy Solutions INC for commercial and industrial deployment in the Philippines and Southeast Asia. The platform addresses four concurrent market failures: (1) the absence of affordable, standards-compliant demand response infrastructure for small-to-medium commercial sites; (2) the lack of verified, tamper-proof energy data for carbon credit issuance; (3) the unavailability of predictive maintenance for distributed heat pump and HVAC assets; and (4) the inability of distributed energy resources (DERs) to participate in grid services without expensive custom integration.</p>
+      <p class="body-text" style="margin-top:12px;">iSAVE resolves these failures through a novel two-device product family: the <strong>iSAVE Bridge</strong> — a PoE-powered Modbus-to-Ethernet field translator that installs at each asset — and the <strong>iSAVE Gateway</strong> — a Linux-based site controller that aggregates Bridge data, executes local control logic, and connects to the Karnot Control Centre cloud platform. Data integrity is guaranteed by a Rubidex permissioned blockchain layer. Environmental sensors are provided by Utterberry wireless IoT motes. Demand response is automated via OpenADR 2.0b, with fleet-level dispatch coordinated through the Octopus Kraken FLEX API and Philippine Meralco RDSP programme.</p>
+    </div>
+
+    <!-- SECTION 1: PROBLEM -->
+    <div class="chapter">
+      <div class="chapter-num">Section 1</div>
+      <h2>Problem Statement</h2>
+      <p class="lead">Why existing solutions fail the Philippines commercial energy market</p>
+    </div>
+    <div class="g2" style="margin-bottom:52px;">
+      <div>
+        <p class="body-text">The Philippines faces among the highest commercial electricity prices in Southeast Asia at ₱10–14/kWh — three to four times the cost in Malaysia or Vietnam. Despite this, commercial building operators have virtually no tools to actively manage their largest energy consumers: heat pumps, chillers, and HVAC systems that represent 60–70% of site energy consumption.</p>
+        <p class="body-text">Demand Response (DR) programmes operated by Meralco (the RDSP scheme) and the IEMOP ancillary services market offer significant revenue potential — but require certified metering, verifiable load reduction data, and automated control systems that existing standalone building management systems (BMS) cannot provide at an accessible price point.</p>
+        <p class="body-text">Carbon markets present a parallel opportunity. The Philippine Climate Change Commission's voluntary carbon framework and the Gold Standard international certification programme can monetise every kilowatt-hour of verified energy saving — but require immutable, auditable energy data that manual logging and traditional databases cannot guarantee.</p>
+      </div>
+      <div class="g2" style="grid-template-columns:1fr;gap:14px;align-content:start;">
+        <div class="callout c-orange"><strong>Grid Problem:</strong> Philippine grid frequency instability and brownouts create demand for flexible, controllable loads — but no affordable aggregation infrastructure exists for commercial sites below 1MW.</div>
+        <div class="callout c-blue"><strong>Data Problem:</strong> Utility DR payments require proof of load shed. Carbon registries require immutable energy data. Traditional databases can be edited — making them unacceptable for either purpose.</div>
+        <div class="callout c-green"><strong>Hardware Problem:</strong> Industrial energy management gateways cost $800–3,000 per site and require specialist commissioning. This economics prevents deployment at the scale needed to create a viable demand response fleet.</div>
+        <div class="callout c-purple"><strong>Maintenance Problem:</strong> Heat pump failures are costly and unpredictable. No affordable remote monitoring solution exists that can provide the sensor granularity needed for predictive maintenance at field scale.</div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: SOLUTION OVERVIEW -->
+    <div class="chapter">
+      <div class="chapter-num">Section 2</div>
+      <h2>The iSAVE Solution</h2>
+      <p class="lead">A two-product hardware family with a unified cloud intelligence layer</p>
+    </div>
+    <p class="body-text" style="margin-bottom:16px;">iSAVE resolves all four problems through a purpose-designed product family comprising two hardware devices, a cloud platform, and integration with two strategic partner technologies.</p>
+    <div class="g3" style="margin-bottom:36px;">
+      <div class="card" style="border-top:4px solid var(--orange);">
+        <div style="font-size:36px;margin-bottom:10px;">🔌</div>
+        <h3>iSAVE Bridge</h3>
+        <p>A PoE-powered Modbus-to-Ethernet field translator. Plugs directly into each energy asset. One Cat6 cable provides both power and data. Designed to be installed by any electrician in under 10 minutes with no specialist tools.</p>
+        <ul>
+          <li>RS485 Modbus RTU input (heat pumps, inverters, meters)</li>
+          <li>PoE 802.3af powered via RJ45 (no AC supply needed)</li>
+          <li>Modbus TCP / MQTT output over Ethernet</li>
+          <li>Hardware secure element — signs all data at source</li>
+          <li>Target BOM: &lt;$45 USD</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:4px solid var(--blue);">
+        <div style="font-size:36px;margin-bottom:10px;">🧠</div>
+        <h3>iSAVE Gateway</h3>
+        <p>The site-level SCADA controller. Aggregates all Bridge data from the PoE switch LAN, runs local control logic, connects to Utterberry Base Station, controls GUDE DR relay boxes, and connects to Karnot Cloud via LTE-M.</p>
+        <ul>
+          <li>Linux SBC — runs Node-RED + Python + MQTT broker</li>
+          <li>Aggregates all iSAVE Bridges via Modbus TCP</li>
+          <li>LTE-M + Wi-Fi connectivity to Karnot Cloud</li>
+          <li>4-hour UPS battery backup for brownouts</li>
+          <li>SG-Ready 4-mode relay outputs for any heat pump</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:4px solid var(--green);">
+        <div style="font-size:36px;margin-bottom:10px;">☁️</div>
+        <h3>Karnot Control Centre</h3>
+        <p>Fleet-wide cloud intelligence platform. Manages all sites, runs the AI forecasting and predictive maintenance engines, issues OpenADR 2.0b DR commands, coordinates with Meralco RDSP / Kraken FLEX, and generates the Rubidex-verified carbon credit pipeline.</p>
+        <ul>
+          <li>Fleet dashboard, alarm management, DR control</li>
+          <li>TimescaleDB + EMQX + Python ML stack</li>
+          <li>OpenADR 2.0b VTN server</li>
+          <li>Rubidex blockchain verification API</li>
+          <li>Kraken FLEX + Meralco RDSP integration</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     PART 2: iSAVE BRIDGE — DETAILED SPEC
+══════════════════════════════════════════════════ -->
+<div id="bridge"></div>
+
+<section class="section bg-light">
+  <div class="section-inner">
+    <div class="chapter center">
+      <div class="chapter-num">Part Two — New Product</div>
+      <h2>iSAVE Bridge — The Smart Field Translator</h2>
+      <p class="lead">A PoE-powered "smart dongle" that sits at each asset and makes it instantly network-connected — inspired by the insight that Ethernet is better than long RS485 runs</p>
+    </div>
+
+    <div class="callout c-blue" style="max-width:820px;margin:0 auto 36px;">
+      <strong>The Core Insight (from field engineering):</strong> Running RS485 cable 30 metres through a commercial building to a central gateway is messy, error-prone, and expensive. Running a single Cat6 cable (which is standard network cable, cheap, and understood by every electrician) is vastly simpler. Put the "translation" intelligence at the asset — not in the central cabinet. The iSAVE Bridge makes every device a standard Ethernet/MQTT device in under 10 minutes.
+    </div>
+
+    <!-- TOPOLOGY DIAGRAM -->
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:20px;text-align:center;">iSAVE Bridge — Installation Topology</h3>
+    <div style="background:#fff;border-radius:16px;padding:36px;box-shadow:0 3px 12px rgba(0,0,0,.07);margin-bottom:36px;">
+
+      <div style="text-align:center;margin-bottom:24px;font-size:13px;color:var(--mid);font-weight:600;">Option B (Recommended): Bridge AT the asset, Ethernet back to SCADA</div>
+
+      <div class="dongle-wrap">
+        <div class="dbox d-hp">🔥 Heat Pump<br><small>or Solar Inverter<br>or Battery BMS</small></div>
+        <div class="darrow">→</div>
+        <div class="dbox d-rs">RS485<br>Modbus RTU<br><small>~0.5m cable</small></div>
+        <div class="darrow">→</div>
+        <div class="dbox d-bridge">⚡ iSAVE Bridge<br><small>PoE powered<br>Modbus→MQTT<br>Hardware signed</small></div>
+        <div class="darrow">→</div>
+        <div class="dbox d-eth">Cat6 Ethernet<br>+ PoE power<br><small>up to 100m</small></div>
+        <div class="darrow">→</div>
+        <div class="dbox d-sw">PoE Switch<br><small>1 per floor<br>or cabinet</small></div>
+        <div class="darrow">→</div>
+        <div class="dbox d-eth">Cat6<br>backbone<br><small>to comms room</small></div>
+        <div class="darrow">→</div>
+        <div class="dbox d-gw">iSAVE<br>Gateway<br><small>Site SCADA</small></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px;">
+        <div style="padding:14px;background:var(--light);border-radius:10px;text-align:center;">
+          <div style="font-size:22px;">✅</div>
+          <div style="font-size:13px;font-weight:700;margin:6px 0;">Short RS485 Run</div>
+          <div style="font-size:12px;color:var(--mid);">Just 0.5m from Bridge to heat pump terminal block. No signal quality issues.</div>
+        </div>
+        <div style="padding:14px;background:var(--light);border-radius:10px;text-align:center;">
+          <div style="font-size:22px;">✅</div>
+          <div style="font-size:13px;font-weight:700;margin:6px 0;">Standard Cat6 Long Run</div>
+          <div style="font-size:12px;color:var(--mid);">Up to 100m of standard Cat6. Any electrician can install. Cheap, reliable, clean.</div>
+        </div>
+        <div style="padding:14px;background:var(--light);border-radius:10px;text-align:center;">
+          <div style="font-size:22px;">✅</div>
+          <div style="font-size:13px;font-weight:700;margin:6px 0;">PoE = No Power Outlet</div>
+          <div style="font-size:12px;color:var(--mid);">Saves ₱5,000–₱10,000 per device vs running a new 220V outlet to each heat pump location.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRIDGE HARDWARE SPEC -->
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:20px;">iSAVE Bridge — Hardware Specification</h3>
+    <table class="tbl" style="margin-bottom:28px;">
+      <tr><th>Parameter</th><th>Specification</th><th>Notes</th></tr>
+      <tr><td>Microcontroller</td><td>Espressif ESP32-S3 with W5500 hardwired Ethernet (or WT32-ETH01 module)</td><td>Dual-core Xtensa LX7 @ 240MHz. 8MB flash, 2MB PSRAM. Hardware TCP/IP stack via W5500 for reliable Ethernet (not Wi-Fi). Low cost, proven in industrial IoT.</td></tr>
+      <tr><td>PoE Input</td><td>IEEE 802.3af PoE Powered Device (PD). Input: 37–57VDC. Output: 5V/1A regulated via TPS23731 PD controller.</td><td>PoE switch only energises the port when it detects a valid PD signature — plug-and-play safe. Total device consumption: &lt;2W. PoE provides up to 15.4W.</td></tr>
+      <tr><td>RS485 Interface</td><td>Isolated RS485 transceiver (ADM2795E or equivalent). 3-pin spring terminal block: A+, B−, GND. Supports Modbus RTU at 1200–115200 baud, 8N1.</td><td>Galvanic isolation (2500V) protects device from ground faults and ground loops at the heat pump. Critical for safety in electrical cabinets.</td></tr>
+      <tr><td>Ethernet Port</td><td>Standard RJ45 with integrated magnetics. 10/100 Mbps. PoE PD on same port (power in + data in/out).</td><td>Single cable provides power, data uplink (Modbus TCP queries from Gateway), and data downlink (MQTT publish to Gateway).</td></tr>
+      <tr><td>Secure Element</td><td>Microchip ATECC608B hardware secure element (I²C interface). Stores device private key. Performs ECDSA-P256 signing of data bundles.</td><td>Private key is generated at factory and cannot be extracted. Every data packet signed at source — provides chain of custody from sensor to blockchain.</td></tr>
+      <tr><td>Firmware</td><td>FreeRTOS. Modbus RTU master task + MQTT publish task + OTA update task. Configuration via DHCP + MQTT provisioning (no web UI needed).</td><td>OTA updates pushed from Karnot Cloud via Gateway. Device receives new firmware automatically without field visit.</td></tr>
+      <tr><td>MQTT Output</td><td>Publishes to local Gateway MQTT broker. Topic: <code>karnot/{site}/{device_id}/telemetry</code>. JSON payload. QoS 1. Every 10 seconds.</td><td>Gateway subscribes and forwards to cloud. If cloud connection drops, Gateway buffers. Bridge always publishes to local broker regardless of internet status.</td></tr>
+      <tr><td>Modbus Polling</td><td>Configurable poll interval (default 10s). Configurable register map per device type (heat pump, inverter, battery, meter). Up to 50 registers per poll cycle.</td><td>Register maps for Karnot iHEAT, Daikin, Mitsubishi, Panasonic, Sungrow, BYD, Pylontech preloaded. Custom maps added via OTA.</td></tr>
+      <tr><td>Form Factor</td><td>Compact DIN-rail module: 90mm × 60mm × 35mm (WHL). 2 DIN-rail modules wide. IP20 enclosure. Mounts in existing electrical cabinet.</td><td>Alternative: wall-mount IP54 enclosure for direct mounting near outdoor heat pump unit.</td></tr>
+      <tr><td>Operating Temperature</td><td>−10°C to +70°C</td><td>Philippines tropical environment: 25–45°C ambient well within range.</td></tr>
+      <tr><td>Target BOM</td><td>&lt;$45 USD at 500 units/year</td><td>ESP32-S3: $3. W5500: $2.50. ATECC608B: $0.70. PoE PD module: $4. PCB + passives: $5. Enclosure + connectors: $8. Assembly: $12. Total: ~$35 ex-margin.</td></tr>
+      <tr><td>Certifications</td><td>CE, FCC, NTC Philippines</td><td>ESP32-S3 module is pre-certified (CE/FCC). PCB integration re-certification required. NTC for Philippines LAN device.</td></tr>
+    </table>
+
+    <!-- BRIDGE DATA FLOW -->
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:16px;">iSAVE Bridge — MQTT Data Payload</h3>
+    <div class="code"><span class="c-m">// iSAVE Bridge MQTT payload — published every 10 seconds</span>
+<span class="c-m">// Topic: karnot/{site_id}/{bridge_id}/telemetry</span>
+{
+  <span class="c-g">"bridge_id"</span>: <span class="c-y">"ISB-PH-001-042"</span>,
+  <span class="c-g">"site_id"</span>: <span class="c-y">"BGC-TOWER-01"</span>,
+  <span class="c-g">"device_type"</span>: <span class="c-y">"heat_pump"</span>,
+  <span class="c-g">"device_model"</span>: <span class="c-y">"KARNOT-IHEAT-25KW"</span>,
+  <span class="c-g">"timestamp_utc"</span>: <span class="c-y">"2026-02-24T08:15:00Z"</span>,
+  <span class="c-g">"readings"</span>: {
+    <span class="c-g">"compressor_status"</span>: <span class="c-p">1</span>,          <span class="c-m">// 0=off, 1=heating, 2=cooling, 3=DHW</span>
+    <span class="c-g">"inlet_temp_c"</span>: <span class="c-p">12.4</span>,
+    <span class="c-g">"outlet_temp_c"</span>: <span class="c-p">45.2</span>,
+    <span class="c-g">"power_draw_kw"</span>: <span class="c-p">8.3</span>,
+    <span class="c-g">"cop_calculated"</span>: <span class="c-p">3.84</span>,
+    <span class="c-g">"sg_ready_mode"</span>: <span class="c-p">2</span>,              <span class="c-m">// 1=block, 2=normal, 3=boost, 4=active_on</span>
+    <span class="c-g">"fault_code"</span>: <span class="c-p">0</span>
+  },
+  <span class="c-g">"signature"</span>: <span class="c-y">"MEQCIHDX7...base64_ECDSA..."</span>, <span class="c-m">// ATECC608B hardware signature</span>
+  <span class="c-g">"fw_version"</span>: <span class="c-y">"1.4.2"</span>
+}</div>
+
+    <!-- BRIDGE SCALABILITY -->
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:16px;margin-top:32px;">Scalability: 10 Heat Pumps = 10 Bridges + 1 PoE Switch</h3>
+    <div class="g3">
+      <div class="card">
+        <h3>Small Site (1–4 assets)</h3>
+        <p>1 iSAVE Bridge per heat pump. Small 8-port PoE switch ($60). All connect to 1 iSAVE Gateway. Total wiring: just Cat6 drops from PoE switch to each plant room.</p>
+        <ul>
+          <li>4 iSAVE Bridges: $180</li>
+          <li>8-port PoE switch: $60</li>
+          <li>1 iSAVE Gateway: $380</li>
+          <li>Cat6 installation: $200</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Medium Site (5–16 assets)</h3>
+        <p>16-port managed PoE switch with VLAN segregation. Bridges on their own VLAN. Gateway on management VLAN. Each floor may have its own small PoE switch daisy-chained.</p>
+        <ul>
+          <li>16 iSAVE Bridges: $720</li>
+          <li>16-port PoE switch: $180</li>
+          <li>1 iSAVE Gateway: $380</li>
+          <li>Utterberry sensor kit: $800</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Large Site (17–48 assets)</h3>
+        <p>Stacked PoE switches per floor connected via fibre uplink. Gateway has fibre SFP module for backbone. Utterberry Base Station connects direct to Gateway LAN port.</p>
+        <ul>
+          <li>48 Bridges + switches: ~$3,000</li>
+          <li>1 iSAVE Gateway: $380</li>
+          <li>Utterberry kit (×2): $1,600</li>
+          <li>GUDE relay controllers: $600</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION: FULL SYSTEM INTEGRATION
+══════════════════════════════════════════════════ -->
+<section class="section ds-dark ds">
+  <div class="section-inner">
+    <div class="chapter center">
+      <div class="chapter-num" style="color:rgba(255,255,255,.5);">Section 3</div>
+      <h2>Full Platform Integration</h2>
+      <p class="lead" style="color:rgba(255,255,255,.8);">How Bridge + Gateway + Cloud + Blockchain + DR Relay all work together from a single sensor reading to a verified carbon credit</p>
+    </div>
+
+    <div class="g2" style="gap:20px;margin-bottom:20px;">
+      <div class="dc">
+        <h3>🔬 Utterberry Sensor Layer</h3>
+        <p>Utterberry wireless motes (temperature, vibration, humidity, pressure) self-organise into a Sub-GHz mesh. The Utterberry Base Station (LAN-connected to the iSAVE Gateway) aggregates all mote data. This provides the environmental context that Modbus data alone cannot — compressor vibration signatures for bearing wear detection, evaporator surface temperature for defrost optimisation, ambient humidity for mould risk scoring. Complementary to iSAVE Bridges: Bridges read the machine data (power, setpoints, fault codes); Utterberry reads the physical state of the machine.</p>
+      </div>
+      <div class="dc">
+        <h3>⚡ GUDE DR Relay Layer</h3>
+        <p>GUDE Expert Net Control units (2302-1: 4-channel relay; 2314-1: 3-channel relay + energy metering) connect to the Gateway via LAN. When the Gateway receives a DR command (from Karnot Cloud via OpenADR 2.0b), it sends HTTP commands to the GUDE units to switch relevant loads. The 2314-1 model measures actual kWh per output channel — providing utility-grade proof of load reduction for Meralco RDSP payment claims. GUDE response time: &lt;100ms. All switching events logged to Rubidex blockchain for immutable DR audit trail.</p>
+      </div>
+      <div class="dc">
+        <h3>🔗 Rubidex Blockchain Layer</h3>
+        <p>Every 15 minutes, the iSAVE Gateway bundles: energy meter readings (kWh), Bridge telemetry snapshots, active DR event status, Utterberry sensor averages. This bundle is SHA-256 hashed, signed with the Gateway's ATECC608B hardware key, and submitted to Rubidex's permissioned blockchain via their API. The hash is immutably committed — if anyone alters the data later, the hash won't match. Utilities (Meralco) and carbon registries (Gold Standard) can independently verify any historical reading via Rubidex's audit API. This turns raw IoT data into legally defensible evidence.</p>
+      </div>
+      <div class="dc">
+        <h3>🌐 Karnot Cloud + Kraken/RDSP</h3>
+        <p>The Karnot Control Centre (EMQX + TimescaleDB + FastAPI + React) provides the fleet management layer. OpenADR 2.0b VTN server issues DR signals to all Gateways simultaneously. AI forecasting (Python Prophet + scikit-learn) predicts site demand and solar generation 24 hours ahead — enabling optimal pre-conditioning before DR events. The Kraken FLEX API integration means Karnot registers as a FLEX asset aggregator: the fleet's available DR capacity is published to Kraken every 30 minutes; Kraken or Meralco RDSP dispatches events; Karnot translates these into per-site OpenADR commands. DR revenue flows: Kraken/RDSP → Karnot → site owner via Rubidex smart contract.</p>
+      </div>
+    </div>
+
+    <div class="dc" style="border:2px solid rgba(255,184,0,.4);">
+      <h3 style="color:var(--gold);">📊 Data Flow: Sensor Reading → Carbon Credit (End-to-End)</h3>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:12px;font-weight:700;">
+        <div style="background:rgba(255,255,255,.1);padding:10px 14px;border-radius:8px;">Heat Pump<br>Modbus Reading</div>
+        <div style="color:var(--gold);">→</div>
+        <div style="background:rgba(255,255,255,.1);padding:10px 14px;border-radius:8px;">iSAVE Bridge<br>ECDSA Signs</div>
+        <div style="color:var(--gold);">→</div>
+        <div style="background:rgba(255,255,255,.1);padding:10px 14px;border-radius:8px;">Gateway<br>Bundles + Hashes</div>
+        <div style="color:var(--gold);">→</div>
+        <div style="background:rgba(255,255,255,.1);padding:10px 14px;border-radius:8px;">Rubidex<br>Blockchain Commit</div>
+        <div style="color:var(--gold);">→</div>
+        <div style="background:rgba(255,255,255,.1);padding:10px 14px;border-radius:8px;">Karnot Cloud<br>Carbon Calc</div>
+        <div style="color:var(--gold);">→</div>
+        <div style="background:rgba(255,255,255,.1);padding:10px 14px;border-radius:8px;">Gold Standard<br>Registry</div>
+        <div style="color:var(--gold);">→</div>
+        <div style="background:rgba(var(--gold),.2);padding:10px 14px;border-radius:8px;border:1px solid var(--gold);">Carbon Credit<br>Issued &amp; Sold</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     PART 3: BUSINESS SUMMARY
+══════════════════════════════════════════════════ -->
+<div id="biz"></div>
+
+<section class="section bg-white">
+  <div class="section-inner">
+    <div class="chapter center">
+      <div class="chapter-num">Part Three</div>
+      <h2>Business Summary</h2>
+      <p class="lead">Executive brief for investors and Philippine utility partners — Foxmont Capital presentation ready</p>
+    </div>
+
+    <div style="background:var(--dark);color:#fff;border-radius:16px;padding:36px;margin-bottom:36px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-bottom:12px;font-family:'JetBrains Mono',monospace;">EXECUTIVE SUMMARY</div>
+      <p style="font-size:16px;line-height:1.8;opacity:.92;">Karnot Energy Solutions has developed iSAVE — a patented smart energy management system that transforms commercial heat pumps, solar panels, and battery storage into revenue-generating, grid-responsive assets. Operating in the Philippines market where electricity costs ₱10–14/kWh, iSAVE delivers three concurrent revenue streams to site operators: energy cost reduction (20–35%), demand response payments from Meralco's RDSP programme, and blockchain-verified carbon credit income. Karnot earns SaaS subscription fees, DR revenue commission, and carbon credit brokerage on every enrolled site. The platform is built on a proprietary two-device hardware family (iSAVE Bridge + iSAVE Gateway), integrated with Utterberry IoT sensors, Rubidex blockchain data integrity, and Octopus Kraken's VPP intelligence layer.</p>
+    </div>
+
+    <!-- MARKET OPPORTUNITY -->
+    <div class="chapter">
+      <div class="chapter-num">Market Opportunity</div>
+      <h2>Philippines Energy Market</h2>
+    </div>
+    <div class="g4" style="margin-bottom:36px;">
+      <div style="background:var(--light);border-radius:14px;padding:24px;text-align:center;">
+        <div style="font-size:40px;font-weight:800;color:var(--blue);margin-bottom:6px;">₱14</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Per kWh</div>
+        <div style="font-size:12px;color:var(--mid);">Commercial electricity price — 3× Malaysia, 4× Vietnam</div>
+      </div>
+      <div style="background:var(--light);border-radius:14px;padding:24px;text-align:center;">
+        <div style="font-size:40px;font-weight:800;color:var(--green);margin-bottom:6px;">5.4</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">kWh/m²/day</div>
+        <div style="font-size:12px;color:var(--mid);">Average solar irradiance — world-class solar economics</div>
+      </div>
+      <div style="background:var(--light);border-radius:14px;padding:24px;text-align:center;">
+        <div style="font-size:40px;font-weight:800;color:var(--orange);margin-bottom:6px;">60%</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">HVAC Energy Share</div>
+        <div style="font-size:12px;color:var(--mid);">Of commercial building consumption in tropical climate</div>
+      </div>
+      <div style="background:var(--light);border-radius:14px;padding:24px;text-align:center;">
+        <div style="font-size:40px;font-weight:800;color:var(--purple);margin-bottom:6px;">$4B</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">TAM (Philippines)</div>
+        <div style="font-size:12px;color:var(--mid);">Commercial HVAC energy management addressable market</div>
+      </div>
+    </div>
+
+    <!-- REVENUE MODEL -->
+    <div class="chapter">
+      <div class="chapter-num">Business Model</div>
+      <h2>Revenue Streams — Per Site</h2>
+    </div>
+    <div class="rev-head"><div>Revenue Stream</div><div>Frequency</div><div>Per-Site Value</div><div>Karnot Share</div></div>
+    <div class="rev-body" style="margin-bottom:36px;">
+      <div class="rev-row"><div><strong>Hardware Sale</strong><br><small>iSAVE Gateway + Bridges + Utterberry kit</small></div><div>One-time</div><div>$1,200–2,500</div><div>100% margin on hardware</div></div>
+      <div class="rev-row"><div><strong>SaaS Subscription</strong><br><small>Cloud, AI, firmware, app, support</small></div><div>Monthly</div><div>$80–150/mo</div><div>100% recurring</div></div>
+      <div class="rev-row"><div><strong>DR Revenue Commission</strong><br><small>Meralco RDSP / Kraken FLEX payments</small></div><div>Monthly</div><div>₱20–80k/yr per site</div><div>20–30% of DR payments</div></div>
+      <div class="rev-row"><div><strong>Carbon Credit Brokerage</strong><br><small>Gold Standard VER credits via Rubidex</small></div><div>Quarterly</div><div>$400–1,200/yr per site</div><div>15% brokerage fee</div></div>
+      <div class="rev-row"><div><strong>Maintenance Contract</strong><br><small>Predictive maintenance alerts + field service</small></div><div>Annual</div><div>$500–1,500/yr</div><div>100% (Karnot engineers)</div></div>
+      <div class="rev-row rev-total"><div>Total Annual Value per Site</div><div>—</div><div>$3,000–8,000+</div><div>$800–2,500 Karnot</div></div>
+    </div>
+
+    <!-- PARTNER ECOSYSTEM -->
+    <div class="chapter">
+      <div class="chapter-num">Partner Ecosystem</div>
+      <h2>Strategic Partners — Why This is Defensible</h2>
+    </div>
+    <div class="g3" style="margin-bottom:36px;">
+      <div class="card" style="border-top:4px solid var(--teal);">
+        <div style="font-size:32px;margin-bottom:10px;">🔬</div>
+        <h3>Utterberry</h3>
+        <p>Dr. Heba Bevan's ISO-certified sensor company provides the IoT motes that no other energy management competitor has access to. Utterberry's ultra-low-power Sub-GHz mesh and IP68 sensors are the competitive moat for predictive maintenance. <strong>Stuart's personal relationship = exclusive or preferential access.</strong></p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--purple);">
+        <div style="font-size:32px;margin-bottom:10px;">🔗</div>
+        <h3>Rubidex (Penteon)</h3>
+        <p>Rubidex's permissioned blockchain (the Data Fabric underpinning BMSIntel and GridLock) provides data integrity that no competitor can replicate with a traditional database. Without blockchain verification, carbon credits require expensive third-party auditing. With Rubidex, the audit is automatic. <strong>Stuart's relationship = iSAVE built on their platform.</strong></p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--green);">
+        <div style="font-size:32px;margin-bottom:10px;">🐙</div>
+        <h3>Octopus Kraken</h3>
+        <p>Rather than building a competing VPP dispatch platform (3+ years, £10M+), Karnot feeds the Kraken FLEX API as a certified asset aggregator. Octopus's grid intelligence is the best in the world — Karnot benefits from it without competing with it. In the Philippines, Meralco RDSP is the equivalent counterparty.</p>
+      </div>
+    </div>
+
+    <!-- INVESTMENT STORY -->
+    <div style="background:linear-gradient(135deg,#0051a5,#007aff);color:#fff;border-radius:16px;padding:40px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-bottom:12px;">FOR FOXMONT CAPITAL &amp; PHILIPPINES INVESTORS</div>
+      <h3 style="font-size:28px;font-weight:700;margin-bottom:16px;">The Investment Thesis</h3>
+      <div class="g2">
+        <div>
+          <p style="font-size:14px;line-height:1.8;opacity:.92;margin-bottom:12px;">iSAVE is not a single product — it is a <strong>platform play</strong> with network effects. Every enrolled site adds data to the predictive maintenance AI (making it smarter). Every site adds DR capacity to the fleet (making the aggregated Meralco RDSP position more valuable). Every site generates carbon credits (making the batch submission to Gold Standard more cost-efficient).</p>
+          <p style="font-size:14px;line-height:1.8;opacity:.92;">The hardware (Bridge + Gateway) is the customer acquisition tool. The SaaS subscription, DR commission, and carbon credit brokerage are the recurring revenue engine. At 200 enrolled sites, Karnot generates $500k+ ARR before accounting for hardware margins.</p>
+        </div>
+        <div>
+          <div style="background:rgba(255,255,255,.12);border-radius:12px;padding:20px;">
+            <div style="font-size:13px;font-weight:700;opacity:.7;margin-bottom:14px;">PROJECTED ARR AT SCALE</div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:13px;"><span>50 sites (end of Year 1)</span><span style="font-weight:700;">$72k ARR</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:13px;"><span>200 sites (end of Year 2)</span><span style="font-weight:700;">$290k ARR</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:13px;"><span>500 sites (Year 3)</span><span style="font-weight:700;">$750k ARR</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:700;color:var(--gold);"><span>1,000 sites + SE Asia (Year 4)</span><span>$1.8M+ ARR</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     PART 4: IP / PATENT DRAFT
+══════════════════════════════════════════════════ -->
+<div id="patent"></div>
+
+<section class="section ds ds-carbon">
+  <div class="section-inner">
+    <div class="chapter center">
+      <div class="chapter-num" style="color:rgba(255,255,255,.5);">Part Four</div>
+      <h2>Intellectual Property — Patent Draft</h2>
+      <p class="lead" style="color:rgba(255,255,255,.75);">Preliminary draft for legal review — identifies novel inventive concepts for patent filing. Engage a patent attorney before filing.</p>
+    </div>
+    <div class="callout" style="background:rgba(255,184,0,.15);border-left-color:var(--gold);color:#fde68a;max-width:820px;margin:0 auto 36px;">
+      <strong>Legal Notice:</strong> This draft is prepared by the inventor for initial disclosure purposes. It does not constitute a formal patent application. A qualified patent attorney should review and file through the appropriate national/PCT process. Priority should be established via a Provisional Patent Application (USPTO) or equivalent as soon as possible.
+    </div>
+  </div>
+</section>
+
+<section class="section bg-white">
+  <div class="section-inner">
+
+    <!-- PATENT TITLE -->
+    <div style="background:var(--light);border-radius:14px;padding:28px;margin-bottom:32px;max-width:820px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mid);letter-spacing:1px;margin-bottom:8px;">PATENT APPLICATION TITLE</div>
+      <h3 style="font-size:22px;font-weight:700;line-height:1.4;">System and Method for Blockchain-Verified Demand Response and Carbon Credit Generation in Distributed Energy Asset Networks Using PoE-Powered Edge Translation Devices</h3>
+      <div style="margin-top:14px;font-size:13px;color:var(--mid);">
+        <strong>Inventors:</strong> Stuart Cox, Karnot Energy Solutions INC &nbsp;·&nbsp;
+        <strong>Field:</strong> Energy Management Systems, IoT, Blockchain, Demand Response &nbsp;·&nbsp;
+        <strong>Filing Jurisdiction:</strong> Philippines (IPOPHL) + PCT international
+      </div>
+    </div>
+
+    <!-- BACKGROUND -->
+    <div class="chapter">
+      <div class="chapter-num">Patent Section 1</div>
+      <h2>Background of the Invention</h2>
+    </div>
+    <p class="body-text">Distributed energy resources (DERs) including heat pumps, solar photovoltaic systems, thermal energy storage systems, and battery energy storage systems (BESS) present significant opportunity for demand response (DR) programme participation and carbon credit generation. However, existing systems suffer from three critical limitations that this invention addresses.</p>
+    <p class="body-text">First, integration of DERs with demand response infrastructure requires either expensive custom integration (costing $800–3,000 per site) or proprietary communication protocols that create vendor lock-in. No affordable, standards-compliant field device exists that can translate between the RS485/Modbus RTU protocols used by most heat pumps and the Ethernet/TCP/IP infrastructure required by cloud-based DR systems.</p>
+    <p class="body-text">Second, carbon credit issuance under established methodologies (Gold Standard, Verra VCS) requires tamper-proof, auditable energy measurement data. Traditional database systems do not provide cryptographic proof of data integrity, requiring expensive third-party auditing that makes small-scale carbon credit programmes economically unviable.</p>
+    <p class="body-text" style="margin-bottom:36px;">Third, predictive maintenance for distributed heat pump fleets lacks affordable, wireless sensor solutions with sufficient granularity to detect early-stage mechanical failures (compressor bearing wear, refrigerant degradation, condenser fouling) before they result in costly breakdowns.</p>
+
+    <!-- SUMMARY OF INVENTION -->
+    <div class="chapter">
+      <div class="chapter-num">Patent Section 2</div>
+      <h2>Summary of the Invention</h2>
+    </div>
+    <p class="body-text" style="margin-bottom:20px;">The present invention provides a system and method comprising three novel components that, in combination, constitute a non-obvious and inventive solution to the above limitations:</p>
+    <div class="g3" style="margin-bottom:36px;">
+      <div class="card" style="border-top:4px solid var(--purple);">
+        <h3>Novel Element A</h3>
+        <p><strong>The iSAVE Bridge Device:</strong> A Power-over-Ethernet (PoE) powered field translation device comprising a hardware secure element, RS485/Modbus RTU interface, and Ethernet/MQTT output — providing cryptographically-signed energy data from distributed assets.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--purple);">
+        <h3>Novel Element B</h3>
+        <p><strong>The Verified DR Method:</strong> A method for blockchain-verified demand response event recording using hardware-signed data bundles committed to a permissioned blockchain, providing utility-grade proof of load reduction without third-party auditing.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--purple);">
+        <h3>Novel Element C</h3>
+        <p><strong>The Carbon Pipeline Method:</strong> A method for autonomous carbon credit generation using on-device baseline comparison, hardware-signed avoided emissions calculation, and blockchain-committed Measurement, Reporting &amp; Verification (MRV) data for direct registry submission.</p>
+      </div>
+    </div>
+
+    <!-- CLAIMS -->
+    <div class="chapter">
+      <div class="chapter-num">Patent Section 3 — Most Critical</div>
+      <h2>Patent Claims</h2>
+      <p class="lead">The claims define the legal scope of protection. Independent claims are broadest; dependent claims add specific embodiments.</p>
+    </div>
+
+    <div class="claim">
+      <div class="claim-num">Independent Claim 1 — Device Claim</div>
+      <h4>The iSAVE Bridge Field Device</h4>
+      <p>A field-mounted energy asset monitoring and communication device comprising:</p>
+      <ol>
+        <li>a Power-over-Ethernet (PoE) powered device controller compliant with IEEE 802.3af, providing regulated DC power to the device from a single Ethernet cable;</li>
+        <li>an isolated RS485 interface configured to communicate with one or more energy assets using the Modbus RTU protocol;</li>
+        <li>a hardware secure element storing a unique device private key, wherein said secure element is configured to generate a cryptographic signature over energy data readings using said private key;</li>
+        <li>a network interface providing Ethernet connectivity and configured to publish signed energy data payloads to a local MQTT broker;</li>
+        <li>a microcontroller configured to: (a) periodically poll the energy asset via Modbus RTU; (b) construct a data bundle comprising timestamped energy readings; (c) invoke the hardware secure element to sign said data bundle; and (d) publish the signed bundle via MQTT;</li>
+        <li>wherein the signed data bundle provides a cryptographic chain of custody from the point of energy measurement to a remote verification system.</li>
+      </ol>
+    </div>
+
+    <div class="claim">
+      <div class="claim-num">Dependent Claim 2</div>
+      <h4>Claim 1 with SG-Ready Control</h4>
+      <p>The device of Claim 1, further comprising one or more potential-free relay outputs configurable to implement Smart Grid Ready (SG-Ready) operating modes 1 through 4 as defined by the German Heat Pump Association (BWP) standard, wherein said relay outputs are controlled by the microcontroller in response to demand response commands received via the MQTT interface.</p>
+    </div>
+
+    <div class="claim">
+      <div class="claim-num">Dependent Claim 3</div>
+      <h4>Claim 1 with Utterberry Sensor Integration</h4>
+      <p>The device of Claim 1, further comprising a Sub-GHz wireless receiver configured to receive environmental sensor data from a mesh network of low-power IoT sensor motes, wherein said sensor data is incorporated into the signed data bundle alongside Modbus-derived energy readings.</p>
+    </div>
+
+    <div class="claim">
+      <div class="claim-num">Independent Claim 4 — Method Claim</div>
+      <h4>Method for Blockchain-Verified Demand Response</h4>
+      <p>A computer-implemented method for verifiable demand response event recording, the method comprising the steps of:</p>
+      <ol>
+        <li>receiving a demand response event signal at a site controller from an automated demand response (OpenADR 2.0b) virtual top node;</li>
+        <li>issuing, by the site controller, one or more control commands to energy assets via Modbus TCP or SG-Ready relay contacts to curtail or modify their energy consumption;</li>
+        <li>measuring, via hardware-secured field devices, actual energy consumption during and after the demand response event period;</li>
+        <li>calculating the load reduction achieved as the difference between measured consumption and a pre-established baseline consumption model;</li>
+        <li>constructing an event record comprising: event identifier, start timestamp, end timestamp, commanded load reduction target, achieved load reduction in kWh, per-asset measurement data, and a hardware cryptographic signature;</li>
+        <li>submitting said event record to a permissioned blockchain system for immutable storage;</li>
+        <li>providing a blockchain transaction identifier to the demand response programme operator as auditable proof of load reduction.</li>
+      </ol>
+    </div>
+
+    <div class="claim">
+      <div class="claim-num">Independent Claim 5 — Method Claim</div>
+      <h4>Method for Autonomous Carbon Credit MRV</h4>
+      <p>A method for automated Measurement, Reporting and Verification (MRV) of greenhouse gas emission reductions for carbon credit issuance, the method comprising:</p>
+      <ol>
+        <li>establishing, at initial system installation, a baseline energy consumption model for a monitored site, said baseline being committed to a permissioned blockchain with a hardware-signed device certificate;</li>
+        <li>continuously measuring actual energy consumption of said site using hardware-secured metering devices at a defined interval;</li>
+        <li>calculating, for each measurement interval, the avoided energy consumption as the difference between the baseline model and the actual measurement, adjusted for relevant variables including ambient temperature and occupancy;</li>
+        <li>applying a grid emission factor specific to the site's electricity supply region to convert avoided energy consumption to avoided greenhouse gas emissions in CO₂-equivalent tonnes;</li>
+        <li>committing signed avoided emissions records to a permissioned blockchain at each measurement interval, thereby creating a tamper-proof emissions reduction audit trail;</li>
+        <li>aggregating committed records over a reporting period and submitting aggregated avoided emissions data and corresponding blockchain transaction identifiers to a carbon credit registry for automated credit issuance.</li>
+      </ol>
+    </div>
+
+    <div class="claim">
+      <div class="claim-num">Independent Claim 6 — System Claim</div>
+      <h4>The Complete iSAVE System</h4>
+      <p>A distributed energy management system comprising:</p>
+      <ol>
+        <li>a plurality of PoE-powered field translation devices as described in Claim 1, each installed in proximity to a respective energy asset;</li>
+        <li>a Power-over-Ethernet network switch providing power and data connectivity to said field translation devices;</li>
+        <li>a site gateway controller connected to said PoE switch, configured to: aggregate MQTT data from all field translation devices; execute local energy optimisation logic; transmit aggregated data to a cloud platform via a cellular network connection; and maintain a local data buffer for periods of network unavailability;</li>
+        <li>a cloud platform comprising a time-series database, machine learning inference engine, and OpenADR 2.0b virtual top node server, configured to manage a fleet of site gateway controllers and coordinate demand response dispatch;</li>
+        <li>a permissioned blockchain system configured to receive hardware-signed data bundles from said site gateway controllers and provide immutable audit records for demand response verification and carbon credit MRV;</li>
+        <li>wherein the combination of hardware-signed field devices, local buffering gateway, and blockchain audit layer provides end-to-end data integrity from point of measurement to carbon credit issuance without requiring third-party auditing.</li>
+      </ol>
+    </div>
+
+    <!-- ABSTRACT -->
+    <div class="chapter" style="margin-top:52px;">
+      <div class="chapter-num">Patent Section 4</div>
+      <h2>Abstract (for Patent Filing)</h2>
+    </div>
+    <div style="background:var(--light);border-radius:14px;padding:28px;max-width:820px;">
+      <p class="body-text">An energy asset management system and associated methods are disclosed. The system comprises PoE-powered field translation devices (iSAVE Bridge) that convert RS485/Modbus RTU communications from energy assets (heat pumps, solar inverters, battery storage, thermal storage) into MQTT messages over standard Ethernet, wherein each message is cryptographically signed using a hardware secure element containing a unique device private key. A site gateway controller aggregates signed data from multiple field devices, executes local demand response and energy optimisation logic, and submits periodic data bundles to a permissioned blockchain for immutable storage. A cloud platform provides fleet management, OpenADR 2.0b demand response coordination, and automated carbon credit MRV via the blockchain audit trail. The system enables verifiable demand response participation and autonomous carbon credit generation without third-party auditing, reducing the cost and complexity of DR programme participation and carbon market access for small-to-medium commercial energy asset operators.</p>
+    </div>
+
+    <!-- IP STRATEGY -->
+    <div class="chapter" style="margin-top:52px;">
+      <div class="chapter-num">IP Strategy</div>
+      <h2>Recommended IP Protection Strategy</h2>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <h3>🚀 Immediate — File Provisional</h3>
+        <p>File a Provisional Patent Application (PPA) with the USPTO or IPOPHL (Philippines Intellectual Property Office) immediately. A PPA establishes your priority date for 12 months at low cost ($320 USPTO). Within 12 months, file the full utility patent or PCT application.</p>
+        <ul>
+          <li>Priority date protection for 12 months</li>
+          <li>Can say "Patent Pending" immediately</li>
+          <li>Cost: ~$320 USD (USPTO)</li>
+          <li>File: Claims 1, 4, 5, 6 as independent claims</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🌍 Year 1 — PCT Application</h3>
+        <p>File a Patent Cooperation Treaty (PCT) application within 12 months of provisional. This covers 153 countries with one application. Enter national phases in Philippines, UK, EU, and Australia — key markets for iSAVE.</p>
+        <ul>
+          <li>Cost: ~$3,000–5,000 USD (attorney + fees)</li>
+          <li>30 months to decide national phase countries</li>
+          <li>Key jurisdictions: PH, GB, EU, AU, SG</li>
+          <li>Engage a patent attorney with IoT/energy experience</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🔒 Trade Secrets (Alongside Patents)</h3>
+        <p>Some elements are better protected as trade secrets than patents. The Rubidex integration methodology, carbon credit calculation models, and predictive maintenance AI training data should remain confidential and protected via NDA with all partners and employees.</p>
+        <ul>
+          <li>Rubidex integration architecture</li>
+          <li>ML model training data and weights</li>
+          <li>Carbon credit calculation methodology</li>
+          <li>Customer site energy baseline models</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>™ Trademarks</h3>
+        <p>Register the iSAVE brand, Karnot brand, iSAVE Bridge product name, and logo in Philippines, UK, EU, and key SE Asia jurisdictions. Trademark registration is relatively cheap and protects the brand even if patents are challenged.</p>
+        <ul>
+          <li>iSAVE® — core product trademark</li>
+          <li>iSAVE Bridge™ — device trademark</li>
+          <li>Karnot® — company trademark</li>
+          <li>Register in: PH, GB, EU, SG, AU</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <h3>Karnot Energy Solutions INC</h3>
+  <p>iSAVE Platform — Technical White Paper · Business Summary · IP Draft · Document KES-001 · February 2026</p>
+  <p style="margin-top:6px;">CONFIDENTIAL — Not for distribution without written consent of Stuart Cox, Karnot Energy Solutions INC</p>
+  <p style="margin-top:4px;font-size:12px;">Partners: Utterberry · Rubidex (Penteon) · Octopus Kraken · Meralco · Gold Standard</p>
+</footer>
+
+<script>
+  // Tab highlighting on scroll
+  const tabs = document.querySelectorAll('.tab');
+  const sections = ['wp','bridge','biz','patent'];
+  window.addEventListener('scroll', () => {
+    let current = sections[0];
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if(el && el.getBoundingClientRect().top < 120) current = id;
+    });
+    tabs.forEach(t => {
+      t.classList.toggle('active', t.getAttribute('href') === '#'+current);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLX — Passive Defrost Technology Investment Brief — Karnot Energy Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0015;--bg2:#110020;--card:#130020;--border:#3b1a6b;--accent:#8b5cf6;--accent2:#7c3aed;--accent3:#a78bfa;--amber:#f59e0b;--cyan:#06b6d4;--text:#e2e8f0;--muted:#94a3b8;--green:#10b981;--red:#ef4444}
+body{background:var(--bg);color:var(--text);font-family:Inter,sans-serif;line-height:1.6;font-size:15px}
+h1,h2,h3{font-family:'Playfair Display',serif}
+.mono{font-family:'JetBrains Mono',monospace}
+.nav{position:sticky;top:0;z-index:100;background:rgba(13,0,21,0.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;justify-content:space-between}
+.nav-brand{font-weight:900;font-size:18px;letter-spacing:3px;color:var(--accent)}
+.nav-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.nav-links{display:flex;gap:20px;flex-wrap:wrap}
+.nav-links a{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;text-decoration:none;transition:color 0.2s}
+.nav-links a:hover{color:var(--accent)}
+.nav-badge{background:rgba(139,92,246,0.15);border:1px solid var(--accent);color:var(--accent);font-size:10px;padding:3px 10px;border-radius:20px;letter-spacing:1px}
+.hero{background:linear-gradient(135deg,#0d0015 0%,#1a0035 50%,#0d0025 100%);padding:80px 32px 64px;border-bottom:2px solid var(--accent2)}
+.hero-inner{max-width:1100px;margin:0 auto}
+.hero-eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--accent3);margin-bottom:16px;font-weight:600}
+.hero h1{font-size:5rem;line-height:1.0;margin-bottom:8px;background:linear-gradient(135deg,#a78bfa,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Playfair Display',serif}
+.hero-sub{font-size:1.3rem;color:var(--text);margin-bottom:12px;font-family:'Playfair Display',serif;font-style:italic}
+.hero-tagline{font-size:1rem;color:var(--muted);max-width:720px;line-height:1.8;margin-bottom:48px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--accent);padding:24px 20px;border-radius:4px;text-align:center}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--accent);display:block;margin-bottom:4px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.stat-grid-sm{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat-box-sm{background:rgba(19,0,32,0.8);border:1px solid rgba(59,26,107,0.6);padding:14px;border-radius:4px;text-align:center}
+.stat-box-sm .sn{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--accent3);display:block;margin-bottom:2px;font-weight:600}
+.stat-box-sm .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.section{max-width:1100px;margin:0 auto;padding:64px 32px;border-bottom:1px solid rgba(59,26,107,0.4)}
+.section-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);margin-bottom:8px;font-weight:600}
+.section-title{font-size:2rem;color:var(--text);margin-bottom:8px;line-height:1.2}
+.section-sub{font-size:1rem;color:var(--muted);margin-bottom:36px;max-width:750px;line-height:1.7}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:24px}
+.card-a{border-top:3px solid var(--accent)}
+.card-b{border-top:3px solid var(--amber)}
+.card-c{border-top:3px solid var(--cyan)}
+.card-d{border-top:3px solid var(--green)}
+.card h3{font-size:1rem;color:var(--text);margin-bottom:12px;font-family:Inter,sans-serif;font-weight:700}
+.card ul{list-style:none;padding:0}
+.card ul li{font-size:13px;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(59,26,107,0.3);line-height:1.5}
+.card ul li:last-child{border-bottom:none}
+.card ul li::before{content:"→ ";color:var(--accent);font-size:11px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:20px 0}
+thead{background:rgba(124,58,237,0.25)}
+thead th{padding:12px 14px;text-align:left;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent3);font-weight:600}
+tbody tr{border-bottom:1px solid rgba(59,26,107,0.4)}
+tbody tr:nth-child(even){background:rgba(19,0,32,0.5)}
+tbody td{padding:10px 14px;color:var(--muted);line-height:1.4}
+tbody td:first-child{color:var(--text);font-weight:500}
+.tr-green{background:rgba(16,185,129,0.05) !important}
+.tr-amber{background:rgba(245,158,11,0.05) !important}
+.tr-blue{background:rgba(6,182,212,0.05) !important}
+.check{color:var(--green);font-weight:700}
+.cross{color:var(--red);font-weight:700}
+.warn{color:var(--amber);font-weight:700}
+.badge-green{display:inline-block;font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);font-weight:600;margin-left:4px}
+.badge-amber{display:inline-block;font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.3);font-weight:600;margin-left:4px}
+.badge-blue{display:inline-block;font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(6,182,212,0.15);color:var(--cyan);border:1px solid rgba(6,182,212,0.3);font-weight:600;margin-left:4px}
+.highlight{background:rgba(139,92,246,0.08);border-left:4px solid var(--accent);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;color:var(--text);line-height:1.7;font-style:italic}
+.highlight-amber{background:rgba(245,158,11,0.08);border-left:4px solid var(--amber);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;color:var(--text);line-height:1.7}
+.step-list{display:flex;flex-direction:column;gap:12px}
+.step-item{display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--card);border-left:3px solid var(--accent);border-radius:0 4px 4px 0}
+.step-n{min-width:28px;height:28px;background:var(--accent2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:monospace;margin-top:1px;flex-shrink:0}
+.ask-box{background:var(--card);border:2px solid var(--accent);border-radius:8px;padding:28px;text-align:center}
+.ask-box h3{font-size:1.1rem;color:var(--accent3);margin-bottom:8px}
+.ask-num{font-family:'JetBrains Mono',monospace;font-size:2.2rem;color:#fff;font-weight:700;display:block;margin:10px 0}
+.ask-box p{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px}
+.ask-box ul{list-style:none;text-align:left}
+.ask-box ul li{font-size:12px;color:var(--muted);padding:3px 0;padding-left:14px;position:relative}
+.ask-box ul li::before{content:"✓";color:var(--green);position:absolute;left:0;font-weight:700}
+.mkt-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:20px}
+.mkt-card h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.mkt-card p{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px}
+.mkt-stat{font-family:'JetBrains Mono',monospace;font-size:1.5rem;color:var(--accent);display:block;margin:8px 0}
+.validation-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.v-box{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center}
+.v-box .v-icon{font-size:1.5rem;margin-bottom:8px}
+.v-box h4{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}
+.v-box p{font-size:11px;color:var(--muted)}
+.v-box .v-cost{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--amber);display:block;margin:6px 0;font-weight:600}
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:32px;text-align:center}
+.footer p{font-size:11px;color:var(--muted);line-height:1.8;letter-spacing:0.5px}
+.footer strong{color:var(--text)}
+@media print{.nav{display:none}body{background:#fff;color:#000}}
+@media(max-width:768px){.stat-grid,.stat-grid-sm,.two-col,.three-col,.card-grid-3,.validation-grid{grid-template-columns:1fr}.hero h1{font-size:3rem}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div>
+    <div class="nav-brand">FLX</div>
+    <div class="nav-sub">Karnot Energy Solutions — Passive Defrost Technology</div>
+  </div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#solution">Solution</a>
+    <a href="#review">Peer Review</a>
+    <a href="#markets">Markets</a>
+    <a href="#financials">Financials</a>
+    <a href="#ip">IP</a>
+    <a href="#validation">Alpha Plan</a>
+    <a href="#ask">The Ask</a>
+  </div>
+  <div class="nav-badge">Technology Investment Brief · Feb 2026</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Karnot Energy Solutions INC — Technology Investment Brief — February 2026 — Confidential</div>
+    <h1>FLX</h1>
+    <div class="hero-sub">The World's First Passive PCM Defrost Module</div>
+    <p class="hero-tagline">CO₂ subcooling heat. Coconut oil PCM. Graphene-enhanced copper foam. A completely new way to defrost a cold store — for free. Peer-reviewed, patent-defended, and ready for alpha validation.</p>
+    <div class="stat-grid">
+      <div class="stat-box"><span class="stat-num">4.5 kWh</span><span class="stat-label">Passive Charge Rate (per hr)</span></div>
+      <div class="stat-box"><span class="stat-num">80%</span><span class="stat-label">Defrost Energy Reduction</span></div>
+      <div class="stat-box"><span class="stat-num">£280–£460</span><span class="stat-label">Volume Production BOM</span></div>
+      <div class="stat-box"><span class="stat-num">$41–62k</span><span class="stat-label">Annual Savings / Cold Store</span></div>
+    </div>
+    <div class="stat-grid-sm">
+      <div class="stat-box-sm"><span class="sn">0</span><span class="sl">Electric Heaters Used</span></div>
+      <div class="stat-box-sm"><span class="sn">0</span><span class="sl">Hot Gas Events</span></div>
+      <div class="stat-box-sm"><span class="sn">0</span><span class="sl">Liquid Hammer Risk</span></div>
+      <div class="stat-box-sm"><span class="sn">✅</span><span class="sl">Peer-Reviewed Feb 2026</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem" class="section">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-title">Defrost Is Broken — In Three Different Ways</h2>
+  <p class="section-sub">Every cold storage facility in the world runs defrost cycles. Most lose 20–30% of their total electricity to it. And the current "best practices" carry either huge energy cost or serious safety risk.</p>
+  <div class="card-grid-3">
+    <div class="card card-a">
+      <span style="font-size:2rem;display:block;margin-bottom:12px">⚡</span>
+      <h3>Energy Waste</h3>
+      <ul>
+        <li>20–30% of all cold store energy is wasted on defrost</li>
+        <li>Electric heaters strip heat you just paid to remove</li>
+        <li>UK 500 kW cold store: £60k–£90k/yr defrost electricity</li>
+        <li>Philippines (₱14/kWh): ₱420k–₱630k/yr per store</li>
+        <li>Global market: ~$2.8B/yr in defrost electricity waste</li>
+        <li>Danfoss 2017: "Electric defrost is very expensive operationally"</li>
+      </ul>
+    </div>
+    <div class="card card-b">
+      <span style="font-size:2rem;display:block;margin-bottom:12px">💥</span>
+      <h3>Safety Risk (Hot Gas)</h3>
+      <ul>
+        <li>Hot gas defrost = current "best practice"</li>
+        <li>Liquid hammer: rapid pressure transients cause failures</li>
+        <li>Condensation-induced shock: pipe and valve damage</li>
+        <li>Danfoss 2017 identified as primary safety risk in NH₃</li>
+        <li>Repair costs: £500k–£2M per major incident</li>
+        <li>FLX eliminates this category entirely — no hot gas</li>
+      </ul>
+    </div>
+    <div class="card card-c">
+      <span style="font-size:2rem;display:block;margin-bottom:12px">🌡️</span>
+      <h3>HFC Lock-In</h3>
+      <ul>
+        <li>Electric defrost designed around HFC refrigerants</li>
+        <li>R404A: GWP 3,922 — Kigali illegal by 2028</li>
+        <li>CO₂ transcritical is the future — but needs new defrost</li>
+        <li>CO₂ Cp spike near 35°C: unique subcooling heat window</li>
+        <li>FLX exploits this CO₂ property exclusively</li>
+        <li>FLX only works with CO₂ systems — this is the moat</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-amber" style="margin-top:24px">
+    <strong>Danfoss Industry Baseline (Vestergaard, 2017):</strong> Independent study on ammonia hot gas defrost systems confirms: electric defrost "very expensive operationally." Field test on 41 kW evaporator: 12.6 kWh saved per cycle using optimised hot gas vs electric. FLX targets near-zero defrost energy cost — exceeding even the best hot gas methods, without their safety risks.
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution" class="section">
+  <div class="section-label">The Technology</div>
+  <h2 class="section-title">Passive. Thermodynamically Verified. Patent-Defended.</h2>
+  <p class="section-sub">FLX uses waste heat from CO₂ gas cooler subcooling to charge a Phase Change Material thermal battery. When defrost is needed, the PCM discharges — melting frost without any electric heater or hot gas event.</p>
+  <div class="two-col">
+    <div>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-n">1</div>
+          <div>
+            <strong style="color:var(--text);font-size:13px">CO₂ Subcooling Coil — Passive Charging</strong>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">Supercritical CO₂ (~37°C, 80–150 bar) after gas cooler passes through FLX heat exchanger. Near pseudocritical temperature, CO₂ Cp spikes — more heat per degree than any HFC refrigerant. Deposits 4.5 kWh/hr into PCM. Zero extra energy. First-principles verified: 0.17 kg/s × 2.0 kJ/kg·K × 13°C = 4.4 kW ≈ claimed. ✅</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">2</div>
+          <div>
+            <strong style="color:var(--text);font-size:13px">FLX Fluid 2.0 — PCM Matrix</strong>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">Virgin coconut oil base: 24°C melt point, 120 kJ/kg latent heat. Enhanced with 5% beeswax (melt stabiliser), 3% PEG-1000 (crystal modifier), 4% graphene nanoflakes (conductivity). Nickel-plated copper foam matrix: prevents lauric acid corrosion. Full stack: 0.5 → 13.5 W/m·K. Melt point &amp; latent heat: literature-confirmed ✅</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">3</div>
+          <div>
+            <strong style="color:var(--text);font-size:13px">Fan ΔP Defrost Trigger — Patent Claim 4</strong>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">As frost accumulates on evaporator fins, airflow resistance increases. Fan differential pressure rises. FLX triggers defrost when ΔP exceeds threshold — not a timer, not a temperature sensor. No prior art found. Peer review: novel and physically sound ✅</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">4</div>
+          <div>
+            <strong style="color:var(--text);font-size:13px">Ultrasonic Agitation — Supercooling Prevention</strong>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">2 × 100W piezoelectric transducers at 20–40 kHz. Activated during phase transitions only. Prevents supercooling (delayed solidification). Enhances solid-liquid heat transfer. Valid mechanism — scientifically well-established ✅. Cavitation erosion test required (1,000 cycles).</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">5</div>
+          <div>
+            <strong style="color:var(--text);font-size:13px">DR-Deferred Defrost — Patent Claim 2</strong>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">When iSAVE receives Meralco/VECO DR event, FLX holds defrost for up to 4 hours even after frost threshold reached. No competitor offers this. Cold store participates in demand response without product risk. Peer review: genuine novelty, no prior art ✅</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">6</div>
+          <div>
+            <strong style="color:var(--text);font-size:13px">Super-Boost Mode — Energy Balance Resolver</strong>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">3-way valve routes hot discharge gas (80–90°C) through FLX when PCM charge is low. 4.5 kW × 8 min = 8.1 kg ice melt. Resolves energy balance gap for heavy frost conditions. Maintains defrost performance at full range of operating conditions.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p style="color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Performance Stack</p>
+      <table>
+        <thead><tr><th>Enhancement Layer</th><th>Conductivity</th></tr></thead>
+        <tbody>
+          <tr><td>VCO alone</td><td class="mono">0.18 W/m·K</td></tr>
+          <tr><td>VCO + copper foam (90% porosity)</td><td class="mono" style="color:var(--amber)">5–10 W/m·K</td></tr>
+          <tr><td>+ Graphene nanoflakes (4 wt%)</td><td class="mono" style="color:var(--accent)">13.5 W/m·K</td></tr>
+        </tbody>
+      </table>
+      <table style="margin-top:16px">
+        <thead><tr><th>FLX Tank Specification</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Dimensions</td><td class="mono">190mm × 500mm</td></tr>
+          <tr><td>Volume</td><td class="mono">14.93 litres</td></tr>
+          <tr><td>PCM mass</td><td class="mono">13.2 kg VCO blend</td></tr>
+          <tr><td>Latent heat capacity</td><td class="mono">1,551 kJ</td></tr>
+          <tr><td>Sensible heat (liquid above melt)</td><td class="mono">377 kJ</td></tr>
+          <tr><td>Total available energy</td><td class="mono" style="color:var(--green)">~1,928 kJ</td></tr>
+          <tr><td>Standard defrost energy needed</td><td class="mono">~1,800 kJ</td></tr>
+          <tr><td>Standard defrost power / time</td><td class="mono">3 kW × 10 min</td></tr>
+          <tr><td>Super-boost power / time</td><td class="mono">4.5 kW × 8 min</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight" style="margin-top:16px">
+        Energy balance: 1,551 kJ latent + 377 kJ sensible = 1,928 kJ total. Standard defrost needs ~1,800 kJ. System operates with positive margin — peer-reviewed February 2026.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PEER REVIEW -->
+<section id="review" class="section">
+  <div class="section-label">Independent Assessment</div>
+  <h2 class="section-title">February 2026 — Independent Technical Peer Review</h2>
+  <p class="section-sub">Based on: FLX technical specification, provisional patent draft, first-principles thermodynamics, and Danfoss industrial baseline (Vestergaard 2017). Core conclusion: the FLX concept is thermodynamically sound.</p>
+  <table>
+    <thead><tr><th>Claim</th><th>Assessment</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr class="tr-green"><td>CO₂ subcooling → PCM: 4.5 kWh/hr</td><td><span class="check">✅ VERIFIED</span></td><td>First-principles: 4.4 kW ≈ 4.5 kW. CO₂ Cp spike near pseudocritical temp is genuine thermodynamic advantage vs any HFC.</td></tr>
+      <tr class="tr-green"><td>PCM melt point 24°C</td><td><span class="check">✅ VERIFIED</span></td><td>VCO literature-confirmed 23–26°C. Beeswax modifier: chemically sound.</td></tr>
+      <tr class="tr-green"><td>PCM latent heat 120 kJ/kg</td><td><span class="check">✅ VERIFIED</span></td><td>VCO latent heat 117–125 kJ/kg in literature. Within spec.</td></tr>
+      <tr class="tr-green"><td>Copper foam thermal enhancement</td><td><span class="check">✅ VERIFIED</span></td><td>90% porosity 10 PPI foam: well-established technique. 28–55× conductivity improvement confirmed by literature.</td></tr>
+      <tr class="tr-green"><td>Fan ΔP defrost trigger</td><td><span class="check">✅ NOVEL &amp; SOUND</span></td><td>Physical mechanism valid. Frost accumulation → increased airflow resistance is well-established. No prior art for this specific application found.</td></tr>
+      <tr class="tr-green"><td>Ultrasonic nucleation prevention</td><td><span class="check">✅ VALID</span></td><td>Well-established physics. Supercooling prevention via acoustic cavitation confirmed in literature.</td></tr>
+      <tr class="tr-green"><td>COP values (4.67/3.60/8.27)</td><td><span class="check">✅ CONSISTENT</span></td><td>First-law check: 4.67 − 3.60 = 1.07 ≈ 1 (electrical work input). Combined COP 8.27 valid during simultaneous heating AND cooling.</td></tr>
+      <tr class="tr-green"><td>DR-deferred defrost (4hr hold)</td><td><span class="check">✅ NOVEL</span></td><td>No prior art found. No competitor cold chain defrost system offers DR deferral. Genuine IP.</td></tr>
+      <tr class="tr-amber"><td>PCM energy balance</td><td><span class="warn">⚠️ TIGHT</span></td><td>Latent alone (1,551 kJ) &lt; needed (1,800 kJ). Resolved via sensible heat + super-boost mode. Minimum charge state alarm required in iSAVE.</td></tr>
+      <tr class="tr-amber"><td>Graphene 13.5 W/m·K</td><td><span class="warn">⚠️ UPPER BOUND</span></td><td>Copper foam does most of the enhancement. Graphene contribution needs physical measurement on fabricated sample.</td></tr>
+      <tr class="tr-amber"><td>5.4 kg ice melt per cycle</td><td><span class="warn">⚠️ SIMPLIFIED</span></td><td>Assumes frost at 0°C. Real figure ~4.5–4.8 kg in −20°C cold store (sensible heat to 0°C required first). Within spec with super-boost.</td></tr>
+      <tr class="tr-blue"><td>Copper-PCM compatibility</td><td><span style="color:var(--cyan);font-weight:700">🔧 ACTION ITEM</span></td><td>Lauric acid (50% of VCO) reacts with bare copper → copper soaps over time. Fix: nickel-plated foam. Stuart confirmed: "nickel-plated foam is the answer." In progress.</td></tr>
+      <tr class="tr-blue"><td>CO₂ coil pressure vessel</td><td><span style="color:var(--cyan);font-weight:700">🔧 ACTION ITEM</span></td><td>80–150 bar CO₂ coil inside atmospheric PCM tank. Requires EN 13480 specification + burst disc/PRV. Stuart Cox: "my bread and butter — easy to do." In progress.</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight" style="margin-top:20px">
+    <strong>Peer Review Conclusion:</strong> The core FLX concept is thermodynamically sound. The passive subcooling charge mechanism is verified from first principles. Business case validated by the Danfoss industry baseline. Two engineering action items (nickel plating + pressure vessel specification) are being addressed and are well within standard practice for a Chemical Combustion Engineer of Stuart Cox's background.
+  </div>
+</section>
+
+<!-- MARKETS -->
+<section id="markets" class="section">
+  <div class="section-label">Market Opportunity</div>
+  <h2 class="section-title">Three Markets. One Technology. Global Addressable.</h2>
+  <p class="section-sub">Philippines cold chain is the primary commercial target. UK heat pump retrofit and Canada/Arctic markets follow in Phase 2. Global OEM licensing multiplies all three.</p>
+  <div class="two-col" style="margin-bottom:32px">
+    <div class="mkt-card" style="border-top:3px solid var(--cyan)">
+      <h4>🇵🇭 Philippines Cold Chain <span class="badge-blue">PRIMARY</span></h4>
+      <span class="mkt-stat">200+ facilities</span>
+      <p>550,000 MT national cold storage. ₱6.6B/yr electricity (68 MW fleet × 8,760 hrs × ₱11/kWh blended avg; DTI Cold Chain Roadmap). Kigali 2028 mandatory HFC retrofit cycle. Meralco RDSP active at ₱500/kW/month.</p>
+      <p><strong style="color:var(--text)">Per medium cold store: $41,015–$61,523/yr total savings</strong></p>
+      <p>DR-deferred defrost = cold chain can participate in ₱270M/yr VPP fleet without product risk. Unique capability — no competitor offers this.</p>
+      <p style="font-size:11px;color:var(--muted)">Market: 200 × $2,500 FLX ASP = $500k Phase 1 hardware</p>
+    </div>
+    <div>
+      <div class="mkt-card" style="border-top:3px solid var(--amber);margin-bottom:16px">
+        <h4>🇬🇧 UK Heat Pump Retrofit <span class="badge-amber">PHASE 2</span></h4>
+        <span class="mkt-stat">26M boilers</span>
+        <p>Boiler Upgrade Scheme: £7,500/unit government grant. FLX on air-source heat pump: 80% defrost savings, +8–15% COP improvement. Innovate UK and IETF grant eligible.</p>
+        <p style="font-size:11px;color:var(--muted)">1% penetration of 1M ASHP installs/yr = 10,000 FLX units = £14M revenue</p>
+      </div>
+      <div class="mkt-card" style="border-top:3px solid var(--green)">
+        <h4>🇨🇦 Canada &amp; Arctic <span class="badge-green">PHASE 2</span></h4>
+        <span class="mkt-stat">−30°C operation</span>
+        <p>Extreme cold requires frequent, energy-intensive defrost. FLX × CO₂ offers unique advantage. Clean Heat Fund: $250M CAD. Nisga'a Nation and Burns Lake identified opportunities.</p>
+        <p style="font-size:11px;color:var(--muted)">NRCan grant programmes applicable</p>
+      </div>
+    </div>
+  </div>
+  <div class="card card-a" style="text-align:center">
+    <h3>🌍 Global OEM Licensing — Revenue Multiplier</h3>
+    <p style="font-size:13px;color:var(--muted);max-width:700px;margin:12px auto">Danfoss, Bitzer, Dorin, Embraco and other CO₂ compressor manufacturers represent millions of annual unit sales. A £50–£100/unit FLX licence royalty + FLX Fluid 2.0 annual consumable creates a recurring global revenue stream without Karnot needing to manufacture at scale.</p>
+    <div class="stat-grid" style="margin-top:20px;max-width:600px;margin-left:auto;margin-right:auto">
+      <div class="stat-box" style="padding:16px"><span class="stat-num" style="font-size:1.3rem">£75/unit</span><span class="stat-label">OEM Royalty Target</span></div>
+      <div class="stat-box" style="padding:16px"><span class="stat-num" style="font-size:1.3rem">£200/yr</span><span class="stat-label">FLX Fluid Subscription</span></div>
+      <div class="stat-box" style="padding:16px"><span class="stat-num" style="font-size:1.3rem">10,000</span><span class="stat-label">Units/yr Target (2028)</span></div>
+      <div class="stat-box" style="padding:16px"><span class="stat-num" style="font-size:1.3rem">£750k</span><span class="stat-label">Annual Royalty Revenue</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINANCIALS -->
+<section id="financials" class="section">
+  <div class="section-label">Financial Model</div>
+  <h2 class="section-title">Hardware + Fluid Subscription + Licensing. Three Stacking Streams.</h2>
+  <p class="section-sub">FLX has a 73% gross margin on hardware at volume. FLX Fluid 2.0 creates an annual consumable subscription. OEM licensing multiplies global reach without Karnot manufacturing everything.</p>
+  <div class="two-col">
+    <div>
+      <p style="color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">BOM Analysis (Volume Production)</p>
+      <table>
+        <thead><tr><th>Component</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>FLX tank (190mm × 500mm, 316L SS)</td><td class="mono">£45</td></tr>
+          <tr><td>Nickel-plated copper foam matrix</td><td class="mono">£65</td></tr>
+          <tr><td>VCO PCM blend (13.2 kg FLX Fluid 2.0)</td><td class="mono">£28</td></tr>
+          <tr><td>Ultrasonic transducers (2 × 100W piezo)</td><td class="mono">£55</td></tr>
+          <tr><td>Fan ΔP pressure sensor</td><td class="mono">£12</td></tr>
+          <tr><td>CO₂ subcooling coil (316L, EN 13480 spec)</td><td class="mono">£62</td></tr>
+          <tr><td>Pipework + fittings + burst disc</td><td class="mono">£43</td></tr>
+          <tr><td>Electronics + RS485 Modbus interface</td><td class="mono">£25</td></tr>
+          <tr><td>Assembly + test + QC</td><td class="mono">£40</td></tr>
+          <tr style="background:rgba(139,92,246,0.1)"><td><strong>Total BOM (volume)</strong></td><td class="mono" style="color:var(--accent);font-weight:700">£375 (range £280–£460)</td></tr>
+          <tr><td>Average Selling Price</td><td class="mono" style="color:var(--amber)">£1,400–£1,800</td></div></td></tr>
+          <tr style="background:rgba(16,185,129,0.08)"><td><strong>Gross Margin</strong></td><td class="mono" style="color:var(--green);font-weight:700">~73%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <p style="color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">3-Year Revenue Projection</p>
+      <table>
+        <thead><tr><th>Year</th><th>FLX Units</th><th>Hardware</th><th>Fluid ARR</th><th>Licensing</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td>2026 Pilot</td><td class="mono">25</td><td class="mono">£35k</td><td class="mono">—</td><td class="mono">—</td><td class="mono" style="color:var(--accent)">£35k</td></tr>
+          <tr><td>2027 Scale</td><td class="mono">200</td><td class="mono">£280k</td><td class="mono">£5k</td><td class="mono">£15k</td><td class="mono" style="color:var(--accent)">£300k</td></tr>
+          <tr><td>2028 Fleet</td><td class="mono">1,000+</td><td class="mono">£1.03M</td><td class="mono">£200k</td><td class="mono">£75k</td><td class="mono" style="color:var(--green)">£1.3M</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight" style="margin-top:16px">Philippines DR revenue (₱54M/yr at 200 cold stores) is additive to above — captured via iSAVE platform, not accounted for in FLX hardware line. FLX enables the DR play; iSAVE monetises it.</div>
+    </div>
+  </div>
+</section>
+
+<!-- IP -->
+<section id="ip" class="section">
+  <div class="section-label">Intellectual Property</div>
+  <h2 class="section-title">A Six-Layer IP Moat Around a Unique Thermodynamic Window.</h2>
+  <p class="section-sub">FLX exploits the CO₂ pseudocritical Cp spike — a thermodynamic property unique to CO₂ transcritical systems. The Glasgow PCT covers the foundation. Five FLX-specific claims add the innovation layer.</p>
+  <div class="two-col">
+    <div>
+      <table>
+        <thead><tr><th>Claim #</th><th>Title</th><th>Novelty</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge-green">Claim 1</span></td><td>Fan ΔP defrost initiation</td><td>No prior art — timers and temp sensors dominate</td></tr>
+          <tr><td><span class="badge-green">Claim 2</span></td><td>DR-deferred defrost via iSAVE</td><td>Genuinely novel — no competitor offers DR deferral</td></tr>
+          <tr><td><span class="badge-green">Claim 3</span></td><td>Ultrasonic PCM nucleation prevention</td><td>Novel application in PCM defrost context</td></tr>
+          <tr><td><span class="badge-green">Claim 4</span></td><td>VCO + graphene + beeswax composite</td><td>Specific formulation novel in PCM heat exchanger</td></tr>
+          <tr><td><span class="badge-green">Claim 5</span></td><td>Nickel-plated copper foam for PCM compatibility</td><td>Novel solution to lauric acid corrosion problem</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <table>
+        <thead><tr><th>IP Layer</th><th>Asset</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Foundation</td><td>Glasgow PCT/WO2022069581A1</td><td><span class="badge-green">Exclusive Licence</span></td></tr>
+          <tr><td>FLX Claims</td><td>5 provisional claims (above)</td><td><span class="badge-amber">In Prosecution</span></td></tr>
+          <tr><td>Trade Secret</td><td>FLX Fluid 2.0 exact formulation</td><td><span class="badge-green">Protected</span></td></tr>
+          <tr><td>Software</td><td>iSAVE DR-deferral logic</td><td><span class="badge-green">Proprietary</span></td></tr>
+          <tr><td>Know-How</td><td>Nickel plating process + supplier</td><td><span class="badge-green">Confidential</span></td></tr>
+        </tbody>
+      </table>
+      <div class="highlight" style="margin-top:16px">
+        <strong>Trade Secret Boundary:</strong> The patent discloses the VCO + graphene + beeswax concept. The exact percentages (wt% beeswax, wt% PEG-1000, wt% graphene, graphene flake size) are NOT disclosed — these are FLX Fluid 2.0 trade secrets. This creates two barriers: patents stop copycat formulations; trade secrets protect the performance optimum.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALIDATION -->
+<section id="validation" class="section">
+  <div class="section-label">Alpha Plan</div>
+  <h2 class="section-title">£16,500 to De-Risk. Then £250k to Scale.</h2>
+  <p class="section-sub">Four targeted validation tests address every peer review action item. After Phase 1, FLX is ready for alpha build and Philippines pilot installation.</p>
+  <div class="validation-grid">
+    <div class="v-box" style="border-top:3px solid var(--red)">
+      <div class="v-icon">🔬</div>
+      <h4>Copper-PCM Compatibility</h4>
+      <span class="v-cost">£2,500</span>
+      <p>Lauric acid + nickel-plated foam immersion test. 90-day accelerated. Confirm zero copper soap formation.</p>
+      <span class="badge-amber">Priority 1</span>
+    </div>
+    <div class="v-box" style="border-top:3px solid var(--red)">
+      <div class="v-icon">🔥</div>
+      <h4>PCM Thermal Cycle Test</h4>
+      <span class="v-cost">£3,500</span>
+      <p>500 charge/discharge cycles. IR imaging. Conductivity verification. Confirm no degradation.</p>
+      <span class="badge-amber">Priority 1</span>
+    </div>
+    <div class="v-box" style="border-top:3px solid var(--amber)">
+      <div class="v-icon">⚗️</div>
+      <h4>Full System Calorimetry</h4>
+      <span class="v-cost">£5,000</span>
+      <p>CO₂ coil + PCM + defrost under controlled lab. Measure actual charge rate, defrost energy, ice mass melted.</p>
+      <span class="badge-blue">Priority 2</span>
+    </div>
+    <div class="v-box" style="border-top:3px solid var(--amber)">
+      <div class="v-icon">🔊</div>
+      <h4>Ultrasonic Erosion Test</h4>
+      <span class="v-cost">£2,500</span>
+      <p>200W at 20–40 kHz for 1,000 cycles. Surface analysis, mass loss measurement, copper foam integrity.</p>
+      <span class="badge-blue">Priority 2</span>
+    </div>
+  </div>
+  <div class="highlight-amber">
+    <strong>Pressure vessel specification (EN 13480 + burst disc/PRV):</strong> Not a validation test — this is standard mechanical engineering design work. Stuart Cox is a qualified Chemical Combustion Engineer. Pressure vessel specification for 80–150 bar CO₂ coil: standard practice, est. £1,000 engineering time. Covered within the £250k seed budget.
+  </div>
+  <table style="margin-top:20px">
+    <thead><tr><th>Phase</th><th>Cost</th><th>Timeline</th><th>Output</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Phase 1 Validation</strong></td><td class="mono">£16,500</td><td>Q2–Q3 2026</td><td>All 4 tests complete. 2 action items closed.</td></tr>
+      <tr><td><strong>Alpha Build (5 units)</strong></td><td class="mono">£50,000</td><td>Q3 2026</td><td>Philippines pilot + UK demo unit.</td></tr>
+      <tr><td><strong>Beta Certification (CE/PED/NTC)</strong></td><td class="mono">£80,000</td><td>Q4 2026</td><td>EU Pressure Equipment Directive + Philippines NTC type approval.</td></tr>
+      <tr><td><strong>Series Production Tooling</strong></td><td class="mono">£120,000</td><td>Q1 2027</td><td>500+ units/yr manufacturing capacity.</td></tr>
+      <tr style="background:rgba(16,185,129,0.06)"><td><strong>Total to commercial production</strong></td><td class="mono" style="color:var(--green)">£266,500</td><td>Q1 2027</td><td>FLX commercially available globally.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ASK -->
+<section id="ask" class="section">
+  <div class="section-label">Investment</div>
+  <h2 class="section-title">£250,000 Seed. De-Risk the Technology. Prove the Market.</h2>
+  <p class="section-sub">Three aligned asks: capital for validation and alpha, an OEM licensing partner for scale, and a pilot cold store for real-world data. All three together makes FLX commercially unstoppable by Q2 2027.</p>
+  <div class="three-col">
+    <div class="ask-box">
+      <h3>💷 Investment Capital</h3>
+      <span class="ask-num">£250,000</span>
+      <p>Seed — convertible note or equity</p>
+      <ul>
+        <li>Phase 1 validation (4 tests): £16,500</li>
+        <li>Pressure vessel specification: £1,000</li>
+        <li>Alpha build (5 units): £50,000</li>
+        <li>Beta certification (CE/PED/NTC): £80,000</li>
+        <li>Philippines pilot (5 cold stores): £40,000</li>
+        <li>Patent prosecution (5 claims): £30,000</li>
+        <li>Working capital + team: £32,500</li>
+        <li>Path to Series A Q2 2027</li>
+      </ul>
+    </div>
+    <div class="ask-box">
+      <h3>🏭 OEM Partner</h3>
+      <span class="ask-num">CO₂ OEM</span>
+      <p>CO₂ refrigeration manufacturer — EU or UK</p>
+      <ul>
+        <li>FLX integrated into their CO₂ product line</li>
+        <li>£50–£100/unit royalty + FLX Fluid consumable</li>
+        <li>Co-development and field trial access</li>
+        <li>Joint IP co-ownership on improvements</li>
+        <li>Danfoss, Bitzer, Dorin, Embraco — all relevant</li>
+        <li>Potential strategic acquirer pathway</li>
+        <li>Market: 10,000 units/yr = £750k royalty</li>
+      </ul>
+    </div>
+    <div class="ask-box">
+      <h3>🧊 Pilot Site</h3>
+      <span class="ask-num">1–3 Sites</span>
+      <p>Cold store operator — Philippines or UK</p>
+      <ul>
+        <li>CO₂ transcritical or R290 refrigeration</li>
+        <li>FLX unit installed on 1 evaporator</li>
+        <li>Defrost energy saving measured + published</li>
+        <li>Data used for patent evidence + case study</li>
+        <li>Peer-reviewed case study for OEM licensing</li>
+        <li>Operator gets FLX free in exchange for data</li>
+        <li>Results expected: 80% defrost energy reduction</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:40px;text-align:center;padding:32px;background:var(--card);border:1px solid var(--border);border-radius:6px">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Stuart Cox — Chemical Combustion Engineer — CEO &amp; Founder</p>
+    <p style="font-size:16px;color:var(--text);font-weight:600">Karnot Energy Solutions INC</p>
+    <p style="font-size:13px;color:var(--accent3);margin-top:8px">stuart@karnot.com &nbsp;·&nbsp; +63 960 289 2001 &nbsp;·&nbsp; www.karnot.com</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">Cosmos Farm, Mapandan, Pangasinan 2428, Philippines &nbsp;·&nbsp; SEC: No. 2025060205860-05</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">FLX Technical White Paper · Independent Peer Review (Feb 2026) · Provisional Patent Draft — available on NDA</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <p><strong>KARNOT ENERGY SOLUTIONS INC — FLX Passive Defrost Technology</strong> — Investment Brief — February 2026 — Confidential</p>
+  <p>Stuart Cox, CEO — stuart@karnot.com — +63 960 289 2001 — SEC No. 2025060205860-05</p>
+  <p style="margin-top:8px;font-size:10px">Proprietary and confidential. Distribution restricted to authorised recipients. All projections are estimates based on current market data and first-principles analysis. Patent claims are subject to prosecution.</p>
+</footer>
+
+</body>
+</html>

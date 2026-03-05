@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iSAVE — Full System Technical Specification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --blue:#007aff; --green:#34c759; --gold:#FFB800;
+            --orange:#F56600; --purple:#6B21A8; --teal:#0D9488;
+            --red:#CE1126; --dark:#1d1d1f; --mid:#6e6e73;
+            --light:#f5f5f7; --white:#ffffff; --border:#d2d2d7;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--light);color:var(--dark);line-height:1.65;}
+        /* ── HERO ── */
+        .hero{background:linear-gradient(135deg,#0a0a1a 0%,#0051a5 60%,#F56600 100%);color:#fff;padding:90px 20px 70px;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:"";position:absolute;inset:0;background:url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="g" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0L0 0 0 60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%25" height="100%25" fill="url(%23g)"/></svg>');}
+        .hero-inner{position:relative;z-index:1;max-width:1000px;margin:0 auto;}
+        .doc-badge{display:inline-block;padding:7px 18px;background:rgba(255,255,255,0.15);border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;}
+        .hero h1{font-size:52px;font-weight:800;line-height:1.1;margin-bottom:14px;}
+        .hero .sub{font-size:20px;opacity:.9;margin-bottom:8px;}
+        .hero .sub2{font-size:15px;opacity:.75;margin-bottom:36px;}
+        .tag-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
+        .tag-chip{padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.25);}
+        /* ── LAYOUT ── */
+        .wrap{max-width:1200px;margin:0 auto;padding:0 24px;}
+        .sec{padding:72px 24px;}
+        .sec-inner{max-width:1200px;margin:0 auto;}
+        .sh{text-align:center;margin-bottom:52px;}
+        .sh .tag{display:inline-block;padding:5px 16px;border-radius:16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+        .sh h2{font-size:38px;font-weight:700;margin-bottom:10px;}
+        .sh p{font-size:18px;color:var(--mid);max-width:680px;margin:0 auto;}
+        /* ── GRID ── */
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+        .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+        /* ── CARDS ── */
+        .card{background:#fff;border-radius:18px;padding:32px;box-shadow:0 4px 14px rgba(0,0,0,.07);}
+        .card h3{font-size:19px;font-weight:700;margin-bottom:10px;}
+        .card p{font-size:14px;color:var(--mid);line-height:1.7;}
+        .card ul{list-style:none;padding:0;margin-top:12px;}
+        .card li{font-size:13px;color:var(--mid);padding:6px 0 6px 20px;position:relative;border-bottom:1px solid var(--light);}
+        .card li:last-child{border-bottom:none;}
+        .card li::before{content:"→";position:absolute;left:0;color:var(--blue);}
+        .icon{font-size:36px;margin-bottom:14px;}
+        /* ── DARK CARDS ── */
+        .dc{background:rgba(255,255,255,.1);border-radius:16px;padding:28px;border:1px solid rgba(255,255,255,.15);}
+        .dc h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px;}
+        .dc p,.dc li{font-size:13px;color:rgba(255,255,255,.82);line-height:1.7;}
+        .dc ul{list-style:none;padding:0;margin-top:10px;}
+        .dc li{padding:5px 0 5px 20px;position:relative;border-bottom:1px solid rgba(255,255,255,.1);}
+        .dc li:last-child{border-bottom:none;}
+        .dc li::before{content:"→";position:absolute;left:0;color:var(--gold);}
+        /* ── SPEC TABLE ── */
+        .st{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.07);}
+        .st th{background:var(--blue);color:#fff;padding:13px 18px;text-align:left;font-size:13px;font-weight:600;}
+        .st td{padding:12px 18px;border-bottom:1px solid var(--light);font-size:13px;vertical-align:top;}
+        .st tr:last-child td{border-bottom:none;}
+        .st tr:hover td{background:#f8f8fa;}
+        .st td:first-child{font-weight:600;width:25%;}
+        .st td:nth-child(2){width:35%;}
+        /* ── PROTOCOL BOX ── */
+        .proto{background:#fff;border-radius:16px;padding:28px;border-left:5px solid var(--blue);box-shadow:0 4px 12px rgba(0,0,0,.07);margin-bottom:18px;}
+        .proto h4{font-size:16px;font-weight:700;margin-bottom:8px;}
+        .proto p{font-size:13px;color:var(--mid);line-height:1.7;}
+        /* ── CODE BLOCK ── */
+        .code{background:#1a1a2e;color:#7dd3fc;font-family:'JetBrains Mono',monospace;font-size:12px;padding:24px;border-radius:12px;overflow-x:auto;line-height:1.8;}
+        .code .cm{color:#4ade80;}
+        .code .ck{color:#f9a8d4;}
+        .code .cv{color:#fde68a;}
+        /* ── ARCH DIAGRAM ── */
+        .arch{background:#fff;border-radius:18px;padding:40px;box-shadow:0 4px 14px rgba(0,0,0,.07);}
+        .alayer{border:2px solid;border-radius:10px;padding:16px 20px;margin-bottom:14px;position:relative;}
+        .alabel{position:absolute;top:-11px;left:16px;padding:2px 12px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+        .l-cloud{border-color:var(--blue);}  .l-cloud .alabel{background:var(--blue);color:#fff;}
+        .l-edge{border-color:var(--orange);}  .l-edge .alabel{background:var(--orange);color:#fff;}
+        .l-field{border-color:var(--teal);}   .l-field .alabel{background:var(--teal);color:#fff;}
+        .l-chain{border-color:var(--purple);} .l-chain .alabel{background:var(--purple);color:#fff;}
+        .l-ext{border-color:var(--green);}    .l-ext .alabel{background:var(--green);color:#fff;}
+        .acomps{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+        .ac{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;}
+        .ac-b{background:#dbeafe;color:#1e40af;} .ac-o{background:#fed7aa;color:#9a3412;}
+        .ac-t{background:#ccfbf1;color:#134e4a;} .ac-p{background:#ede9fe;color:#5b21b6;}
+        .ac-g{background:#d1fae5;color:#065f46;} .ac-gr{background:#f3f4f6;color:#374151;}
+        .ac-y{background:#fef9c3;color:#713f12;}
+        .aarrow{text-align:center;font-size:20px;color:var(--mid);margin:4px 0;}
+        /* ── DARK SECTIONS ── */
+        .ds{padding:72px 24px;color:#fff;}
+        .ds-blue{background:linear-gradient(135deg,#0051a5,#007aff);}
+        .ds-dark{background:linear-gradient(135deg,#0a0a1a,#1e3a5f);}
+        .ds-purple{background:linear-gradient(135deg,#3b0764,#6b21a8);}
+        .ds-teal{background:linear(135deg,#042f2e,#0d9488);}
+        .ds-green{background:linear-gradient(135deg,#064e3b,#059669);}
+        .ds-teal2{background:linear-gradient(135deg,#042f2e,#0d9488);}
+        /* ── BADGES ── */
+        .b{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin:2px;}
+        .b-b{background:#dbeafe;color:#1e40af;} .b-g{background:#d1fae5;color:#065f46;}
+        .b-o{background:#fed7aa;color:#9a3412;} .b-p{background:#ede9fe;color:#5b21b6;}
+        .b-t{background:#ccfbf1;color:#134e4a;} .b-r{background:#fee2e2;color:#991b1b;}
+        .b-y{background:#fef9c3;color:#713f12;}
+        /* ── STATUS ── */
+        .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+        .p-std{background:#d1fae5;color:#065f46;}  /* standard */
+        .p-req{background:#fee2e2;color:#991b1b;}   /* required */
+        .p-rec{background:#dbeafe;color:#1e40af;}   /* recommended */
+        /* ── DECISION BOX ── */
+        .decision{background:#fff;border-radius:18px;padding:36px;box-shadow:0 4px 14px rgba(0,0,0,.07);border-top:5px solid var(--orange);}
+        .decision h3{font-size:22px;font-weight:700;margin-bottom:12px;}
+        /* ── FOOTER ── */
+        footer{background:#1d1d1f;color:rgba(255,255,255,.65);text-align:center;padding:48px 20px;}
+        footer h3{color:#fff;font-size:22px;font-weight:700;margin-bottom:8px;}
+        /* ── RESPONSIVE ── */
+        @media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr;}.hero h1{font-size:34px;}}
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="doc-badge">Karnot Energy Solutions — Technical Specification v2.0 — Feb 2026</div>
+    <h1>iSAVE — Full System<br>Technical Design</h1>
+    <p class="sub">From sensor to blockchain to grid — the complete architecture</p>
+    <p class="sub2">Heat Pumps · Solar PV · Thermal &amp; Electric Batteries · Fan Coils · Utterberry Sensors · Rubidex Blockchain · Karnot Cloud · Kraken Integration</p>
+    <div class="tag-row">
+      <div class="tag-chip" style="background:rgba(0,122,255,.3);">IEEE 2030.5 Compliant</div>
+      <div class="tag-chip" style="background:rgba(52,199,89,.3);">SG-Ready Standard</div>
+      <div class="tag-chip" style="background:rgba(107,33,168,.3);">Rubidex Blockchain</div>
+      <div class="tag-chip" style="background:rgba(13,148,136,.3);">Utterberry Sensors</div>
+      <div class="tag-chip" style="background:rgba(245,102,0,.3);">Octopus Kraken API</div>
+      <div class="tag-chip" style="background:rgba(206,17,38,.3);">🇵🇭 Philippines First</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     DESIGN PHILOSOPHY — KEY DECISIONS
+══════════════════════════════════════════════════ -->
+<section class="sec" style="background:#fff;">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#dbeafe;color:#1e40af;">Design Philosophy</div>
+      <h2>Five Core Design Decisions</h2>
+      <p>Before the architecture: the strategic choices that shape the whole system</p>
+    </div>
+    <div class="g2" style="gap:20px;">
+
+      <div class="decision">
+        <div style="font-size:32px;margin-bottom:10px;">🤝</div>
+        <h3>Decision 1: Work WITH Kraken, Not Against It</h3>
+        <p style="font-size:14px;color:var(--mid);line-height:1.8;">Building a full VPP dispatch platform like Kraken would take 3+ years and tens of millions. Octopus Energy already built it. <strong>Karnot's advantage is the asset layer, not the grid dispatch layer.</strong></p>
+        <div style="margin-top:16px;padding:14px;background:#f0f9ff;border-radius:10px;">
+          <p style="font-size:13px;color:#1e40af;font-weight:600;">The Plan: Build the best asset control and data platform in SE Asia. Feed that data to Kraken via their published FLEX API. Kraken does the grid dispatch. Karnot earns from the assets.</p>
+        </div>
+      </div>
+
+      <div class="decision">
+        <div style="font-size:32px;margin-bottom:10px;">🏗️</div>
+        <h3>Decision 2: Modbus TCP/IP as the Field Bus</h3>
+        <p style="font-size:14px;color:var(--mid);line-height:1.8;">Every heat pump, inverter, battery, fan coil, and energy meter made in the last 20 years supports Modbus. BACnet/IP is added for newer HVAC controllers. This ensures <strong>maximum compatibility with minimum custom integration work.</strong></p>
+        <div style="margin-top:16px;padding:14px;background:#f0f9ff;border-radius:10px;">
+          <p style="font-size:13px;color:#1e40af;font-weight:600;">Rule: Modbus TCP/IP over Ethernet first. RS485/Modbus RTU via gateway for older equipment. BACnet/IP for premium HVAC. SG-Ready 4-mode relay as the universal fallback for any heat pump.</p>
+        </div>
+      </div>
+
+      <div class="decision">
+        <div style="font-size:32px;margin-bottom:10px;">📡</div>
+        <h3>Decision 3: iSAVE Gateway is the SCADA Node</h3>
+        <p style="font-size:14px;color:var(--mid);line-height:1.8;">Every site has one iSAVE Gateway Controller — a Linux-based DIN-rail computer that runs local control logic, collects all field data, executes DR commands, and buffers 30 days of data locally. <strong>The site works even when the internet is down.</strong></p>
+        <div style="margin-top:16px;padding:14px;background:#f0f9ff;border-radius:10px;">
+          <p style="font-size:13px;color:#1e40af;font-weight:600;">The iSAVE Gateway is the brain on-site. Utterberry Base Station plugs into it. GUDE relay boxes connect via LAN. All field devices connect to it via RS485 or Ethernet.</p>
+        </div>
+      </div>
+
+      <div class="decision">
+        <div style="font-size:32px;margin-bottom:10px;">🔗</div>
+        <h3>Decision 4: Rubidex is the Data Notary, Not the Database</h3>
+        <p style="font-size:14px;color:var(--mid);line-height:1.8;">Karnot owns its own time-series database (TimescaleDB). Rubidex provides the <strong>immutable proof layer</strong> — every 15-minute energy hash is committed to their blockchain. Utilities and carbon registries get cryptographic proof the data is genuine.</p>
+        <div style="margin-top:16px;padding:14px;background:#f5f3ff;border-radius:10px;">
+          <p style="font-size:13px;color:#5b21b6;font-weight:600;">Rubidex = audit trail + carbon credit verification. Karnot = operational platform + fleet management. These are two different things and both are needed.</p>
+        </div>
+      </div>
+
+      <div class="decision" style="grid-column:1 / -1;">
+        <div style="font-size:32px;margin-bottom:10px;">🇵🇭</div>
+        <h3>Decision 5: Design for Philippines First, Scale to the World</h3>
+        <p style="font-size:14px;color:var(--mid);line-height:1.8;">Every specification is made for the Philippines reality: 220V 60Hz grid, frequent brownouts (LTE-M primary + 4-hour battery backup), tropical climate (45°C, 95% RH, IP65 minimum), and commercial cooling (not heating) as the primary application. The European/UK variant adds Matter certification and heating optimisation later.</p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;">
+          <div style="padding:12px;background:#fee2e2;border-radius:8px;text-align:center;"><div style="font-size:11px;font-weight:700;color:#991b1b;">Grid</div><div style="font-size:12px;color:#991b1b;margin-top:3px;">220V 60Hz<br>Brownout-prone</div></div>
+          <div style="padding:12px;background:#fef9c3;border-radius:8px;text-align:center;"><div style="font-size:11px;font-weight:700;color:#713f12;">Climate</div><div style="font-size:12px;color:#713f12;margin-top:3px;">Tropical 45°C<br>95% RH</div></div>
+          <div style="padding:12px;background:#d1fae5;border-radius:8px;text-align:center;"><div style="font-size:11px;font-weight:700;color:#065f46;">Connectivity</div><div style="font-size:12px;color:#065f46;margin-top:3px;">LTE-M primary<br>WiFi secondary</div></div>
+          <div style="padding:12px;background:#dbeafe;border-radius:8px;text-align:center;"><div style="font-size:11px;font-weight:700;color:#1e40af;">Application</div><div style="font-size:12px;color:#1e40af;margin-top:3px;">Cooling + DHW<br>DR + Solar</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     FULL SYSTEM ARCHITECTURE
+══════════════════════════════════════════════════ -->
+<section class="sec">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#ede9fe;color:#5b21b6;">System Architecture</div>
+      <h2>Complete iSAVE Architecture</h2>
+      <p>Five layers from physical sensors to grid markets — every connection defined</p>
+    </div>
+    <div class="arch">
+
+      <!-- Layer 0: Physical Assets -->
+      <div class="alayer l-field">
+        <div class="alabel">Layer 0 — Physical Assets (What iSAVE Controls)</div>
+        <div class="acomps">
+          <div class="ac ac-t">🔥 Heat Pump (Karnot iHEAT)</div>
+          <div class="ac ac-t">🌬️ Fan Coil Units (iZONE)</div>
+          <div class="ac ac-t">☀️ Solar PV Inverter</div>
+          <div class="ac ac-t">🏦 Thermal Battery Tank</div>
+          <div class="ac ac-t">🔋 Electric Battery (BESS)</div>
+          <div class="ac ac-t">⚡ Main Energy Meter</div>
+          <div class="ac ac-t">🔌 Sub-meters</div>
+          <div class="ac ac-gr">DR Relay Contactors</div>
+        </div>
+      </div>
+
+      <!-- Layer 0b: Utterberry sensors -->
+      <div class="alayer l-field" style="border-color:var(--teal);border-style:dashed;">
+        <div class="alabel" style="background:var(--teal);">Layer 0b — Utterberry Wireless Sensor Mesh</div>
+        <div class="acomps">
+          <div class="ac ac-t">🌡️ Temperature Motes ×N</div>
+          <div class="ac ac-t">💧 Humidity Motes ×N</div>
+          <div class="ac ac-t">📳 Vibration Motes ×N</div>
+          <div class="ac ac-t">❄️ Defrost Sensors</div>
+          <div class="ac ac-t">⚡ CT Clamp Motes</div>
+          <div class="ac ac-t">🔌 Pressure Motes</div>
+          <div class="ac ac-gr">Sub-GHz Mesh → Utterberry Base Station</div>
+        </div>
+      </div>
+
+      <div class="aarrow">↕ RS485 Modbus RTU / Modbus TCP/IP / BACnet/IP / SG-Ready Relay / CAN &nbsp;&nbsp; + &nbsp;&nbsp; Utterberry Sub-GHz Wireless</div>
+
+      <!-- Layer 1: iSAVE Gateway -->
+      <div class="alayer l-edge">
+        <div class="alabel">Layer 1 — iSAVE Gateway Controller (On-Site SCADA Node)</div>
+        <div class="acomps">
+          <div class="ac ac-o">Modbus TCP/IP Master</div>
+          <div class="ac ac-o">RS485 RTU Driver</div>
+          <div class="ac ac-o">BACnet/IP Stack</div>
+          <div class="ac ac-o">SG-Ready Relay Control</div>
+          <div class="ac ac-o">Utterberry Base Station (LAN)</div>
+          <div class="ac ac-o">GUDE Relay Controller (LAN)</div>
+          <div class="ac ac-o">Local AI Engine (TinyML)</div>
+          <div class="ac ac-o">DR Agent (OpenADR VEN)</div>
+          <div class="ac ac-o">Solar Optimiser Logic</div>
+          <div class="ac ac-o">Battery Dispatch Logic</div>
+          <div class="ac ac-o">Local MQTT Broker</div>
+          <div class="ac ac-o">30-Day Data Buffer</div>
+          <div class="ac ac-o">LTE-M Modem</div>
+          <div class="ac ac-o">OTA Update Agent</div>
+        </div>
+      </div>
+
+      <div class="aarrow">↕ MQTT over TLS via LTE-M (primary) / Wi-Fi (secondary) &nbsp;+&nbsp; Rubidex data hashes every 15 min</div>
+
+      <!-- Layer 2: Rubidex -->
+      <div class="alayer l-chain">
+        <div class="alabel">Layer 2 — Rubidex Blockchain (Data Integrity &amp; Carbon Credit Notary)</div>
+        <div class="acomps">
+          <div class="ac ac-p">Device Identity Ledger</div>
+          <div class="ac ac-p">Energy Data Hashes (15-min)</div>
+          <div class="ac ac-p">DR Event Records</div>
+          <div class="ac ac-p">Carbon Credit MRV</div>
+          <div class="ac ac-p">Smart Contract: Revenue Split</div>
+          <div class="ac ac-p">Audit Trail API</div>
+          <div class="ac ac-p">BMSIntel Integration</div>
+        </div>
+      </div>
+
+      <div class="aarrow">↕ REST API / WebSocket — Authenticated per-tenant</div>
+
+      <!-- Layer 3: Karnot Cloud -->
+      <div class="alayer l-cloud">
+        <div class="alabel">Layer 3 — Karnot Control Centre (Fleet Management &amp; Control)</div>
+        <div class="acomps">
+          <div class="ac ac-b">EMQX MQTT Broker</div>
+          <div class="ac ac-b">TimescaleDB (time-series)</div>
+          <div class="ac ac-b">Node-RED / Python Control</div>
+          <div class="ac ac-b">OpenADR 2.0b VTN Server</div>
+          <div class="ac ac-b">AI Forecasting (Python/ML)</div>
+          <div class="ac ac-b">Carbon Credit Engine</div>
+          <div class="ac ac-b">Predictive Maintenance AI</div>
+          <div class="ac ac-b">REST + WebSocket API</div>
+          <div class="ac ac-b">React Web Dashboard</div>
+          <div class="ac ac-b">iOS / Android App</div>
+          <div class="ac ac-b">Utility Portal</div>
+          <div class="ac ac-b">Rubidex Verification API</div>
+        </div>
+      </div>
+
+      <div class="aarrow">↕ Kraken FLEX API (REST) &nbsp;+&nbsp; OpenADR 2.0 VTN signals downward &nbsp;+&nbsp; Gold Standard Carbon Registry API</div>
+
+      <!-- Layer 4: External Platforms -->
+      <div class="alayer l-ext">
+        <div class="alabel">Layer 4 — External Platforms (We Feed, They Dispatch)</div>
+        <div class="acomps">
+          <div class="ac ac-g">Octopus Kraken FLEX API</div>
+          <div class="ac ac-g">Meralco RDSP Portal</div>
+          <div class="ac ac-g">Gold Standard Registry</div>
+          <div class="ac ac-g">Philippine ERC DR System</div>
+          <div class="ac ac-g">AutoGrid / AutoDR (future)</div>
+          <div class="ac ac-gr">SCADA / BMS of building (read-only)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     iSAVE GATEWAY — HARDWARE SPEC
+══════════════════════════════════════════════════ -->
+<section class="sec" style="background:#fff;">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#fed7aa;color:#9a3412;">iSAVE Gateway Hardware</div>
+      <h2>iSAVE Gateway Controller — Full Specification</h2>
+      <p>The on-site SCADA node. One device, every connection, 10-year life</p>
+    </div>
+    <table class="st" style="margin-bottom:28px;">
+      <tr><th>Category</th><th>Specification</th><th>Notes</th></tr>
+      <tr><td>Core Processor</td><td>Raspberry Pi CM4 (Compute Module 4) or equivalent industrial SBC — ARM Cortex-A72 quad-core 1.5GHz, 4GB RAM, 32GB eMMC</td><td>Linux OS (Debian), runs Node-RED + Python + MQTT broker locally. Field-upgradeable.</td></tr>
+      <tr><td>RS485 / Modbus RTU</td><td>2× isolated RS485 ports (DIN rail terminal), supports Modbus RTU at 9600–115200 baud</td><td>Heat pump connection (Karnot iHEAT), older inverters, fan coils, energy meters</td></tr>
+      <tr><td>Modbus TCP / BACnet/IP</td><td>Via onboard Ethernet switch (4-port, managed, 100Mbps) — runs Modbus TCP master and BACnet/IP stack in software</td><td>Modern inverters (SunSpec), BACnet HVAC controllers, GUDE relay boxes</td></tr>
+      <tr><td>SG-Ready Interface</td><td>4× potential-free relay outputs (24VDC/230VAC, 5A) — wired directly to heat pump SG-Ready terminals</td><td>Implements all 4 SG-Ready operating modes. Universal compatibility with ANY SG-Ready heat pump.</td></tr>
+      <tr><td>Digital I/O</td><td>8× isolated digital inputs (3.3–24V), 4× relay outputs (230VAC 10A)</td><td>External event signals, motor run contacts, alarm inputs</td></tr>
+      <tr><td>Analog Inputs</td><td>4× 4–20mA / 0–10V (12-bit ADC)</td><td>Pressure transducers, flow meters, external temperature sensors</td></tr>
+      <tr><td>Energy Meter</td><td>Built-in 3-phase MID-certified energy meter (Class 1, ±1% accuracy) — CT clamp inputs (5A secondary)</td><td>Revenue-grade main site metering for DR verification and carbon credits</td></tr>
+      <tr><td>LTE-M / 4G Modem</td><td>Sierra Wireless HL7800 or Quectel EC21 — dual-SIM failover, LTE-M + EGPRS fallback</td><td>Philippines primary connectivity. Two SIM slots for carrier diversity (Globe + Smart).</td></tr>
+      <tr><td>Wi-Fi</td><td>Wi-Fi 5 (802.11ac) dual-band 2.4/5GHz</td><td>Office/commercial sites. Secondary fallback to LTE-M.</td></tr>
+      <tr><td>Utterberry Integration</td><td>Utterberry Base Station connects via onboard Ethernet port. Data received via local API/MQTT.</td><td>All Utterberry sensor data ingested into Gateway time-series buffer.</td></tr>
+      <tr><td>GUDE Integration</td><td>GUDE Expert Net Control units connect via LAN Ethernet. Controlled via HTTP/REST and SNMP.</td><td>GUDE 2314-1 preferred (3-channel + energy metering). 2302-1 for 4-channel switching.</td></tr>
+      <tr><td>Secure Element</td><td>Microchip ATECC608B hardware secure element — stores Rubidex device key pair, TLS certificates</td><td>Cryptographic root of trust. Key pair provisioned at factory, cannot be extracted.</td></tr>
+      <tr><td>Local Storage</td><td>32GB eMMC (OS + firmware) + 128GB industrial SD card (data buffer)</td><td>30 days full-resolution data buffered locally. Survives LTE outages.</td></tr>
+      <tr><td>Display / HMI</td><td>2.4" colour TFT touchscreen + 4× RGB status LEDs + buzzer</td><td>On-site diagnostics, system status, DR mode indicator without needing app</td></tr>
+      <tr><td>Power Supply</td><td>85–264VAC / 12–48VDC input, 25W max. Built-in UPS: 10Ah LiFePO4 = 4-hour backup</td><td>Philippine 220V 60Hz. 4-hour brownout resilience. Battery charged from mains continuously.</td></tr>
+      <tr><td>Enclosure</td><td>IP65 polycarbonate DIN-rail enclosure, 12-module wide. Optional IP66 wall-mount box.</td><td>Tropical rated. UV-stabilised. Stainless steel hardware.</td></tr>
+      <tr><td>Operating Temp</td><td>−10°C to +70°C (storage: −40°C to +85°C)</td><td>Philippines ambient 25–45°C well within range</td></tr>
+      <tr><td>Humidity</td><td>5–95% RH non-condensing</td><td>Conformal coating on PCB for Philippines tropical environment</td></tr>
+      <tr><td>Target BOM</td><td>&lt;$280 USD at 200+ units/yr (ex assembly)</td><td>Sell/lease model. 5-year payback at $60/mo SaaS fee.</td></tr>
+      <tr><td>Certifications</td><td>CE, FCC, NTC Philippines (LTE), IEC 62368-1 (safety)</td><td>NTC approval needed for LTE modem in Philippines</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     FIELD DEVICES — WHAT TO BUY
+══════════════════════════════════════════════════ -->
+<section class="sec">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#d1fae5;color:#065f46;">Equipment Selection</div>
+      <h2>What to Buy — Recommended Equipment by Category</h2>
+      <p>Best-in-class products confirmed compatible with iSAVE Gateway protocols</p>
+    </div>
+
+    <!-- HEAT PUMPS -->
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:16px;margin-top:8px;padding-left:4px;border-left:5px solid var(--blue);">&nbsp;Heat Pumps</h3>
+    <table class="st" style="margin-bottom:32px;">
+      <tr><th>Product</th><th>Protocol</th><th>iSAVE Connection</th><th>Notes</th></tr>
+      <tr><td>Karnot iHEAT (own product)</td><td>RS485 Modbus RTU (custom register map)</td><td>Direct RS485 port on Gateway</td><td>Primary product. Full control + monitoring. SG-Ready relay built-in.</td></tr>
+      <tr><td>Daikin Altherma 3 / 4</td><td>BACnet/IP or Daikin Open Protocol (RS485)</td><td>Ethernet or RS485 via Daikin D3NET adapter</td><td>Market-leading in Philippines. Modbus adapter available.</td></tr>
+      <tr><td>Mitsubishi Ecodan</td><td>Modbus RTU (MELCloud gateway) or BACnet</td><td>RS485 or Ethernet via MA561 BACnet controller</td><td>Large installed base SE Asia. SG-Ready compliant.</td></tr>
+      <tr><td>Panasonic Aquarea</td><td>Modbus RTU via CZ-CAPRA1 adapter</td><td>RS485 port on Gateway</td><td>Cost-effective for Philippines mass market.</td></tr>
+      <tr><td>Any SG-Ready heat pump</td><td>SG-Ready 4-mode relay contact</td><td>4× relay outputs on iSAVE Gateway</td><td>Universal fallback. Works with ANY modern heat pump regardless of brand.</td></tr>
+    </table>
+
+    <!-- SOLAR INVERTERS -->
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:16px;padding-left:4px;border-left:5px solid var(--gold);">&nbsp;Solar PV Inverters</h3>
+    <table class="st" style="margin-bottom:32px;">
+      <tr><th>Product</th><th>Protocol</th><th>iSAVE Connection</th><th>Notes</th></tr>
+      <tr><td>Sungrow SG / SH Series</td><td>SunSpec Modbus TCP/IP (built-in)</td><td>Ethernet — direct Modbus TCP</td><td>Best value in Philippines. SunSpec standard = plug-and-play.</td></tr>
+      <tr><td>Huawei SUN2000</td><td>Modbus TCP/IP via SDongle</td><td>Ethernet via Huawei SDongle dongle</td><td>Market leader in Asia. Low cost. Good monitoring.</td></tr>
+      <tr><td>Fronius Symo / Primo</td><td>SunSpec Modbus TCP/IP (Datamanager 2.0)</td><td>Ethernet — direct Modbus TCP</td><td>High quality, excellent API. Good for premium sites.</td></tr>
+      <tr><td>SolarEdge</td><td>SolarEdge Modbus TCP / REST API</td><td>Ethernet or SolarEdge cloud API</td><td>Optimizer-based. Good for complex roof shapes.</td></tr>
+    </table>
+
+    <!-- ELECTRIC BATTERIES -->
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:16px;padding-left:4px;border-left:5px solid var(--green);">&nbsp;Electric Batteries (BESS)</h3>
+    <table class="st" style="margin-bottom:32px;">
+      <tr><th>Product</th><th>Protocol</th><th>iSAVE Connection</th><th>Notes</th></tr>
+      <tr><td>BYD Battery-Box Premium HV</td><td>Modbus TCP/IP (SunSpec compatible)</td><td>Ethernet — Modbus TCP</td><td>Best price/kWh in Asia. LFP chemistry. Very safe. Widely available Philippines.</td></tr>
+      <tr><td>Pylontech US5000 / FORCE H2</td><td>RS485 Modbus RTU (CAN optional)</td><td>RS485 port on Gateway</td><td>Extremely popular, excellent support, good BMS documentation.</td></tr>
+      <tr><td>CATL TENER (commercial scale)</td><td>CAN 2.0B + Modbus TCP</td><td>Ethernet or CAN via adapter</td><td>Best choice for large commercial sites (&gt;100kWh). CATL is dominant in Philippines.</td></tr>
+      <tr><td>Alpha ESS Smile / Storion</td><td>Modbus TCP/IP + Alpha cloud API</td><td>Ethernet</td><td>Good Philippines availability. Decent Modbus documentation.</td></tr>
+    </table>
+
+    <!-- THERMAL STORAGE -->
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:16px;padding-left:4px;border-left:5px solid var(--orange);">&nbsp;Thermal Storage (Karnot iSTORE)</h3>
+    <table class="st" style="margin-bottom:32px;">
+      <tr><th>Parameter</th><th>Specification</th><th>iSAVE Monitoring</th></tr>
+      <tr><td>Karnot iSTORE Tank</td><td>200–5000L insulated buffer tank (PCM-enhanced option). Stainless steel inner. 4-zone temperature sensors.</td><td>4× Utterberry temp motes (top/middle-high/middle-low/bottom). SoC calculated from temperature profile.</td></tr>
+      <tr><td>Control Method</td><td>3-way motorised valve (24VAC, Belimo or Honeywell) — charge/discharge/bypass modes. Controlled via iSAVE Gateway digital output.</td><td>Valve position feedback via digital input. Flow meter on charge/discharge circuit.</td></tr>
+      <tr><td>SoC Calculation</td><td>iSAVE calculates State of Charge from temperature stratification model. Full = all zones above setpoint. Empty = all zones below minimum.</td><td>Continuous SoC 0–100% published to cloud every 60 seconds.</td></tr>
+      <tr><td>Charge Sources</td><td>Heat pump (primary), solar surplus (via heat pump), electric immersion heater (backup/boost)</td><td>Metered separately for carbon credit calculation.</td></tr>
+    </table>
+
+    <!-- FAN COIL UNITS -->
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:16px;padding-left:4px;border-left:5px solid var(--teal);">&nbsp;Fan Coil Units (iZONE)</h3>
+    <table class="st" style="margin-bottom:32px;">
+      <tr><th>Product</th><th>Protocol</th><th>iSAVE Connection</th><th>Notes</th></tr>
+      <tr><td>Karnot iZONE Fan Coils</td><td>RS485 Modbus RTU (Karnot protocol)</td><td>RS485 bus — up to 32 units per bus</td><td>Native integration. Full zone temperature, fan speed, valve control.</td></tr>
+      <tr><td>Penteon / Generic BACnet FCU</td><td>BACnet/IP or BACnet MS/TP</td><td>Ethernet or RS485 with BACnet gateway</td><td>BACnet standard → works with any BACnet-certified controller.</td></tr>
+      <tr><td>KNX-controlled FCU</td><td>KNX TP bus → KNX/IP gateway</td><td>Ethernet via KNX IP router</td><td>Common in European-grade buildings in SE Asia. KNX/IP gateway adds ~$200.</td></tr>
+    </table>
+
+    <!-- ENERGY METERS & DR RELAYS -->
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:16px;padding-left:4px;border-left:5px solid var(--purple);">&nbsp;Energy Meters &amp; DR Relay Controllers</h3>
+    <table class="st" style="margin-bottom:8px;">
+      <tr><th>Product</th><th>Protocol</th><th>Use in iSAVE</th><th>Notes</th></tr>
+      <tr><td>Eastron SDM630 Modbus</td><td>RS485 Modbus RTU</td><td>Sub-metering heat pump, battery, solar sub-circuits</td><td>Best value 3-phase sub-meter. ±0.5% accuracy. ~$35 USD.</td></tr>
+      <tr><td>Carlo Gavazzi EM340</td><td>Modbus RTU + Modbus TCP</td><td>Revenue-grade sub-metering</td><td>MID certified. Better for DR payment verification. ~$80 USD.</td></tr>
+      <tr><td><strong>GUDE Expert Net Control 2314-1</strong></td><td>HTTP REST + SNMP over LAN</td><td>3-channel DR relay switching + energy metering. Measures kWh per channel before/after DR event.</td><td>Highlighted in screenshots. The PREFERRED choice for verified DR switching — built-in energy meter per channel proves actual load shed to utility.</td></tr>
+      <tr><td><strong>GUDE Expert Net Control 2302-1</strong></td><td>HTTP REST + SNMP over LAN</td><td>4-channel 230VAC relay switching — larger loads (compressors, pumps)</td><td>Also in screenshots. Use for high-current switching where energy metering is via separate SDM630.</td></tr>
+      <tr><td>GUDE Expert Sensor Box 7214</td><td>HTTP REST + SNMP over LAN</td><td>Temperature/humidity sensing + relay output at remote points</td><td>In screenshots. Good for remote plant rooms where Utterberry motes would be overkill.</td></tr>
+    </table>
+    <div style="background:#fef9c3;border-radius:10px;padding:14px 18px;margin-top:12px;">
+      <p style="font-size:13px;color:#713f12;font-weight:600;">⭐ GUDE units spotted in Stuart's research are exactly right for iSAVE DR relay control. They connect via Ethernet (LAN) to the iSAVE Gateway, respond to HTTP commands in &lt;100ms, and the 2314-1 measures actual energy per channel — giving utility-grade proof of load shed for DR payment claims.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     COMMUNICATION PROTOCOLS
+══════════════════════════════════════════════════ -->
+<section class="sec" style="background:#fff;">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#dbeafe;color:#1e40af;">Protocols</div>
+      <h2>Communication Protocols — What Talks to What</h2>
+      <p>Every connection in the system, with the exact protocol and why</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--teal);">
+      <h4>🔬 Utterberry Sensors → iSAVE Gateway</h4>
+      <p><span class="b b-t">Sub-GHz Wireless Mesh</span> <span class="b b-t">Utterberry Proprietary</span> &nbsp; Utterberry motes form a self-healing mesh and relay data to the Utterberry Base Station. The Base Station connects via Ethernet to the iSAVE Gateway LAN port. <strong>Action needed: Ask Heba whether Base Station outputs (a) local MQTT on LAN, or (b) only to utterberry.io cloud.</strong> If local MQTT: iSAVE Gateway subscribes directly. If cloud-only: iSAVE Cloud polls utterberry.io REST API. Either works — local is preferred for brownout resilience.</p>
+    </div>
+
+    <div class="proto">
+      <h4>🔥 Karnot iHEAT Heat Pump → iSAVE Gateway</h4>
+      <p><span class="b b-b">RS485 Modbus RTU</span> <span class="b b-y">SG-Ready Relay (backup)</span> &nbsp; Primary: RS485 Modbus RTU at 9600 baud. iSAVE reads 30+ registers: compressor status, setpoint, inlet/outlet temps, flow rate, power draw, fault codes. Writes: setpoint, mode (heat/cool/DHW/off), fan speed. Backup: 4 SG-Ready relay outputs on Gateway (NC/NO contacts) map to all 4 SG-Ready operating modes regardless of Modbus status. This ensures DR control even if Modbus fails.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--gold);">
+      <h4>☀️ Solar Inverter → iSAVE Gateway</h4>
+      <p><span class="b b-b">SunSpec Modbus TCP/IP</span> <span class="b b-b">Modbus RTU (fallback)</span> &nbsp; SunSpec is an open standard. Sungrow, Huawei, Fronius, SMA, SolarEdge all implement it. iSAVE reads: AC power output (W), daily/total generation (kWh), DC voltage/current per string, grid frequency, inverter temp, fault status. Over Ethernet via Modbus TCP — no adapter needed for modern inverters.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--green);">
+      <h4>🔋 Electric Battery (BESS) → iSAVE Gateway</h4>
+      <p><span class="b b-b">Modbus TCP/IP</span> <span class="b b-b">RS485 Modbus RTU</span> <span class="b b-b">CAN 2.0B (CATL)</span> &nbsp; BYD/Pylontech: RS485 Modbus RTU. iSAVE reads: SoC (%), SoH (%), cell voltages, pack temperature, charge/discharge current, available capacity. Writes: charge power limit, discharge power limit, operating mode. CAN bus required for CATL large-format systems — CAN-to-Modbus gateway adds $40.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--purple);">
+      <h4>🔌 GUDE DR Relay Controllers → iSAVE Gateway</h4>
+      <p><span class="b b-b">HTTP REST (LAN)</span> <span class="b b-b">SNMP (LAN)</span> &nbsp; GUDE units connect via standard Ethernet on the local LAN. iSAVE Gateway sends HTTP GET/POST commands to switch relays: <code style="font-family:monospace;background:#f3f4f6;padding:2px 6px;border-radius:4px;">GET http://192.168.1.50/statusjsn.js?components=...</code>. Response time &lt;100ms. GUDE 2314-1 also reports real-time kWh per output channel — fed back to iSAVE for DR verification logging.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--orange);">
+      <h4>🌬️ Fan Coil Units → iSAVE Gateway</h4>
+      <p><span class="b b-b">RS485 Modbus RTU</span> <span class="b b-b">BACnet MS/TP</span> <span class="b b-b">BACnet/IP</span> &nbsp; Karnot iZONE: RS485 Modbus bus, up to 32 units per bus. BACnet controllers: BACnet/IP over Ethernet or MS/TP over RS485. iSAVE reads/writes: zone setpoint, actual temperature, fan speed (1/2/3/auto), heating/cooling valve position, occupancy mode, filter alarm.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--blue);">
+      <h4>⚡ Energy Meters → iSAVE Gateway</h4>
+      <p><span class="b b-b">RS485 Modbus RTU</span> &nbsp; Eastron SDM630 and Carlo Gavazzi EM340 both use RS485 Modbus RTU at 9600 baud. iSAVE reads: kW (per phase), kVAr, kWh import/export, power factor, frequency, voltage, current. Polled every 10 seconds. All meter readings hashed to Rubidex every 15 minutes.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--purple);">
+      <h4>🔗 iSAVE Gateway → Rubidex Blockchain</h4>
+      <p><span class="b b-p">HTTPS REST API</span> <span class="b b-p">Rubidex SDK</span> &nbsp; Every 15 minutes, iSAVE Gateway bundles: timestamp, site ID, energy readings (kWh import/export, generation, battery SoC), active DR events, Utterberry sensor snapshots. This bundle is SHA-256 hashed locally, signed with the device's hardware key (ATECC608B), then submitted to Rubidex via their API. Rubidex commits the hash to their permissioned blockchain. If LTE is down, hashes are queued locally and submitted in batch when connectivity resumes — no data is ever lost.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--blue);">
+      <h4>☁️ iSAVE Gateway → Karnot Cloud (MQTT)</h4>
+      <p><span class="b b-b">MQTT over TLS 1.3</span> <span class="b b-b">LTE-M primary</span> <span class="b b-b">Wi-Fi secondary</span> &nbsp; All sensor data published to EMQX broker in Karnot Cloud. Topic structure: <code style="font-family:monospace;background:#f3f4f6;padding:2px 6px;border-radius:4px;">karnot/{site_id}/{device_type}/{device_id}/{datapoint}</code>. QoS 1 (at-least-once delivery) for energy data. QoS 2 (exactly-once) for DR commands. Heartbeat every 30 seconds. Reconnect with exponential backoff. 30-day local buffer ensures no data loss during outages.</p>
+    </div>
+
+    <div class="proto" style="border-color:var(--green);">
+      <h4>☁️ Karnot Cloud → Octopus Kraken FLEX API</h4>
+      <p><span class="b b-g">Kraken FLEX REST API</span> <span class="b b-g">HTTPS</span> &nbsp; Karnot Control Centre registers the fleet with Octopus Kraken as a FLEX asset aggregator. Every 30 minutes, Karnot pushes: (a) available DR capacity (kW) per site, (b) forecast availability for next 24 hours, (c) response time per site. Kraken dispatches DR events back to Karnot via webhook. Karnot translates Kraken DR signals into OpenADR 2.0 events and pushes to the relevant site Gateway. This arrangement means Kraken does the grid dispatch optimisation and Karnot earns DR payments from Kraken.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SG-READY IMPLEMENTATION
+══════════════════════════════════════════════════ -->
+<section class="sec ds-blue">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:rgba(255,255,255,.2);color:#fff;">SG-Ready Standard</div>
+      <h2>SG-Ready Implementation in iSAVE</h2>
+      <p style="color:rgba(255,255,255,.85);">iSAVE implements all 4 SG-Ready modes as required by the German BWP standard — used globally as the de-facto smart grid heat pump interface</p>
+    </div>
+    <div class="g4" style="gap:20px;">
+      <div class="dc" style="border-top:4px solid #ef4444;">
+        <div style="font-size:28px;margin-bottom:8px;">🚫</div>
+        <h3>Mode 1 — Utility Block</h3>
+        <p>Heat pump is locked off. iSAVE closes relay contact 1. Duration: max 2 hours, up to 3× per day. Thermal battery continues to supply heating/cooling. Electric backup element can be enabled. Triggered by: utility DR signal or frequency event.</p>
+        <div style="margin-top:12px;padding:8px;background:rgba(255,255,255,.1);border-radius:6px;font-size:11px;font-family:monospace;">Relay 1: CLOSED &nbsp; Relay 2: OPEN</div>
+      </div>
+      <div class="dc" style="border-top:4px solid #22c55e;">
+        <div style="font-size:28px;margin-bottom:8px;">✅</div>
+        <h3>Mode 2 — Normal Operation</h3>
+        <p>Standard efficient operation. Both relay contacts open. iSAVE optimises scheduling, pre-charges thermal battery before expected block period, and adjusts setpoints for off-peak tariff. This is the default running state.</p>
+        <div style="margin-top:12px;padding:8px;background:rgba(255,255,255,.1);border-radius:6px;font-size:11px;font-family:monospace;">Relay 1: OPEN &nbsp; Relay 2: OPEN</div>
+      </div>
+      <div class="dc" style="border-top:4px solid #f59e0b;">
+        <div style="font-size:28px;margin-bottom:8px;">☀️</div>
+        <h3>Mode 3 — Solar Surplus Boost</h3>
+        <p>PV generation surplus detected. Relay contact 2 closed. Heat pump increases to intensified heating/DHW mode — using excess solar to charge thermal battery. Recommended (not mandatory) start command. iSAVE calculates surplus threshold before triggering.</p>
+        <div style="margin-top:12px;padding:8px;background:rgba(255,255,255,.1);border-radius:6px;font-size:11px;font-family:monospace;">Relay 1: OPEN &nbsp; Relay 2: CLOSED</div>
+      </div>
+      <div class="dc" style="border-top:4px solid #3b82f6;">
+        <div style="font-size:28px;margin-bottom:8px;">⚡</div>
+        <h3>Mode 4 — Active Command On</h3>
+        <p>Definitive command to actively switch heat pump on, optionally with temperature increase in storage. Triggered by: cheap off-peak tariff, grid oversupply event, pre-DR pre-conditioning. Both relay contacts closed. iSAVE configures temperature boost level per site.</p>
+        <div style="margin-top:12px;padding:8px;background:rgba(255,255,255,.1);border-radius:6px;font-size:11px;font-family:monospace;">Relay 1: CLOSED &nbsp; Relay 2: CLOSED</div>
+      </div>
+    </div>
+    <div class="dc" style="margin-top:24px;border:2px solid rgba(255,255,255,.3);">
+      <h3>🔌 iSAVE SG-Ready Wiring (Universal)</h3>
+      <p>The iSAVE Gateway provides 4 potential-free relay outputs (terminals SG1+/SG1−, SG2+/SG2−). These wire directly to the heat pump controller's SG-Ready or EVU (Energieversorger) terminals — a simple 2-wire connection per contact. Works with Daikin, Mitsubishi, Panasonic, Vaillant, Viessmann, Worcester Bosch, and any BWP-compliant heat pump regardless of manufacturer or age. No programming required on the heat pump side — it just sees the contact states and responds per its factory SG-Ready logic.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     IEEE STANDARDS COMPLIANCE
+══════════════════════════════════════════════════ -->
+<section class="sec" style="background:#fff;">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#f3e8ff;color:#6b21a8;">IEEE Standards</div>
+      <h2>IEEE &amp; IEC Standards Compliance</h2>
+      <p>Every relevant standard iSAVE must comply with — and how we meet each one</p>
+    </div>
+    <table class="st">
+      <tr><th>Standard</th><th>Title</th><th>Relevance to iSAVE</th><th>Status</th></tr>
+      <tr>
+        <td>IEEE 2030.5<br>(SEP 2.0)</td>
+        <td>Smart Energy Profile 2.0</td>
+        <td>The US/international standard for DER device communication with utilities. Defines how DR signals are received and how devices report energy data. Karnot Control Centre implements SEP 2.0 server; iSAVE Gateway is SEP 2.0 client.</td>
+        <td><span class="pill p-req">Required for US/AUS markets</span></td>
+      </tr>
+      <tr>
+        <td>OpenADR 2.0b</td>
+        <td>Open Automated Demand Response</td>
+        <td>The primary DR communication standard for Philippines ERC and most Asian markets. iSAVE Gateway runs OpenADR 2.0b VEN (Virtual End Node). Karnot Control Centre runs OpenADR 2.0b VTN (Virtual Top Node). Meralco RDSP uses OpenADR.</td>
+        <td><span class="pill p-req">Required — Philippines</span></td>
+      </tr>
+      <tr>
+        <td>IEEE 1547-2018</td>
+        <td>Interconnection of DERs with Electric Power Systems</td>
+        <td>Governs how distributed energy resources (solar, batteries) connect to the grid. iSAVE must comply when controlling grid-connected inverters and BESS — particularly ride-through requirements and anti-islanding.</td>
+        <td><span class="pill p-req">Required — solar + BESS</span></td>
+      </tr>
+      <tr>
+        <td>IEC 61850</td>
+        <td>Communication Networks for Power Utility Automation</td>
+        <td>Utility-grade substation communication standard. Relevant for Phase 2 Control Centre when interfacing directly with utility SCADA systems. iSAVE Gateway does not need full IEC 61850 — the Karnot Control Centre needs a GOOSE/MMS gateway.</td>
+        <td><span class="pill p-rec">Phase 2 Control Centre</span></td>
+      </tr>
+      <tr>
+        <td>IEC 61968 / 61970</td>
+        <td>Common Information Model (CIM)</td>
+        <td>Standard data model for utility asset information. Karnot's API should map fleet asset data to CIM schema — makes integration with any utility SCADA or Kraken-compatible system much simpler. Required for Philippines DU API integration.</td>
+        <td><span class="pill p-rec">Phase 2 API layer</span></td>
+      </tr>
+      <tr>
+        <td>SunSpec Alliance</td>
+        <td>SunSpec Modbus Information Models</td>
+        <td>De-facto standard for solar inverter communication. iSAVE implements SunSpec client (models 1, 101/111, 120, 122, 160). Ensures plug-and-play with Sungrow, Fronius, SMA, Huawei, SolarEdge without custom drivers.</td>
+        <td><span class="pill p-std">Implemented</span></td>
+      </tr>
+      <tr>
+        <td>IEC 62056 / DLMS</td>
+        <td>Device Language Message Specification (smart metering)</td>
+        <td>Smart meter communication standard used by Meralco and Philippine DUs. iSAVE can read DLMS-compliant smart meters directly — critical for accurate baseline measurement for DR and carbon credits.</td>
+        <td><span class="pill p-req">Philippines metering</span></td>
+      </tr>
+      <tr>
+        <td>ISO 50001</td>
+        <td>Energy Management Systems</td>
+        <td>iSAVE data collection and reporting supports ISO 50001 energy auditing requirements. Karnot's data export can generate ISO 50001 Section 4.6 (monitoring, measurement, analysis) reports automatically.</td>
+        <td><span class="pill p-rec">Commercial customers</span></td>
+      </tr>
+      <tr>
+        <td>IEC 62443</td>
+        <td>Industrial Cybersecurity</td>
+        <td>Cybersecurity standards for industrial control systems. iSAVE Gateway targets IEC 62443-4-2 Security Level 2 (SL2) — hardware secure element, encrypted communications, role-based access, firmware signing, audit logging. Critical for utility-connected devices.</td>
+        <td><span class="pill p-req">Utility deployments</span></td>
+      </tr>
+      <tr>
+        <td>BWP SG-Ready</td>
+        <td>Smart Grid Ready Heat Pump Interface (German BWP)</td>
+        <td>The 4-mode relay interface standard described in detail above. iSAVE implements all 4 modes via hardware relay outputs. Ensures compatibility with all European and internationally-certified heat pumps. Used as universal fallback regardless of Modbus capability.</td>
+        <td><span class="pill p-std">Implemented — hardware</span></td>
+      </tr>
+      <tr>
+        <td>MQTT 5.0</td>
+        <td>ISO/IEC 20922 Message Queuing Telemetry Transport</td>
+        <td>Primary IoT messaging protocol between iSAVE Gateway and Karnot Cloud. MQTT 5.0 adds session expiry, subscription identifiers, and enhanced error reporting vs 3.1.1. TLS 1.3 mandatory on all connections.</td>
+        <td><span class="pill p-std">Core protocol</span></td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     RUBIDEX / CARBON CREDIT PIPELINE
+══════════════════════════════════════════════════ -->
+<section class="sec ds-purple">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:rgba(255,255,255,.2);color:#fff;">Rubidex + Carbon</div>
+      <h2>Rubidex Blockchain &amp; Carbon Credit Pipeline</h2>
+      <p style="color:rgba(255,255,255,.85);">How every kWh saved becomes a verified, tradeable carbon credit via Rubidex and Gold Standard</p>
+    </div>
+    <div class="g2" style="gap:24px;">
+      <div class="dc">
+        <h3>📊 Step 1 — Establish Baseline (at Installation)</h3>
+        <ul>
+          <li>iSAVE Gateway records 30-day pre-installation energy baseline from utility meter</li>
+          <li>Baseline model committed to Rubidex blockchain (tamper-proof)</li>
+          <li>Weather-normalised baseline using local temperature data</li>
+          <li>Approved by Karnot engineer and committed with timestamp + GPS coordinates</li>
+          <li>Rubidex issues a unique Device Credential NFT for this installation</li>
+        </ul>
+      </div>
+      <div class="dc">
+        <h3>⚡ Step 2 — Continuous Measurement (Every 15 min)</h3>
+        <ul>
+          <li>iSAVE reads energy meter: actual kWh consumed this period</li>
+          <li>Calculates: Baseline kWh − Actual kWh = Saved kWh</li>
+          <li>Applies: Philippine Grid Emission Factor (kgCO₂/kWh from DOE)</li>
+          <li>Calculates: Avoided CO₂ in tonnes for this period</li>
+          <li>Bundle signed with device private key → submitted to Rubidex API</li>
+          <li>Rubidex commits hash to permissioned blockchain</li>
+        </ul>
+      </div>
+      <div class="dc">
+        <h3>🏦 Step 3 — Monthly Credit Batch</h3>
+        <ul>
+          <li>At month end, Karnot aggregates all Rubidex-verified avoided CO₂ for each site</li>
+          <li>Fleet total submitted to Gold Standard registry API as a batch claim</li>
+          <li>Gold Standard reviews blockchain proof — no site visit required (blockchain is the audit)</li>
+          <li>Credits issued: 1 VER (Verified Emission Reduction) = 1 tonne CO₂ avoided</li>
+          <li>Credits appear in Karnot's Gold Standard registry account</li>
+        </ul>
+      </div>
+      <div class="dc">
+        <h3>💰 Step 4 — Revenue Distribution (Smart Contract)</h3>
+        <ul>
+          <li>Credits sold on voluntary carbon market (Xpansiv CBL, AirCarbon Exchange, or direct to corporates)</li>
+          <li>Philippines voluntary carbon price: ~$8–15/tonne CO₂ (growing)</li>
+          <li>Rubidex smart contract auto-distributes: 70% to site owner, 15% to Karnot, 15% to operating costs</li>
+          <li>Distribution ratios configurable per contract</li>
+          <li>Full audit trail from sensor reading → credit sale on Rubidex ledger</li>
+        </ul>
+      </div>
+    </div>
+    <div class="dc" style="margin-top:24px;border:2px solid rgba(255,255,255,.3);">
+      <h3>🇵🇭 Philippines Carbon Market Specifics</h3>
+      <p>The Philippines Climate Change Commission (CCC) launched the Philippine Carbon Market under RA 11285 (Energy Efficiency Act). Karnot iSAVE data — with Rubidex blockchain verification — is ideally positioned to generate credits under: (a) Gold Standard's Efficient Cookstoves/HVAC methodology, (b) CDM/SD-VISta methodology for demand-side efficiency projects, (c) Future Philippine voluntary carbon exchange (in development under DOE). Grid emission factor for Luzon: ~0.6 kgCO₂/kWh (2024, DOE Philippines).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     KARNOT CONTROL CENTRE vs KRAKEN
+══════════════════════════════════════════════════ -->
+<section class="sec ds-dark">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:rgba(255,255,255,.15);color:#fff;">Karnot vs Kraken</div>
+      <h2>Karnot Control Centre — What to Build vs What to Buy</h2>
+      <p style="color:rgba(255,255,255,.82);">Stuart's instinct to work WITH Kraken rather than copy it is correct. Here's the exact division of responsibility.</p>
+    </div>
+
+    <div class="g2" style="gap:24px;margin-bottom:24px;">
+      <div class="dc" style="border:2px solid rgba(245,102,0,.5);">
+        <h3 style="color:var(--gold);">🏗️ What Karnot Builds (iSAVE + Control Centre)</h3>
+        <ul>
+          <li><strong>iSAVE Gateway:</strong> The on-site controller. This is Karnot's hardware product.</li>
+          <li><strong>Asset data collection:</strong> Every reading from every device, every 10 seconds.</li>
+          <li><strong>Local AI control:</strong> Solar optimisation, battery dispatch, thermal pre-conditioning.</li>
+          <li><strong>Fleet dashboard:</strong> Karnot engineers see all sites, all assets, all alarms.</li>
+          <li><strong>Carbon credit pipeline:</strong> Rubidex-verified MRV → Gold Standard submission.</li>
+          <li><strong>Predictive maintenance:</strong> AI-flagged anomalies → service tickets.</li>
+          <li><strong>Utility portal:</strong> Philippine DUs see their enrolled DR fleet capacity.</li>
+          <li><strong>OpenADR VTN:</strong> Issue DR commands to all Gateways from Control Centre.</li>
+        </ul>
+      </div>
+      <div class="dc" style="border:2px solid rgba(52,199,89,.5);">
+        <h3 style="color:var(--green);">🐙 What Kraken Does (Karnot Feeds, Kraken Dispatches)</h3>
+        <ul>
+          <li><strong>Grid signal intelligence:</strong> Balancing Mechanism prices, grid frequency, carbon intensity forecasts.</li>
+          <li><strong>Optimal dispatch decisions:</strong> When to curtail which assets, for how long, at what price.</li>
+          <li><strong>Settlement &amp; payment:</strong> Kraken handles the financial settlement with National Grid / System Operator.</li>
+          <li><strong>Aggregation at scale:</strong> Kraken aggregates Karnot's fleet alongside thousands of other assets.</li>
+          <li><strong>Market access:</strong> Kraken is registered with every grid operator. Karnot doesn't need to be.</li>
+        </ul>
+        <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.1);border-radius:8px;">
+          <p style="font-size:12px;color:rgba(255,255,255,.8);">📡 <strong>Integration:</strong> Karnot registers fleet assets via Kraken FLEX API. Karnot pushes half-hourly asset availability. Kraken sends back dispatch signals. Karnot translates to OpenADR for Gateways. DR payment flows: Kraken → Karnot → site owner via smart contract.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dc" style="border:2px solid rgba(255,184,0,.4);">
+      <h3 style="color:var(--gold);">🇵🇭 Philippines-Specific: Meralco RDSP Instead of Kraken</h3>
+      <p>In the Philippines, the equivalent is <strong>Meralco's RDSP (Retail DR Service Provider)</strong> programme and the <strong>IEMOP (Independent Electricity Market Operator of the Philippines)</strong> ancillary services market. Karnot registers as an RDSP aggregator with Meralco. The Karnot Control Centre issues DR signals to enrolled sites. Load shed is verified via Rubidex blockchain records. Meralco pays Karnot per kW of verified load reduction. Karnot distributes payments to site owners via smart contract. Same model as Kraken — just the Philippine grid operator instead.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     CLOUD SOFTWARE STACK
+══════════════════════════════════════════════════ -->
+<section class="sec" style="background:#fff;">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#d1fae5;color:#065f46;">Cloud Platform</div>
+      <h2>Karnot Control Centre — Software Stack</h2>
+      <p>Open-source proven technologies — no vendor lock-in, runs on any cloud</p>
+    </div>
+    <table class="st">
+      <tr><th>Component</th><th>Technology</th><th>Why This Choice</th></tr>
+      <tr><td>MQTT Broker</td><td>EMQX Enterprise (self-hosted or cloud)</td><td>Handles 10M+ concurrent connections. Built-in Modbus bridge. Supports clustering. Free up to 10k connections.</td></tr>
+      <tr><td>Time-Series Database</td><td>TimescaleDB (PostgreSQL extension)</td><td>Best-in-class for energy time-series. Full SQL. Automatic compression. 100× faster than PostgreSQL for time-series queries.</td></tr>
+      <tr><td>Workflow Engine</td><td>Node-RED (on Gateway) + Apache Airflow (cloud)</td><td>Node-RED for on-site control flows. Airflow for cloud batch jobs (carbon credit calculations, daily reports).</td></tr>
+      <tr><td>AI / ML</td><td>Python: scikit-learn, Prophet, TensorFlow Lite</td><td>Prophet for demand forecasting. scikit-learn for anomaly detection. TFLite for on-device inference on Gateway.</td></tr>
+      <tr><td>API Gateway</td><td>FastAPI (Python) + NGINX reverse proxy</td><td>FastAPI: auto-generates OpenAPI docs, async support, excellent performance. NGINX: TLS termination, rate limiting.</td></tr>
+      <tr><td>Web Dashboard</td><td>React + Recharts + Mapbox GL JS</td><td>React for component architecture. Recharts for energy graphs. Mapbox for fleet map view.</td></tr>
+      <tr><td>Mobile App</td><td>React Native (iOS + Android from one codebase)</td><td>One development team, two platforms. Over-the-air updates via Expo EAS.</td></tr>
+      <tr><td>DR Engine</td><td>Custom Python service + OpenADR 2.0b library (openleadr)</td><td>openleadr is the Python OpenADR implementation. Karnot wraps it with fleet logic, priority rules, and Kraken/RDSP integration.</td></tr>
+      <tr><td>Message Queue</td><td>Apache Kafka</td><td>Handles high-throughput fleet events. Decouples data ingestion from processing. Enables replay for debugging.</td></tr>
+      <tr><td>Infrastructure</td><td>Docker + Kubernetes on AWS (ap-southeast-1 Singapore region)</td><td>Singapore region: closest to Philippines. Kubernetes: scales with fleet growth. Docker: portable, reproducible deployments.</td></tr>
+      <tr><td>Monitoring</td><td>Grafana + Prometheus + Alertmanager</td><td>Grafana for internal ops dashboards. Prometheus scrapes all service metrics. Alertmanager → PagerDuty for on-call.</td></tr>
+      <tr><td>Rubidex Integration</td><td>Python microservice: reads TimescaleDB, hashes bundles, submits to Rubidex API</td><td>Runs every 15 minutes as a scheduled job. Queue-backed to handle Rubidex API downtime.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     BILL OF MATERIALS — PHILIPPINES SITE
+══════════════════════════════════════════════════ -->
+<section class="sec">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#fee2e2;color:#991b1b;">🇵🇭 BOM</div>
+      <h2>Indicative Bill of Materials — Philippines Commercial Site</h2>
+      <p>Example: 50kW cooling load, 30kWp solar, 50kWh BESS, 3,000L thermal storage</p>
+    </div>
+    <table class="st">
+      <tr><th>Item</th><th>Recommended Product</th><th>Qty</th><th>Est. Unit Cost (USD)</th><th>Total</th></tr>
+      <tr><td>Heat Pump</td><td>Karnot iHEAT 25kW (×2) or Daikin Altherma 50kW</td><td>1–2</td><td>$6,000–12,000</td><td>$12,000</td></tr>
+      <tr><td>Solar PV Inverter</td><td>Sungrow SH30RT hybrid 30kW</td><td>1</td><td>$2,800</td><td>$2,800</td></tr>
+      <tr><td>Electric Battery</td><td>BYD Battery-Box Premium HV 50kWh</td><td>1</td><td>$18,000</td><td>$18,000</td></tr>
+      <tr><td>Thermal Storage</td><td>Karnot iSTORE 3,000L insulated buffer</td><td>1</td><td>$4,500</td><td>$4,500</td></tr>
+      <tr><td>Solar Panels</td><td>Jinko / LONGi 400W mono PERC (75 panels)</td><td>75</td><td>$120</td><td>$9,000</td></tr>
+      <tr><td>Fan Coil Units</td><td>Karnot iZONE 2kW (×10 zones)</td><td>10</td><td>$350</td><td>$3,500</td></tr>
+      <tr><td><strong>iSAVE Gateway</strong></td><td><strong>Karnot iSAVE GW-1 (this product)</strong></td><td>1</td><td><strong>$380</strong></td><td><strong>$380</strong></td></tr>
+      <tr><td>Utterberry Kit</td><td>Utterberry Base Station + 8 motes (temp ×4, vibration ×2, humidity ×2)</td><td>1</td><td>$800 (est)</td><td>$800</td></tr>
+      <tr><td>GUDE 2314-1</td><td>GUDE Expert Net Control 2314-1 (3ch + energy meter)</td><td>2</td><td>$220</td><td>$440</td></tr>
+      <tr><td>GUDE 2302-1</td><td>GUDE Expert Net Control 2302-1 (4ch relay)</td><td>1</td><td>$160</td><td>$160</td></tr>
+      <tr><td>Energy Meters</td><td>Eastron SDM630 Modbus ×4 (sub-meters)</td><td>4</td><td>$38</td><td>$152</td></tr>
+      <tr><td>Networking</td><td>Industrial Ethernet switch (DIN-rail, 8-port, managed)</td><td>1</td><td>$120</td><td>$120</td></tr>
+      <tr><td>Cabling &amp; Enclosure</td><td>RS485 cable, DIN-rail cabinet, terminals</td><td>–</td><td>–</td><td>$350</td></tr>
+      <tr><td>Installation Labour</td><td>3 days (Philippines ESCO rates)</td><td>–</td><td>–</td><td>$600</td></tr>
+      <tr style="background:#f0f9ff;font-weight:700;"><td colspan="4">Total Hardware + Installation</td><td>~$52,802</td></tr>
+      <tr style="background:#d1fae5;"><td colspan="4">iSAVE SaaS Subscription (annual)</td><td>$1,200/yr</td></tr>
+      <tr style="background:#d1fae5;"><td colspan="4">Estimated DR Revenue (annual, 50kW × 2000hrs)</td><td>~₱240,000 (~$4,200)</td></tr>
+      <tr style="background:#d1fae5;"><td colspan="4">Estimated Carbon Credits (annual, 50 tonnes CO₂)</td><td>~$600</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     NEXT STEPS
+══════════════════════════════════════════════════ -->
+<section class="sec" style="background:#fff;">
+  <div class="sec-inner">
+    <div class="sh">
+      <div class="tag" style="background:#fef9c3;color:#713f12;">Now — Q3 2026</div>
+      <h2>Immediate Next Steps</h2>
+      <p>The 8 actions that turn this design into a real product</p>
+    </div>
+    <div class="g2">
+      <div class="card" style="border-top:4px solid var(--blue);">
+        <div class="icon">📞</div>
+        <h3>1. Call Heba (Utterberry) — This Week</h3>
+        <p>One question matters most: can the Utterberry Base Station output data locally (MQTT or HTTP) to the iSAVE Gateway on the same LAN? This decides whether the system works offline during brownouts. If yes — architecture is confirmed. If no — we integrate via utterberry.io cloud API.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--purple);">
+        <div class="icon">📞</div>
+        <h3>2. Call Rubidex — This Week</h3>
+        <p>Ask for partner API access. Key question: does Rubidex have a REST endpoint to commit data hashes from third-party devices? Share this technical spec with them. Propose: iSAVE as the energy asset layer of their BMSIntel ecosystem — built on Rubidex Data Fabric.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--green);">
+        <div class="icon">🐙</div>
+        <h3>3. Contact Octopus Kraken Team</h3>
+        <p>Octopus has a FLEX technology licensing programme. Contact their partnership team to discuss: (a) licensing Kraken FLEX for Philippine/SE Asia markets, or (b) registering Karnot as a FLEX asset aggregator to feed data into their UK/EU platform. This removes the need to build grid dispatch from scratch.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--gold);">
+        <div class="icon">🛒</div>
+        <h3>4. Order Prototype Hardware</h3>
+        <p>Order for 3 prototype Gateways: (a) Raspberry Pi CM4 4GB + IO carrier board, (b) 2× GUDE 2314-1 relay controllers, (c) Eastron SDM630 sub-meters ×4, (d) industrial DIN-rail enclosure + Ethernet switch. ~$800 total. Assemble one bench prototype to test Modbus + GUDE + LTE integration.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--orange);">
+        <div class="icon">💻</div>
+        <h3>5. Build Gateway Software v0.1</h3>
+        <p>Node-RED on Raspberry Pi: (a) Modbus TCP/IP driver for one heat pump, (b) GUDE HTTP relay control, (c) MQTT publish to local EMQX broker, (d) SG-Ready relay logic for 4 modes, (e) basic web status page. Goal: working proof-of-concept in 4 weeks.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--teal);">
+        <div class="icon">🇵🇭</div>
+        <h3>6. Identify Philippines Pilot Site</h3>
+        <p>Need a commercial building in Manila or Cebu with: existing heat pump or chiller, grid connection &gt;50kW, owner willing to be a reference customer. Contact Meralco's RDSP team to understand enrolment requirements and what data format they need from aggregators.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--red);">
+        <div class="icon">📋</div>
+        <h3>7. NTC Philippines Type Approval</h3>
+        <p>The iSAVE Gateway's LTE modem requires NTC (National Telecommunications Commission) type approval to be legally sold in the Philippines. Process takes 3–6 months. Engage a local Philippine compliance agent (e.g. Bureau Veritas Philippines) now to start the application in parallel with development.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--purple);">
+        <div class="icon">📄</div>
+        <h3>8. Draft Partner MOUs</h3>
+        <p>Draft simple 2-page MOUs with Utterberry and Rubidex covering: (a) intent to integrate, (b) co-marketing Philippines market, (c) data sharing terms, (d) commercial model (revenue share on carbon credits and DR payments). These MOUs help attract investors and Philippines utility partners.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     CTA
+══════════════════════════════════════════════════ -->
+<section style="background:linear-gradient(135deg,#0a0a1a 0%,#0051a5 60%,#F56600 100%);color:#fff;padding:90px 20px;text-align:center;">
+  <h2 style="font-size:46px;font-weight:800;margin-bottom:16px;">The Most Advanced Energy Platform<br>in Southeast Asia</h2>
+  <p style="font-size:19px;opacity:.9;max-width:720px;margin:0 auto 36px;">Karnot iSAVE: five-layer architecture from Utterberry sensor mesh to Rubidex blockchain to Karnot cloud to Kraken grid intelligence. No single competitor in the Philippines builds all five layers. That is the moat.</p>
+  <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+    <a href="mailto:stuart@karnot.com" style="display:inline-block;padding:16px 40px;font-size:17px;font-weight:700;border-radius:40px;background:#fff;color:#007aff;text-decoration:none;">Contact Stuart</a>
+    <a href="isave-roadmap-specs.html" style="display:inline-block;padding:16px 40px;font-size:17px;font-weight:700;border-radius:40px;background:rgba(255,255,255,.15);color:#fff;border:2px solid #fff;text-decoration:none;">View Roadmap</a>
+    <a href="isave-platform.html" style="display:inline-block;padding:16px 40px;font-size:17px;font-weight:700;border-radius:40px;background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.5);text-decoration:none;">iSAVE Marketing Page</a>
+  </div>
+</section>
+
+<footer>
+  <h3>Karnot Energy Solutions INC</h3>
+  <p>iSAVE Full System Technical Specification v2.0 — February 2026 — Confidential</p>
+  <p style="margin-top:6px;font-size:12px;">Partners: Utterberry · Rubidex · Octopus Kraken · Gold Standard · Meralco RDSP</p>
+</footer>
+
+</body>
+</html>
