@@ -102,6 +102,7 @@ import ProfessionalServices from './pages/ProfessionalServices.jsx';
 import RegulatoryIndustryPage from './pages/RegulatoryIndustryPage.jsx';
 import ImportExportCompliancePage from './pages/ImportExportCompliancePage.jsx';
 import TechDevelopmentHub from './pages/TechDevelopmentHub.jsx';
+import ISAVETechSpec from './pages/ISAVETechSpec.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -242,6 +243,7 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'techNotes', label: 'Tech Notes', icon: FileText },
         { view: 'techDocs', label: 'Document Vault', icon: Briefcase },
         { view: 'techPatents', label: 'IP & Patents', icon: Shield, badge: 'NEW' },
+        { view: 'isaveTechSpec', label: 'iSAVE Tech Spec', icon: FileText, badge: 'HTML' },
     ];
 
     // Social Media & Marketing Menu
@@ -916,6 +918,10 @@ export default function App() {
                 {/* Tech R&D Hub - all views route to same component with tab control */}
                 {['techHub','techRoadmap','techTasks','techNotes','techDocs','techPatents'].includes(activeView) && (
                     <TechDevelopmentHub user={dataUser} initialView={activeView} />
+                )}
+
+                {activeView === 'isaveTechSpec' && (
+                    <ISAVETechSpec user={dataUser} />
                 )}
 
                 {activeView === 'rsrhCalc' && (
