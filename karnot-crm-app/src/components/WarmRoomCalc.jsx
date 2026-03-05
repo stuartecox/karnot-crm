@@ -1173,7 +1173,7 @@ const WarmRoomCalc = ({ setActiveView, user }) => {
                                 2. Operating Profile (Weekend)
                             </h3>
                             <div className="space-y-4">
-                                <InputField label=""Weekly Operating Hours (Max 168)" value={inputs.duration} 
+                                <InputField label="Weekly Operating Hours (Max 168)" value={inputs.duration} 
                                     onChange={(e) => handleInputChange('duration', parseFloat(e.target.value))} />
                                 <InputField label="Number of Door Openings" value={inputs.doorOpenings} 
                                     onChange={(e) => handleInputChange('doorOpenings', parseFloat(e.target.value))} />
