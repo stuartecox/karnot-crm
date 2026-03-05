@@ -101,6 +101,7 @@ import DailyTasksDashboard from './pages/DailyTasksDashboard.jsx';
 import ProfessionalServices from './pages/ProfessionalServices.jsx';
 import RegulatoryIndustryPage from './pages/RegulatoryIndustryPage.jsx';
 import ImportExportCompliancePage from './pages/ImportExportCompliancePage.jsx';
+import TechDevelopmentHub from './pages/TechDevelopmentHub.jsx';
 
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
@@ -233,6 +234,16 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'serviceInvoice', label: 'Service Invoice', icon: FileText }
     ];
 
+    // Tech R&D Menu
+    const techRDMenu = [
+        { view: 'techHub', label: 'Product Overview', icon: Zap, badge: 'CO2' },
+        { view: 'techRoadmap', label: 'Dev Roadmap', icon: Target },
+        { view: 'techTasks', label: 'Engineering Tasks', icon: CheckCircle },
+        { view: 'techNotes', label: 'Tech Notes', icon: FileText },
+        { view: 'techDocs', label: 'Document Vault', icon: Briefcase },
+        { view: 'techPatents', label: 'IP & Patents', icon: Shield, badge: 'NEW' },
+    ];
+
     // Social Media & Marketing Menu
     const socialMediaMenu = [
         { view: 'socialPlanner', label: 'Social Planner', icon: Layout, badge: 'NEW' },
@@ -355,6 +366,7 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                         variant="orange"
                     />
                     <DropdownMenu label="Operations" icon={Wrench} items={operationsMenu} activeView={activeView} setActiveView={setActiveView} />
+                    <DropdownMenu label="Tech R&D" icon={Zap} items={techRDMenu} activeView={activeView} setActiveView={setActiveView} variant="purple" />
 
                     {/* Social Media & Marketing */}
                     <DropdownMenu
@@ -900,7 +912,12 @@ export default function App() {
                 {activeView === 'importExportCompliance' && (
                     <ImportExportCompliancePage user={dataUser} />
                 )}
-                
+
+                {/* Tech R&D Hub - all views route to same component with tab control */}
+                {['techHub','techRoadmap','techTasks','techNotes','techDocs','techPatents'].includes(activeView) && (
+                    <TechDevelopmentHub user={dataUser} initialView={activeView} />
+                )}
+
                 {activeView === 'rsrhCalc' && (
                     <div className="max-w-7xl mx-auto">
                         <Button onClick={() => setActiveView('calculatorsHub')} variant="secondary" className="mb-4">
