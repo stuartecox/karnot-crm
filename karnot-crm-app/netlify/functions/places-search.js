@@ -135,9 +135,9 @@ exports.handler = async (event, context) => {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     error: 'API request denied',
-                    message: 'API configuration error. Please check API key and billing.',
+                    message: `Google API denied: ${data.error_message || 'Unknown reason'}. Check that Places API is enabled and billing is active.`,
                     details: data.error_message,
                     status: data.status
                 })
@@ -152,8 +152,9 @@ exports.handler = async (event, context) => {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     error: `Google Places API error: ${data.status}`,
+                    message: `Google API error: ${data.error_message || data.status}`,
                     details: data.error_message,
                     status: data.status
                 })
