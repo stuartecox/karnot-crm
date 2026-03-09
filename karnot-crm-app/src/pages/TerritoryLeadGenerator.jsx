@@ -231,18 +231,26 @@ const TerritoryLeadGenerator = ({ territories = [], user }) => {
             });
 
             if (!response.ok) {
-                throw new Error('Search failed. Please check your API configuration.');
+                const errorData = await response.json().catch(() => ({}));
+                const details = errorData.details ? ` (${errorData.details})` : '';
+                const status = errorData.status ? ` [${errorData.status}]` : '';
+                throw new Error(errorData.message || errorData.error || `Search failed (HTTP ${response.status})`) ;
             }
 
             const data = await response.json();
             setResults(data.results || []);
-            
+
             if (!data.results || data.results.length === 0) {
                 setError(`No businesses found matching "${searchKeyword}". Try different keywords or expand the search radius.`);
             }
         } catch (err) {
-            setError(err.message || 'Search failed. Please try again.');
-            console.error('Search error:', err);
+            console.error('Search error details:', err);
+            // Show more detail for network/fetch errors vs API errors
+            if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                setError('Network error: Could not reach the server. Check your internet connection.');
+            } else {
+                setError(err.message || 'Search failed. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
