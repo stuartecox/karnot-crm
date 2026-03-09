@@ -231,7 +231,8 @@ const TerritoryLeadGenerator = ({ territories = [], user }) => {
             });
 
             if (!response.ok) {
-                throw new Error('Search failed. Please check your API configuration.');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || errorData.error || `Search failed (${response.status}). Please check your API configuration.`);
             }
 
             const data = await response.json();
