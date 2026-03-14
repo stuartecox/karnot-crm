@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnot Energy Solutions - Financial Dashboard</title>
+    <style>
+        :root {
+            --green: #27ae60;
+            --dark-green: #1e8449;
+            --blue: #2c3e50;
+            --dark-blue: #3d5a6b;
+            --darker-blue: #2d4a58;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --bg-light: #f5f5f7;
+            --border-color: #d2d2d7;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 40px 22px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d5f6d 0%, #1e3a44 100%);
+            color: #fff;
+            padding: 60px 40px;
+            text-align: center;
+            margin: 0;
+        }
+        
+        .teaser-badge {
+            display: inline-block;
+            background: transparent;
+            color: #2ecc71;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 2px solid #2ecc71;
+        }
+        
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1.5px;
+            line-height: 1.2;
+            color: #fff;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 20px auto 40px;
+            line-height: 1.6;
+            max-width: 900px;
+        }
+        
+        h2 {
+            color: var(--blue);
+            font-size: 2rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--green);
+        }
+        
+        .section-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1000px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .sensitivity-controls {
+            background: var(--bg-light);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--blue);
+        }
+        
+        .control-value {
+            color: var(--green);
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--green);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.5);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--green);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.5);
+            border: none;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 900px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .metric {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--darker-blue) 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .metric-value {
+            font-size: 1.6em;
+            font-weight: 700;
+            word-break: break-word;
+        }
+        
+        .year-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .year-tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 20px;
+            background: var(--bg-light);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-weight: 600;
+            color: var(--blue);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .year-tab:hover {
+            background: #e8f5e9;
+            border-color: var(--green);
+        }
+        
+        .year-tab.active {
+            background: linear-gradient(135deg, var(--green) 0%, var(--dark-green) 100%);
+            color: white;
+            border-color: var(--dark-green);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+        
+        .financial-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .financial-table th {
+            background: var(--bg-light);
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--blue);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+        
+        .financial-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+        
+        .financial-table tr:hover {
+            background: var(--bg-light);
+        }
+        
+        .positive {
+            color: var(--green);
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .chart-container {
+            background: var(--bg-light);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            min-height: 300px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 250px;
+            gap: 15px;
+        }
+        
+        .bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--dark-blue) 0%, var(--blue) 100%);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            min-height: 20px;
+        }
+        
+        .bar:hover {
+            background: linear-gradient(to top, var(--green) 0%, var(--dark-green) 100%);
+        }
+        
+        .bar-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--blue);
+            white-space: nowrap;
+        }
+        
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--blue);
+            white-space: nowrap;
+        }
+        
+        .assumptions-box {
+            background: linear-gradient(135deg, rgba(61, 90, 107, 0.08) 0%, rgba(61, 90, 107, 0.03) 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border-left: 5px solid var(--dark-blue);
+        }
+        
+        .assumptions-box h3 {
+            color: var(--blue);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .assumptions-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .assumptions-box li {
+            color: var(--text-secondary);
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .assumptions-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-weight: bold;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, var(--green) 0%, var(--dark-green) 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .reset-button {
+            background: linear-gradient(135deg, var(--green) 0%, var(--dark-green) 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+        }
+
+        .reset-button:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+            .header {
+                padding: 40px 20px;
+            }
+            .section-card {
+                padding: 25px;
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="teaser-badge">INTERACTIVE FINANCIAL MODEL</div>
+        <h1>Karnot Financial Dashboard</h1>
+        <p class="subtitle">Interactive Sensitivity Analysis | 2026-2030 Forecast<br><strong>View projections and adjust assumptions in real-time</strong></p>
+    </div>
+
+    <div class="container">
+        <!-- Key Metrics First -->
+        <div class="section-card full-width">
+            <h2>📊 Key Financial Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">2030 Revenue</div>
+                    <div class="metric-value" id="revenue2030">$14.8M</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">2030 Net Profit</div>
+                    <div class="metric-value" id="profit2030">$5.5M</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">5-Year Revenue CAGR</div>
+                    <div class="metric-value" id="cagr">77%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">2030 Net Margin</div>
+                    <div class="metric-value" id="netMargin2030">37%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue & Profit Charts -->
+        <div class="dashboard-grid">
+            <div class="section-card">
+                <h2>💰 Revenue Projection</h2>
+                <div class="chart-container">
+                    <div class="bar-chart" id="revenueChart"></div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2>📈 Net Profit Projection</h2>
+                <div class="chart-container">
+                    <div class="bar-chart" id="profitChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensitivity Controls MOVED BELOW -->
+        <div class="section-card full-width">
+            <h2>🎛️ Sensitivity Analysis Controls</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95em;">
+                Adjust the sliders below to see real-time impact on the projections above
+            </p>
+            <div style="text-align: right; margin-bottom: 15px;">
+                <button id="resetButton" class="reset-button">
+                    ↺ Reset to Plan Values
+                </button>
+            </div>
+            <div class="sensitivity-controls">
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Revenue Growth Rate</span>
+                        <span class="control-value" id="revenueGrowthValue">Base (77% CAGR)</span>
+                    </div>
+                    <input type="range" id="revenueGrowth" min="50" max="100" value="77" step="1">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Export Unit Price (USD)</span>
+                        <span class="control-value" id="exportPriceValue">$3,252</span>
+                    </div>
+                    <input type="range" id="exportPrice" min="2500" max="4000" value="3252" step="50">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Domestic Unit Price (USD)</span>
+                        <span class="control-value" id="domesticPriceValue">$3,239</span>
+                    </div>
+                    <input type="range" id="domesticPrice" min="2500" max="4000" value="3239" step="50">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Gross Margin Target</span>
+                        <span class="control-value" id="marginValue">55%</span>
+                    </div>
+                    <input type="range" id="margin" min="40" max="65" value="55" step="1">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Operating Expense Efficiency</span>
+                        <span class="control-value" id="opexValue">100%</span>
+                    </div>
+                    <input type="range" id="opex" min="80" max="120" value="100" step="5">
+                </div>
+            </div>
+        </div>
+
+        <!-- Year Selector -->
+        <div class="section-card full-width">
+            <h2>🔍 Detailed Financial Breakdown</h2>
+            <div class="year-tabs">
+                <button class="year-tab active" onclick="selectYear(2026)">2026</button>
+                <button class="year-tab" onclick="selectYear(2027)">2027</button>
+                <button class="year-tab" onclick="selectYear(2028)">2028</button>
+                <button class="year-tab" onclick="selectYear(2029)">2029</button>
+                <button class="year-tab" onclick="selectYear(2030)">2030</button>
+            </div>
+
+            <table class="financial-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                        <th>% of Revenue</th>
+                    </tr>
+                </thead>
+                <tbody id="financialDetails">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+
+            <div class="assumptions-box">
+                <h3>Key Model Assumptions</h3>
+                <ul id="assumptionsList">
+                    <!-- Populated by JavaScript -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Unit Economics -->
+        <div class="dashboard-grid">
+            <div class="section-card">
+                <h2>🏭 Unit Sales Volume</h2>
+                <table class="financial-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Export Units</th>
+                            <th>Domestic Units</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="unitSales">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-card">
+                <h2>💼 Team Growth</h2>
+                <table class="financial-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Team</th>
+                            <th>Rev/Employee</th>
+                            <th>Profit/Employee</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamMetrics">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Cash Flow -->
+        <div class="section-card full-width">
+            <h2>💵 Cash Flow Summary</h2>
+            <table class="financial-table">
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Operating Cash Flow</th>
+                        <th>Investing Cash Flow</th>
+                        <th>Financing Cash Flow</th>
+                        <th>Ending Cash</th>
+                    </tr>
+                </thead>
+                <tbody id="cashFlow">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Base financial data from PDF
+        var baseData = {
+            2026: {
+                revenue: 514832,
+                exportRevenue: 331704,
+                domesticRevenue: 181384,
+                exportUnits: 102,
+                domesticUnits: 56,
+                directCosts: 275558,
+                grossProfit: 257416,
+                operatingExpenses: 257416,
+                netProfit: 7593,
+                headcount: 8.75,
+                revenuePerEmployee: 58838,
+                profitPerEmployee: 868,
+                operatingCashFlow: 30030,
+                investingCashFlow: -402875,
+                financingCashFlow: 450906,
+                endingCash: 78061
+            },
+            2027: {
+                revenue: 1872853,
+                exportRevenue: 1350000,
+                domesticRevenue: 486000,
+                exportUnits: 300,
+                domesticUnits: 108,
+                directCosts: 932656,
+                grossProfit: 1030069,
+                operatingExpenses: 599313,
+                netProfit: 432129,
+                headcount: 19.33,
+                revenuePerEmployee: 96888,
+                profitPerEmployee: 20640,
+                operatingCashFlow: 447633,
+                investingCashFlow: -37313,
+                financingCashFlow: 22029,
+                endingCash: 510410
+            },
+            2028: {
+                revenue: 3818393,
+                exportRevenue: 2700000,
+                domesticRevenue: 970000,
+                exportUnits: 540,
+                domesticUnits: 194,
+                directCosts: 1801336,
+                grossProfit: 2139300,
+                operatingExpenses: 973690,
+                netProfit: 1107366,
+                headcount: 30,
+                revenuePerEmployee: 127280,
+                profitPerEmployee: 36912,
+                operatingCashFlow: 1161431,
+                investingCashFlow: -53470,
+                financingCashFlow: -430339,
+                endingCash: 1188032
+            },
+            2029: {
+                revenue: 7639138,
+                exportRevenue: 5346000,
+                domesticRevenue: 1925000,
+                exportUnits: 972,
+                domesticUnits: 350,
+                directCosts: 3532745,
+                grossProfit: 4354309,
+                operatingExpenses: 1680610,
+                netProfit: 2603384,
+                headcount: 47,
+                revenuePerEmployee: 162535,
+                profitPerEmployee: 54635,
+                operatingCashFlow: 2621333,
+                investingCashFlow: -61838,
+                financingCashFlow: 0,
+                endingCash: 2720384
+            },
+            2030: {
+                revenue: 14778831,
+                exportRevenue: 10500000,
+                domesticRevenue: 3492500,
+                exportUnits: 1750,
+                domesticUnits: 635,
+                directCosts: 6673014,
+                grossProfit: 8571722,
+                operatingExpenses: 2955766,
+                netProfit: 5475615,
+                headcount: 61,
+                revenuePerEmployee: 242276,
+                profitPerEmployee: 89764,
+                operatingCashFlow: 5522748,
+                investingCashFlow: -72298,
+                financingCashFlow: 0,
+                endingCash: 5980588
+            }
+        };
+
+        var currentData = JSON.parse(JSON.stringify(baseData));
+        var currentYear = 2026;
+
+        // Store base values for reset
+        const baseValues = {
+            revenueGrowth: 77,
+            exportPrice: 3252,
+            domesticPrice: 3239,
+            margin: 55,
+            opex: 100
+        };
+
+        // Format currency
+        function formatCurrency(value) {
+            if (value >= 1000000) {
+                return '$' + (value / 1000000).toFixed(1) + 'M';
+            } else if (value >= 1000) {
+                return '$' + (value / 1000).toFixed(0) + 'K';
+            } else {
+                return '$' + value.toFixed(0);
+            }
+        }
+
+        // Format percentage
+        function formatPercent(value) {
+            return value.toFixed(1) + '%';
+        }
+
+        // Reset function
+        function resetToBase() {
+            document.getElementById('revenueGrowth').value = baseValues.revenueGrowth;
+            document.getElementById('exportPrice').value = baseValues.exportPrice;
+            document.getElementById('domesticPrice').value = baseValues.domesticPrice;
+            document.getElementById('margin').value = baseValues.margin;
+            document.getElementById('opex').value = baseValues.opex;
+            
+            // Reset currentData to baseData
+            currentData = JSON.parse(JSON.stringify(baseData));
+            
+            updateCalculations();
+        }
+
+        // Update calculations based on sensitivity controls
+        function updateCalculations() {
+            var revenueGrowth = parseInt(document.getElementById('revenueGrowth').value) / 77;
+            var exportPrice = parseInt(document.getElementById('exportPrice').value) / 3252;
+            var domesticPrice = parseInt(document.getElementById('domesticPrice').value) / 3239;
+            var marginTarget = parseInt(document.getElementById('margin').value) / 55;
+            var opexEfficiency = parseInt(document.getElementById('opex').value) / 100;
+
+            // Update control value displays
+            document.getElementById('revenueGrowthValue').textContent = document.getElementById('revenueGrowth').value + '% CAGR';
+            document.getElementById('exportPriceValue').textContent = '$' + document.getElementById('exportPrice').value;
+            document.getElementById('domesticPriceValue').textContent = '$' + document.getElementById('domesticPrice').value;
+            document.getElementById('marginValue').textContent = document.getElementById('margin').value + '%';
+            document.getElementById('opexValue').textContent = document.getElementById('opex').value + '%';
+
+            // Calculate overall revenue multiplier
+            var overallMultiplier = (exportPrice + domesticPrice) / 2;
+            
+            // Recalculate financials for each year
+            for (var year in baseData) {
+                var base = baseData[year];
+                var adjusted = currentData[year];
+                
+                // Adjust revenue based on price changes
+                adjusted.exportRevenue = base.exportRevenue * exportPrice;
+                adjusted.domesticRevenue = base.domesticRevenue * domesticPrice;
+                adjusted.revenue = adjusted.exportRevenue + adjusted.domesticRevenue;
+                
+                // Adjust for revenue growth rate
+                if (year > 2026) {
+                    var yearDiff = parseInt(year) - 2026;
+                    adjusted.revenue = baseData[2026].revenue * overallMultiplier * Math.pow(1 + (revenueGrowth * 0.77), yearDiff);
+                }
+                
+                // Adjust margins
+                adjusted.grossProfit = adjusted.revenue * (marginTarget * 0.55);
+                adjusted.directCosts = adjusted.revenue - adjusted.grossProfit;
+                
+                // Scale operating expenses AND headcount proportionally with revenue
+                var revenueRatio = adjusted.revenue / base.revenue;
+                
+                // Scale headcount proportionally (maintaining base minimum of 2 people)
+                var baseHeadcount = base.headcount;
+                adjusted.headcount = Math.max(2, baseHeadcount * revenueRatio);
+                
+                // Adjust operating expenses proportionally with revenue AND efficiency factor
+                adjusted.operatingExpenses = base.operatingExpenses * revenueRatio * opexEfficiency;
+                
+                // Calculate net profit
+                adjusted.netProfit = adjusted.grossProfit - adjusted.operatingExpenses;
+                
+                // Recalculate per-employee metrics
+                adjusted.revenuePerEmployee = adjusted.revenue / adjusted.headcount;
+                adjusted.profitPerEmployee = adjusted.netProfit / adjusted.headcount;
+            }
+            
+            updateDashboard();
+        }
+
+        // Update all dashboard elements
+        function updateDashboard() {
+            // Update summary metrics
+            document.getElementById('revenue2030').textContent = formatCurrency(currentData[2030].revenue);
+            document.getElementById('profit2030').textContent = formatCurrency(currentData[2030].netProfit);
+            document.getElementById('netMargin2030').textContent = formatPercent((currentData[2030].netProfit / currentData[2030].revenue) * 100);
+            
+            // Calculate actual CAGR
+            var actualCAGR = (Math.pow(currentData[2030].revenue / currentData[2026].revenue, 1/4) - 1) * 100;
+            document.getElementById('cagr').textContent = formatPercent(actualCAGR);
+            
+            // Update charts
+            updateCharts();
+            
+            // Update detailed breakdown
+            updateFinancialDetails();
+            
+            // Update unit sales table
+            updateUnitSales();
+            
+            // Update team metrics
+            updateTeamMetrics();
+            
+            // Update cash flow
+            updateCashFlow();
+            
+            // Update assumptions
+            updateAssumptions();
+        }
+
+        // Update revenue and profit charts
+        function updateCharts() {
+            var revenueChart = document.getElementById('revenueChart');
+            var profitChart = document.getElementById('profitChart');
+            
+            revenueChart.innerHTML = '';
+            profitChart.innerHTML = '';
+            
+            var maxRevenue = currentData[2030].revenue;
+            var maxProfit = currentData[2030].netProfit;
+            
+            for (var year = 2026; year <= 2030; year++) {
+                var revenueBar = document.createElement('div');
+                revenueBar.className = 'bar';
+                var revenueHeight = (currentData[year].revenue / maxRevenue) * 100;
+                revenueBar.style.height = revenueHeight + '%';
+                revenueBar.innerHTML = '<span class="bar-value">' + formatCurrency(currentData[year].revenue) + '</span><span class="bar-label">' + year + '</span>';
+                revenueChart.appendChild(revenueBar);
+                
+                var profitBar = document.createElement('div');
+                profitBar.className = 'bar';
+                var profitHeight = Math.max((currentData[year].netProfit / maxProfit) * 100, 5);
+                profitBar.style.height = profitHeight + '%';
+                profitBar.innerHTML = '<span class="bar-value">' + formatCurrency(currentData[year].netProfit) + '</span><span class="bar-label">' + year + '</span>';
+                profitChart.appendChild(profitBar);
+            }
+        }
+
+        // Update financial details table
+        function updateFinancialDetails() {
+            var tbody = document.getElementById('financialDetails');
+            var data = currentData[currentYear];
+            
+            var rows = [
+                { label: 'Total Revenue', value: data.revenue, pct: 100 },
+                { label: 'Export Equipment Sales', value: data.exportRevenue, pct: (data.exportRevenue / data.revenue) * 100 },
+                { label: 'Domestic Equipment Sales', value: data.domesticRevenue, pct: (data.domesticRevenue / data.revenue) * 100 },
+                { label: 'Direct Costs', value: data.directCosts, pct: (data.directCosts / data.revenue) * 100, negative: true },
+                { label: 'Gross Profit', value: data.grossProfit, pct: (data.grossProfit / data.revenue) * 100, highlight: true },
+                { label: 'Operating Expenses', value: data.operatingExpenses, pct: (data.operatingExpenses / data.revenue) * 100, negative: true },
+                { label: 'Net Profit', value: data.netProfit, pct: (data.netProfit / data.revenue) * 100, highlight: true, positive: data.netProfit > 0 }
+            ];
+            
+            tbody.innerHTML = '';
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var tr = document.createElement('tr');
+                var labelClass = row.highlight ? 'highlight' : '';
+                var valueClass = row.positive ? 'positive' : (row.negative ? '' : '');
+                if (row.positive === false && row.value < 0) valueClass = 'negative';
+                
+                tr.innerHTML = '<td><span class="' + labelClass + '">' + row.label + '</span></td>' +
+                              '<td class="' + valueClass + '">' + formatCurrency(row.value) + '</td>' +
+                              '<td>' + formatPercent(row.pct) + '</td>';
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Update unit sales table
+        function updateUnitSales() {
+            var tbody = document.getElementById('unitSales');
+            tbody.innerHTML = '';
+            
+            for (var year = 2026; year <= 2030; year++) {
+                var data = baseData[year];
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td><strong>' + year + '</strong></td>' +
+                              '<td>' + data.exportUnits + '</td>' +
+                              '<td>' + data.domesticUnits + '</td>' +
+                              '<td><strong>' + (data.exportUnits + data.domesticUnits) + '</strong></td>';
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Update team metrics table
+        function updateTeamMetrics() {
+            var tbody = document.getElementById('teamMetrics');
+            tbody.innerHTML = '';
+            
+            for (var year = 2026; year <= 2030; year++) {
+                var data = currentData[year];
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td><strong>' + year + '</strong></td>' +
+                              '<td>' + data.headcount.toFixed(1) + '</td>' +
+                              '<td>' + formatCurrency(data.revenuePerEmployee) + '</td>' +
+                              '<td class="positive">' + formatCurrency(data.profitPerEmployee) + '</td>';
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Update cash flow table
+        function updateCashFlow() {
+            var tbody = document.getElementById('cashFlow');
+            tbody.innerHTML = '';
+            
+            for (var year = 2026; year <= 2030; year++) {
+                var data = baseData[year];
+                var tr = document.createElement('tr');
+                var investClass = data.investingCashFlow < 0 ? 'negative' : 'positive';
+                tr.innerHTML = '<td><strong>' + year + '</strong></td>' +
+                              '<td class="positive">' + formatCurrency(data.operatingCashFlow) + '</td>' +
+                              '<td class="' + investClass + '">' + formatCurrency(data.investingCashFlow) + '</td>' +
+                              '<td>' + formatCurrency(data.financingCashFlow) + '</td>' +
+                              '<td><strong>' + formatCurrency(data.endingCash) + '</strong></td>';
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Update assumptions list
+        function updateAssumptions() {
+            var list = document.getElementById('assumptionsList');
+            var exportPrice = document.getElementById('exportPrice').value;
+            var domesticPrice = document.getElementById('domesticPrice').value;
+            var margin = document.getElementById('margin').value;
+            
+            var assumptions = [
+                'Export unit price: $' + exportPrice,
+                'Domestic unit price: $' + domesticPrice,
+                'Target gross margin: ' + margin + '%',
+                'Headcount scales proportionally with revenue changes',
+                'Operating expenses scale proportionally with revenue',
+                'Export units grow from 102 (2026) to 1,750 (2030)',
+                'Domestic units grow from 56 (2026) to 635 (2030)',
+                'Company achieves profitability in Year 1 (2026)',
+                'Operating cash flow positive from Year 1'
+            ];
+            
+            list.innerHTML = '';
+            for (var i = 0; i < assumptions.length; i++) {
+                var li = document.createElement('li');
+                li.textContent = assumptions[i];
+                list.appendChild(li);
+            }
+        }
+
+        // Select year for detailed view
+        function selectYear(year) {
+            currentYear = year;
+            
+            var tabs = document.querySelectorAll('.year-tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            event.target.classList.add('active');
+            
+            updateFinancialDetails();
+        }
+
+        // Add event listeners to all range inputs
+        var rangeInputs = document.querySelectorAll('input[type="range"]');
+        for (var i = 0; i < rangeInputs.length; i++) {
+            rangeInputs[i].addEventListener('input', updateCalculations);
+        }
+
+        // Add reset button event listener
+        document.getElementById('resetButton').addEventListener('click', resetToBase);
+
+        // Initialize dashboard
+        updateDashboard();
+    </script>
+</body>
+</html>

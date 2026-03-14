@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnot Energy Solutions - Business Model & Revenue Streams</title>
+    <style>
+        :root {
+            --green: #27ae60;
+            --dark-green: #1e8449;
+            --blue: #2c3e50;
+            --dark-blue: #3d5a6b;
+            --darker-blue: #2d4a58;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --bg-light: #f5f5f7;
+            --border-color: #d2d2d7;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 22px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d5f6d 0%, #1e3a44 100%);
+            color: #fff;
+            padding: 60px 40px;
+            text-align: center;
+            margin: 0;
+        }
+        
+        .teaser-badge {
+            display: inline-block;
+            background: transparent;
+            color: #2ecc71;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 2px solid #2ecc71;
+        }
+        
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1.5px;
+            line-height: 1.2;
+            color: #fff;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 20px auto 40px;
+            line-height: 1.6;
+            max-width: 900px;
+        }
+        
+        h2 {
+            color: var(--blue);
+            font-size: 2rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--green);
+        }
+        
+        h3 {
+            color: var(--blue);
+            font-size: 1.5rem;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        
+        h4 {
+            color: var(--dark-blue);
+            font-size: 1.2rem;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .section-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%);
+            border-left: 5px solid var(--green);
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+        
+        .highlight-box strong {
+            color: var(--dark-green);
+            font-size: 18px;
+        }
+        
+        .info-box {
+            background: var(--bg-light);
+            border-left: 4px solid var(--dark-blue);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .revenue-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .revenue-table thead {
+            background: var(--dark-blue);
+            color: white;
+        }
+        
+        .revenue-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .revenue-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .revenue-table tr:hover {
+            background: var(--bg-light);
+        }
+        
+        .revenue-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--darker-blue) 100%);
+            padding: 25px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #2ecc71;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.95em;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: var(--bg-light);
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--green);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .feature-card h4 {
+            color: var(--dark-blue);
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .icon-label {
+            font-size: 2em;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .economics-box {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .economics-header {
+            background: var(--dark-blue);
+            color: white;
+            padding: 15px 20px;
+            margin: -25px -25px 20px -25px;
+            border-radius: 10px 10px 0 0;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+        
+        .economics-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .economics-row:last-child {
+            border-bottom: none;
+        }
+        
+        .economics-label {
+            font-weight: 600;
+            color: var(--blue);
+        }
+        
+        .economics-value {
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+        
+        .ratio-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--green) 0%, var(--dark-green) 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+        
+        .phase-timeline {
+            margin: 30px 0;
+        }
+        
+        .phase {
+            background: white;
+            border-left: 5px solid var(--green);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .phase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .phase-title {
+            font-weight: 700;
+            color: var(--dark-blue);
+            font-size: 1.2em;
+        }
+        
+        .phase-date {
+            color: var(--green);
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .phase-content ul {
+            margin-left: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .phase-content li {
+            margin-bottom: 8px;
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+        
+        li strong {
+            color: var(--blue);
+        }
+        
+        p {
+            margin-bottom: 15px;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+        
+        .cta-section {
+            text-align: center;
+            background: linear-gradient(135deg, var(--green) 0%, var(--dark-green) 100%);
+            color: white;
+            padding: 50px 40px;
+            border-radius: 16px;
+            margin-top: 40px;
+        }
+        
+        .cta-section h2 {
+            color: white;
+            border: none;
+            margin-bottom: 15px;
+        }
+        
+        .cta-section p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+        
+        .btn-cta {
+            display: inline-block;
+            padding: 16px 40px;
+            background: white;
+            color: var(--dark-green);
+            font-size: 1.1em;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+            .header {
+                padding: 40px 20px;
+            }
+            .section-card {
+                padding: 25px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            .economics-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            .phase-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="teaser-badge">BUSINESS MODEL</div>
+        <h1>Revenue Streams & Economics</h1>
+        <p class="subtitle">Five Integrated Revenue Streams | Hardware-Enabled SaaS Model<br><strong>Resilient, Scalable, High-Margin Business Architecture</strong></p>
+    </div>
+
+    <div class="container">
+        <!-- Overview -->
+        <div class="section-card">
+            <h2>5.1 Overview: Five Integrated Revenue Streams</h2>
+            <p style="font-size: 1.1em; margin-bottom: 25px;">Karnot operates a resilient <strong>"Hardware-Enabled SaaS"</strong> model designed to withstand economic cycles. We don't just sell boxes; we monetize the energy, data, and carbon savings they generate.</p>
+            
+            <table class="revenue-table">
+                <thead>
+                    <tr>
+                        <th style="width:22%;">Revenue Stream</th>
+                        <th style="width:45%;">Commercial Mechanism</th>
+                        <th style="width:33%;">Key Numbers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1. Capital Equipment Sales</strong><br><span style="color: var(--text-secondary); font-size: 0.9em;">(Transactional)</span></td>
+                        <td>Direct B2B sales of iHEAT &amp; iCOOL hardware to Commercial &amp; Industrial (C&I) clients. 50% deposit on order covers COGS before manufacturing.</td>
+                        <td><strong>₱8,000 USD all-in/site</strong><br>50% gross margin<br><span style="color: var(--text-secondary); font-size: 0.9em;">7-month customer payback</span></td>
+                    </tr>
+                    <tr style="background: rgba(39,174,96,0.04);">
+                        <td><strong>2. EaaS — Energy Savings Share</strong><br><span style="color: var(--green); font-size: 0.9em; font-weight:600;">(Primary Recurring ★)</span></td>
+                        <td><strong>Two parallel channels, one platform:</strong><br>
+                        • <strong>AQUAHERO</strong> residential — utility-led, homeowners pay ₱3,500/month comfort subscription on electric bill, 15-year contract<br>
+                        • <strong>iHEAT / iCOOL</strong> commercial direct — C&I clients pay 50% of verified monthly savings, 5-year contract</td>
+                        <td><strong>₱3,500/mo</strong> residential<br><strong>₱59,166/mo</strong> commercial/site<br><span style="color: var(--text-secondary); font-size: 0.9em;">Both on iSAVE platform</span></td>
+                    </tr>
+                    <tr style="background: rgba(39,174,96,0.04);">
+                        <td><strong>3. VPP / RDSP</strong><br><span style="color: var(--green); font-size: 0.9em; font-weight:600;">(Stacked Recurring ★)</span></td>
+                        <td>Every iSAVE site auto-enrolled in Meralco RDSP (Retail Demand Shaping Programme). Karnot earns a monthly capacity payment for controllable load — layered on top of EaaS at zero additional hardware cost.</td>
+                        <td><strong>₱2,235/site/month</strong><br>30 sites → ₱67k/month<br><span style="color: var(--text-secondary); font-size: 0.9em;">496 sites → ₱1.1M/month</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4. Carbon Credits</strong><br><span style="color: var(--text-secondary); font-size: 0.9em;">(High Margin)</span></td>
+                        <td>Rubidex blockchain MRV creates immutable energy-saving records. Aggregated into Gold Standard carbon credits. Automated, low-overhead revenue per site.</td>
+                        <td><strong>₱4,700/site/month</strong><br><span style="color: var(--text-secondary); font-size: 0.9em;">~₱56k/year per site</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>5. Control Centre SaaS</strong><br><span style="color: var(--text-secondary); font-size: 0.9em;">(Series A Story)</span></td>
+                        <td>Fleet management API for utilities, ESCO portals, and VPP aggregators. OpenADR 2.0 demand response engine. Unlocked at scale post-Series A.</td>
+                        <td><strong>$200/site/year</strong><br><span style="color: var(--text-secondary); font-size: 0.9em;">80%+ gross margin</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Revenue Stream 1 -->
+        <div class="section-card">
+            <h2>5.2 Revenue Stream 1: Capital Equipment Sales (The Foundation)</h2>
+            <p>This is the bedrock of our cash flow. We sell hardware directly to high-load commercial clients (hotels, food processors, data centres) and through our international distributors.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="icon-label">🎯</span>
+                    <h4>The Foundation</h4>
+                    <p>We target <strong>high-load commercial clients</strong> (hotels, food processors) where efficiency is critical and energy consumption is the primary operational cost.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="icon-label">⚡</span>
+                    <h4>The "7-Month" ROI</h4>
+                    <p>A standard 50-room hotel in the Philippines saves <strong>₱383,163 annually</strong> by switching to Karnot. This delivers a payback period of just <strong>0.6 years (7 months)</strong>, compressing sales cycles from 12 months to roughly 12 weeks.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="icon-label">✅</span>
+                    <h4>UK Compliance</h4>
+                    <p>Our units are fully <strong>MCS Certified</strong>, enabling UK installers to claim government grants (BUS). This certification is a mandatory requirement for volume adoption in our primary export market.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Stream 2 -->
+        <div class="section-card">
+            <h2>5.3 Revenue Stream 2: Energy-as-a-Service (EaaS) — Dual-Channel</h2>
+            <p>EaaS is our <strong>primary recurring revenue engine</strong>. We operate two parallel delivery channels under the same iSAVE edge platform: a utility-led residential model (<strong>AQUAHERO</strong>) and a direct commercial model (<strong>iHEAT / iCOOL</strong>). Both share the same hardware stack, edge controller, and VPP backbone — expanding our total addressable market across every segment simultaneously.</p>
+
+            <!-- Channel A -->
+            <div style="margin: 30px 0 0 0; border-left: 4px solid var(--green); padding-left: 20px;">
+                <h3 style="margin-bottom: 15px; color: var(--dark-green);">Channel A: AQUAHERO — Residential (Utility-Led)</h3>
+                <div class="economics-box">
+                    <div class="economics-header">AQUAHERO EaaS Model</div>
+                    <div class="economics-row">
+                        <div class="economics-label">Mechanism</div>
+                        <div class="economics-value">We partner with Distribution Utilities (e.g., <strong>PANELCO III</strong>). The utility purchases the fleet upfront — Karnot receives 100% hardware payment on delivery and manages the fleet for <strong>15 years</strong>. Zero balance-sheet risk for Karnot.</div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">Customer Offer</div>
+                        <div class="economics-value">Homeowners pay a <strong>"Comfort Subscription" of ₱3,500/month</strong> directly on their electric bill — eliminating the ₱150,000+ upfront cost of traditional AC or water heating. No CapEx, no contract fuss.</div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">The Win-Win-Win</div>
+                        <div class="economics-value">
+                            <strong>• The Utility:</strong> Gains a managed VPP load asset + bill collection channel.<br>
+                            <strong>• The Developer / ESCO:</strong> Earns a long-term revenue share (passive income).<br>
+                            <strong>• The Homeowner:</strong> Saves ~40% on energy vs. inefficient incumbents — hot water &amp; comfort delivered.
+                        </div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">Contract Term</div>
+                        <div class="economics-value"><strong>15-year</strong> utility management contract. Revenue stream secured through 2040+.</div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">Product Brand</div>
+                        <div class="economics-value"><strong>AQUAHERO</strong> — Karnot's residential heat pump water heater range. Designed for Philippine households; replaces LPG, electric resistance, and solar thermal.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Channel B -->
+            <div style="margin: 30px 0 0 0; border-left: 4px solid var(--blue); padding-left: 20px;">
+                <h3 style="margin-bottom: 15px; color: var(--blue);">Channel B: iHEAT / iCOOL — Commercial Direct (C&amp;I)</h3>
+                <div class="economics-box">
+                    <div class="economics-header">Commercial EaaS Model — Confirmed Pilot Numbers</div>
+                    <div class="economics-row">
+                        <div class="economics-label">Mechanism</div>
+                        <div class="economics-value">Karnot installs iHEAT or iCOOL at C&amp;I client sites (hotels, food processors, commercial buildings). Client pays <strong>50% of verified monthly energy savings</strong> — zero CapEx required. Savings measured and verified by iSAVE edge controller.</div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">Revenue per Site</div>
+                        <div class="economics-value">
+                            <span style="font-size: 1.3em; font-weight: 700; color: var(--green);">₱59,166 / month</span> (~$1,020 USD)<br>
+                            <span style="color: var(--text-secondary); font-size: 0.9em;">Based on: 15kW iHEAT, COP 4.14, ₱12/kWh grid price, 50% savings share</span>
+                        </div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">Customer ROI</div>
+                        <div class="economics-value"><strong>7-month payback</strong> for the customer. Saves ₱383,163/year vs. incumbent system. Compresses sales cycle from 12 months to ~12 weeks.</div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">Contract Term</div>
+                        <div class="economics-value"><strong>5-year EaaS contract</strong>. Full 30-site pilot fleet operational by Month 9. Revenue compounds as contracts stack — no drop-off within the 60-month window.</div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">5-Year Cohort Growth</div>
+                        <div class="economics-value">
+                            Installing <strong>2 units/week</strong> continuously:<br>
+                            • Month 9: 30 sites → <strong>₱1,774,980/month</strong> EaaS alone<br>
+                            • Year 3: ~200 sites → <strong>₱11.8M/month</strong><br>
+                            • Year 5: <strong>496 sites → ₱29.3M/month EaaS</strong> (~$506k USD/month)<br>
+                            <span style="color: var(--text-secondary); font-size: 0.9em;">All EaaS revenue, before RDSP (Stream 3) and Carbon (Stream 4) stacked on top</span>
+                        </div>
+                    </div>
+                    <div class="economics-row">
+                        <div class="economics-label">Product Brands</div>
+                        <div class="economics-value">
+                            <strong>iHEAT</strong> — Commercial heat pump water heater (hotels, food processing, laundry).<br>
+                            <strong>iCOOL</strong> — Commercial cooling/air conditioning variant.<br>
+                            <strong>iSTOR</strong> — Thermal water batteries (1,000L–3,000L) providing 3–4 hours coast time for VPP.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combined stats -->
+            <div class="stats-grid" style="margin-top: 30px;">
+                <div class="stat-card">
+                    <div class="stat-number">₱3,500</div>
+                    <div class="stat-label">AQUAHERO Residential/month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">₱59,166</div>
+                    <div class="stat-label">iHEAT/iCOOL Commercial/site/month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">30</div>
+                    <div class="stat-label">Commercial Sites by Month 9</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">496</div>
+                    <div class="stat-label">Sites by Year 5 (2 units/week)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Stream 3 -->
+        <div class="section-card">
+            <h2>5.4 Revenue Stream 3: VPP / Demand Response (RDSP)</h2>
+            <p>Every iSAVE-connected site is <strong>automatically enrolled</strong> as a Virtual Power Plant (VPP) node. Through Meralco's <strong>Retail Demand Shaping Programme (RDSP)</strong> and equivalent programmes from other Distribution Utilities, Karnot earns a confirmed monthly capacity payment for controllable load — <em>stacked directly on top of EaaS revenue at zero additional hardware cost</em>.</p>
+
+            <div class="economics-box" style="margin-top: 25px;">
+                <div class="economics-header">RDSP Revenue per Site (Confirmed)</div>
+                <div class="economics-row">
+                    <div class="economics-label">Programme</div>
+                    <div class="economics-value"><strong>Meralco RDSP</strong> (Retail Demand Shaping Programme) — Philippines' primary demand response mechanism for C&amp;I customers. Meralco pays enrolled customers/aggregators for curtailable load capacity.</div>
+                </div>
+                <div class="economics-row">
+                    <div class="economics-label">Rate</div>
+                    <div class="economics-value"><strong>₱500 / kW / month</strong> for confirmed curtailable capacity</div>
+                </div>
+                <div class="economics-row">
+                    <div class="economics-label">Capacity per Site</div>
+                    <div class="economics-value"><strong>4.47 kW</strong> curtailable per iHEAT site (iSTOR thermal battery provides 3–4 hour coast time — the load can be cut without the customer noticing)</div>
+                </div>
+                <div class="economics-row">
+                    <div class="economics-label">Revenue per Site</div>
+                    <div class="economics-value">
+                        <span style="font-size: 1.3em; font-weight: 700; color: var(--green);">₱2,235 / site / month</span><br>
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">₱500 × 4.47 kW = ₱2,235 — confirmed RDSP calculation</span>
+                    </div>
+                </div>
+                <div class="economics-row">
+                    <div class="economics-label">Pilot Fleet (30 sites)</div>
+                    <div class="economics-value"><strong>₱67,050 / month</strong> (₱804,600 / year) — steady from Month 9 when pilot fleet is fully operational</div>
+                </div>
+            </div>
+
+            <h3 style="margin: 30px 0 15px 0; color: var(--blue);">5-Year Compounding Cohort (RDSP Revenue)</h3>
+            <p style="margin-bottom: 20px;">RDSP payments compound as the iSAVE fleet grows at 2 installs/week. Every new site adds ₱2,235/month in permanent RDSP income — stacked on the EaaS base:</p>
+
+            <table class="revenue-table">
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Cumulative Sites</th>
+                        <th>RDSP Revenue / Month</th>
+                        <th>RDSP Revenue / Year</th>
+                        <th>EaaS + RDSP / Month</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Pilot (Month 9)</strong></td>
+                        <td>30 sites</td>
+                        <td><strong>₱67,050</strong></td>
+                        <td>₱804,600</td>
+                        <td>₱1,842,030</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Year 1</strong></td>
+                        <td>~96 sites</td>
+                        <td><strong>₱214,560</strong></td>
+                        <td>₱2.6M</td>
+                        <td>₱5.9M</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Year 2</strong></td>
+                        <td>~200 sites</td>
+                        <td><strong>₱447,000</strong></td>
+                        <td>₱5.4M</td>
+                        <td>₱12.3M</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Year 3</strong></td>
+                        <td>~296 sites</td>
+                        <td><strong>₱661,960</strong></td>
+                        <td>₱7.9M</td>
+                        <td>₱18.2M</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Year 5 (Full Fleet)</strong></td>
+                        <td><strong>496 sites</strong></td>
+                        <td><strong>₱1,108,560</strong></td>
+                        <td><strong>₱13.3M</strong></td>
+                        <td style="color: var(--green); font-weight: 700;"><strong>₱31.7M / month</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box" style="margin-top: 25px;">
+                <strong>Full Revenue Stack per Site per Month (Year 5 basis):</strong>
+                <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    <div style="background: rgba(39,174,96,0.1); border-radius: 8px; padding: 12px; text-align: center;">
+                        <div style="font-size: 1.1em; font-weight: 700; color: var(--green);">₱59,166</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">Stream 2: EaaS</div>
+                    </div>
+                    <div style="background: rgba(44,62,80,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+                        <div style="font-size: 1.1em; font-weight: 700; color: var(--blue);">+ ₱2,235</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">Stream 3: RDSP/VPP</div>
+                    </div>
+                    <div style="background: rgba(44,62,80,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+                        <div style="font-size: 1.1em; font-weight: 700; color: var(--blue);">+ ₱4,700</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">Stream 4: Carbon</div>
+                    </div>
+                    <div style="background: rgba(39,174,96,0.15); border-radius: 8px; padding: 12px; text-align: center; border: 1px solid var(--green);">
+                        <div style="font-size: 1.2em; font-weight: 700; color: var(--dark-green);">= ₱66,101</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">Total / site / month</div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; text-align: center; font-size: 0.95em; color: var(--text-secondary);">
+                    At 496 sites (Year 5): <strong style="color: var(--dark-green); font-size: 1.05em;">₱32.8M / month (~$566k USD/month)</strong> combined MRR
+                </div>
+            </div>
+
+            <!-- Stream 4 callout -->
+            <div style="margin-top: 30px; padding: 20px; background: rgba(44,62,80,0.05); border-radius: 12px; border: 1px solid var(--border-color);">
+                <h4 style="margin-bottom: 10px; color: var(--blue);">5.4a Revenue Stream 4: Carbon Credits (Automated, High Margin)</h4>
+                <p>Every iSAVE site simultaneously generates <strong>blockchain-verified carbon credits</strong> via our Rubidex MRV integration. Energy savings are hashed every 15 minutes, creating an immutable audit trail that meets Gold Standard requirements — with no manual reporting overhead.</p>
+                <div style="margin-top: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 160px; background: #fff; border-radius: 8px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+                        <div style="font-size: 1.2em; font-weight: 700; color: var(--green);">₱4,700</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">per site / month</div>
+                    </div>
+                    <div style="flex: 1; min-width: 160px; background: #fff; border-radius: 8px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+                        <div style="font-size: 1.2em; font-weight: 700; color: var(--green);">₱56,400</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">per site / year</div>
+                    </div>
+                    <div style="flex: 1; min-width: 160px; background: #fff; border-radius: 8px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+                        <div style="font-size: 1.2em; font-weight: 700; color: var(--green);">₱27.9M</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">496 sites / year</div>
+                    </div>
+                    <div style="flex: 1; min-width: 160px; background: #fff; border-radius: 8px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+                        <div style="font-size: 1.2em; font-weight: 700; color: var(--blue);">Rubidex</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary);">MRV Partner</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution -->
+        <div class="section-card">
+            <h2>5.5 Distribution: The "Partner-Equity" Network</h2>
+            <p>To scale globally without bloating fixed costs, we deploy two distinct partner strategies adapted to our core markets:</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="icon-label">🇵🇭</span>
+                    <h4>Domestic Market<br><span style="font-weight: 400; font-size: 0.9em; color: var(--text-secondary);">(The "Co-Owner" Model)</span></h4>
+                    <p>We recruit elite energy professionals (ESCOs, Engineers) as <strong>Partner-Investors</strong>. They invest <strong>$2.5k – $5k</strong> to buy "skin in the game," receiving quarterly dividends and a permanent hardware discount. This turns "mercenary" dealers into loyal co-owners.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="icon-label">🇬🇧</span>
+                    <h4>UK Export Market<br><span style="font-weight: 400; font-size: 0.9em; color: var(--text-secondary);">(The "Service" Model)</span></h4>
+                    <p>We view the UK's <strong>5,000+ MCS Certified Installers</strong> as our primary sales force. We win them by solving their #1 bottleneck: Admin. Our Philippines-based <strong>"Concierge Team"</strong> handles their complete grant paperwork and system design for free. We don't just sell them a heat pump; we sell them <em>time</em>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- iSAVE VPP Controller -->
+        <div class="section-card">
+            <h2>5.6 The iSAVE VPP Smart Controller: Grid Intelligence Engine</h2>
+            <p>The iSAVE Controller acts as the "Central Brain" of our distributed energy network. Unlike passive monitoring tools, this is an <strong>Active Control System</strong> built on a robust <strong>ARM Cortex-class MCU</strong> designed to protect revenue, extend asset life, and unlock grid-level value.</p>
+            
+            <div class="highlight-box">
+                <strong>Key Capabilities:</strong>
+                <ul style="margin-top: 15px;">
+                    <li><strong>Real-Time Performance Monitoring:</strong> Tracks COP, energy consumption, and system health 24/7</li>
+                    <li><strong>Predictive Maintenance AI:</strong> Machine learning algorithms detect anomalies weeks before failure</li>
+                    <li><strong>Grid Integration:</strong> Enables demand response and Virtual Power Plant (VPP) functionality</li>
+                    <li><strong>Blockchain MRV:</strong> Creates verifiable, tradeable carbon credits from measured energy savings</li>
+                    <li><strong>Remote Diagnostics:</strong> Reduces service calls and enables our Call Centre to troubleshoot remotely</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Unit Economics -->
+        <div class="section-card">
+            <h2>5.7 Unit Economics: Dual-Engine Business Model</h2>
+            <p>Karnot operates a hybrid business model that creates two distinct but complementary economic engines. By decoupling our high-touch domestic operations from our low-touch global export operations, we optimise capital deployment to achieve both high per-unit profitability and massive scalability.</p>
+            
+            <h3>5.8 Domestic Economics: The "Value" Engine</h3>
+            <p>Our strategy in the Philippines is built on a <strong>"High-Engagement, High-Reward"</strong> framework. We invest heavily in direct customer support to secure long-term recurring revenue.</p>
+            
+            <div class="economics-box">
+                <div class="economics-header">DOMESTIC ECONOMICS (HIGH ENGAGEMENT MODEL)</div>
+                
+                <div class="economics-row">
+                    <div class="economics-label">CAC Strategy<br><span style="font-size: 0.85em; font-weight: 400; color: var(--text-secondary);">(High Investment)</span></div>
+                    <div class="economics-value">
+                        We accept a structurally higher Customer Acquisition Cost to secure total ownership of the client relationship. This includes our dedicated Sales Engineers, local Call Centre, and 50% of executive time.<br><br>
+                        <strong style="color: var(--blue);">2030 Projection (Stabilised):</strong><br>
+                        <span style="color: #e74c3c; font-weight: 700; font-size: 1.1em;">~$1,570 per unit</span>
+                    </div>
+                </div>
+                
+                <div class="economics-row">
+                    <div class="economics-label">LTV Dynamics<br><span style="font-size: 0.85em; font-weight: 400; color: var(--text-secondary);">(Recurring Yield)</span></div>
+                    <div class="economics-value">
+                        A domestic customer is a 10-year asset, not a one-time sale. Value is derived from three layers:<br>
+                        <ul style="margin-top: 10px;">
+                            <li>Initial Hardware Margin</li>
+                            <li>Annual Service & Maintenance Agreements</li>
+                            <li>Monetisation of Carbon Credits</li>
+                        </ul>
+                        <strong style="color: var(--blue);">2030 Projection:</strong><br>
+                        <span style="color: var(--green); font-weight: 700; font-size: 1.1em;">~$7,520 per unit</span>
+                    </div>
+                </div>
+                
+                <div class="economics-row">
+                    <div class="economics-label">Efficiency Ratio</div>
+                    <div class="economics-value">
+                        This "Full Stack" value proposition generates a powerful return on investment. For every dollar spent acquiring a local customer, we generate nearly five dollars in value.<br><br>
+                        <span class="ratio-badge">LTV:CAC Ratio = 5:1</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">5.9 Export Economics: The "Scale" Engine</h3>
+            <p>Our export strategy turns the traditional hardware model on its head. Instead of building expensive local sales teams in every country, we leverage a <strong>"Distributor-First"</strong> model (partners in Malaysia, the UK, and Canada) to achieve extreme capital efficiency.</p>
+            
+            <div class="economics-box">
+                <div class="economics-header">EXPORT ECONOMICS (LOW FRICTION MODEL)</div>
+                
+                <div class="economics-row">
+                    <div class="economics-label">CAC Strategy<br><span style="font-size: 0.85em; font-weight: 400; color: var(--text-secondary);">(Low Friction)</span></div>
+                    <div class="economics-value">
+                        Our export strategy turns the traditional model on its head. Instead of expensive local teams, we leverage a "Distributor-First" model (partners in Malaysia, UK, Canada) to achieve extreme capital efficiency.<br><br>
+                        <strong style="color: var(--blue);">2030 Projection (Volume):</strong><br>
+                        <span style="color: var(--green); font-weight: 700; font-size: 1.1em;">~$210 per unit</span> <span style="font-size: 0.9em; color: var(--text-secondary);">(Fraction of domestic cost)</span>
+                    </div>
+                </div>
+                
+                <div class="economics-row">
+                    <div class="economics-label">LTV Dynamics<br><span style="font-size: 0.85em; font-weight: 400; color: var(--text-secondary);">(Volume Focus)</span></div>
+                    <div class="economics-value">
+                        While we forgo service revenue in export markets (handing that opportunity to partners), we retain the high-margin hardware sales and the blockchain-verified Carbon Credit revenue.<br><br>
+                        <strong style="color: var(--blue);">2030 Projection:</strong><br>
+                        <span style="color: var(--green); font-weight: 700; font-size: 1.1em;">~$4,860 per unit</span>
+                    </div>
+                </div>
+                
+                <div class="economics-row">
+                    <div class="economics-label">The Scalability Multiplier</div>
+                    <div class="economics-value">
+                        The true power of this model lies in the ratio. With exceptionally low CAC and strong hardware LTV, our Export channel becomes a "pure volume engine" requiring minimal capital to scale.<br><br>
+                        <span class="ratio-badge">LTV:CAC Ratio > 23:1</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">5.10 Risk-Adjusted Returns</h3>
+            <p>When combined, these two engines provide Karnot with a balanced risk profile:</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="icon-label">🛡️</span>
+                    <h4>Defensive Moat</h4>
+                    <p>The Domestic engine provides deep market penetration and steady cash flow through recurring service contracts.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="icon-label">🚀</span>
+                    <h4>Uncapped Upside</h4>
+                    <p>The Export engine provides rapid expansion capabilities without bloating operating expenses. Even when accounting for the cost of finance and applying a conservative discount rate to future cash flows, our unit economics demonstrate a path to immediate and sustained profitability.</p>
+                </div>
+            </div>
+
+            <div class="stats-grid" style="margin-top: 30px;">
+                <div class="stat-card">
+                    <div class="stat-number">23:1</div>
+                    <div class="stat-label">Export LTV:CAC Ratio</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5:1</div>
+                    <div class="stat-label">Domestic LTV:CAC Ratio</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$7,520</div>
+                    <div class="stat-label">Domestic LTV (2030)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$4,860</div>
+                    <div class="stat-label">Export LTV (2030)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locations & Facilities -->
+        <div class="section-card">
+            <h2>6. Locations & Facilities</h2>
+            
+            <h3>6.1 The Cosmos Farm Innovation Centre</h3>
+            <p>Karnot Energy Solutions Inc. is headquartered at Cosmos Farm in Mapandan, Pangasinan. This strategic location serves as our corporate command centre, primary technology demonstration site, and a fully integrated "Living Laboratory." Our vision is to create a solar-powered microgrid ecosystem that seamlessly combines commercial operations with real-world applications of our technology. The facility proves that our "Twin-Engine" strategy (Tropical Efficiency + Arctic Resilience) works in practice.</p>
+            
+            <h3>6.2 Strategic Development Roadmap</h3>
+            <p>The development of the facility is structured in three distinct phases to align operational capacity with capital deployment.</p>
+            
+            <div class="phase-timeline">
+                <div class="phase">
+                    <div class="phase-header">
+                        <div class="phase-title">Phase 1</div>
+                        <div class="phase-date">Mid-2026</div>
+                    </div>
+                    <div class="phase-content">
+                        <strong>Primary Focus:</strong> Validation & Operations (Domestic Pilot)
+                        <ul>
+                            <li><strong>Live Technology Showcase:</strong> Fully operational iHEAT, iCOOL, iSTOR, and iSPA systems running in real-time.</li>
+                            <li><strong>North American Approvals (Q3):</strong> Execution of Mexican NOM and Canadian CSA certification. Field testing of CO₂ Monoblock in Vancouver.</li>
+                            <li><strong>iSAVE Command Centre (Q4):</strong> Launch of "Mission Control" for global fleet monitoring.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="phase">
+                    <div class="phase-header">
+                        <div class="phase-title">Phase 2</div>
+                        <div class="phase-date">2027</div>
+                    </div>
+                    <div class="phase-content">
+                        <strong>Primary Focus:</strong> Commercial Scale-Up (VPP & Global Export)
+                        <ul>
+                            <li><strong>Utility VPP Rollout:</strong> Transitioning from Pilot to full Commercial EaaS Deployment with major domestic power companies.</li>
+                            <li><strong>Arctic Strategy Launch:</strong> Commence export of Monoblock CO₂ units to Canada/UK via Malaysian OEM partner.</li>
+                            <li><strong>Agri-Tech Integration:</strong> Commercial demonstration of Solar Crop Drying and HydroGreen Vertical Pastures.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="phase" style="border-left-color: #2ecc71; background: linear-gradient(135deg, rgba(46, 204, 113, 0.05) 0%, rgba(46, 204, 113, 0.02) 100%);">
+                    <div class="phase-header">
+                        <div class="phase-title">Phase 3</div>
+                        <div class="phase-date">Post-Series A, 2028</div>
+                    </div>
+                    <div class="phase-content">
+                        <strong>Primary Focus:</strong> The Manufacturing Hub (Vertical Integration)
+                        <ul>
+                            <li><strong>1,000 m² Facility:</strong> Dedicated assembly lines for Transcritical CO₂ Monoblocks destined for global export.</li>
+                            <li><strong>Vertical Integration:</strong> In-house production of FLX Defrost modules to secure IP and capture full margin.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>6.3 Location Advantage</h3>
+            <p>Located in Central Luzon, our OPEX base is significantly lower than Metro Manila. Direct access to the TPLEX (Tarlac-Pangasinan-La Union Expressway) ensures rapid logistics for both domestic distribution and transport to international shipping ports.</p>
+
+            <h3>6.4 Territorial Distribution Strategy</h3>
+            <p>To drive rapid adoption across Northern Luzon without cannibalising sales, Karnot is implementing a <strong>"One Partner, One Zone"</strong> exclusivity policy. We have identified 17 Strategic Zones across the region. In 2026, our primary objective is to recruit one specialist engineering firm or ESCO in each zone to act as the "Authorised Territory Distributor."</p>
+            
+            <div class="info-box">
+                <p><strong>20km Exclusivity:</strong> Each partner is granted a protected 20km radius around their base of operations. All leads generated by Karnot's central marketing within that zone are handed exclusively to them, with realistic sales 'minimal' performance targets to meet.</p>
+            </div>
+
+            <h3>6.5 Sales & Operations Call Centre</h3>
+            <p>As part of our operational infrastructure at Cosmos Farm, we are establishing a dedicated <strong>Sales & Operations Call Centre</strong> to support both domestic and international operations:</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="icon-label">📞</span>
+                    <h4>Domestic Support</h4>
+                    <p>Direct customer service, technical support, and service scheduling for Philippine clients. Handling inbound inquiries and outbound follow-up for the 17 territorial zones.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="icon-label">🌍</span>
+                    <h4>Export Concierge Service</h4>
+                    <p>Dedicated support for UK MCS installers - handling grant paperwork, system design, and technical queries. This "free service" is our competitive weapon to win installer loyalty.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="icon-label">🎯</span>
+                    <h4>Lead Qualification</h4>
+                    <p>Professional screening and routing of inbound leads to appropriate territory partners or direct sales team. Ensuring no opportunity is lost in our growth phase.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="icon-label">📊</span>
+                    <h4>Performance Monitoring</h4>
+                    <p>Real-time tracking of customer satisfaction, response times, and resolution rates. Integrated with iSAVE platform for proactive maintenance scheduling.</p>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 25px;">
+                <strong>Strategic Advantage:</strong> Our Philippines-based call centre provides English-language support at a fraction of Western labour costs, while delivering superior service quality. This becomes a key differentiator in export markets where competitors rely on expensive local teams or offshore to lower-quality centres.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

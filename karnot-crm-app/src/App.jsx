@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { auth, db } from './firebase'; 
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { 
     collection, 
     onSnapshot, 
@@ -91,6 +91,20 @@ import InvestorAutoResearch from './components/InvestorAutoResearch.jsx';
 import InvestorFinancialModel from './components/InvestorFinancialModel.jsx';
 import EaaSInvestorCalculator from './components/EaaSInvestorCalculator.jsx';
 
+// --- Social Media & Marketing ---
+import SocialMediaPlanner from './pages/SocialMediaPlanner.jsx';
+import EmailMarketingPage from './pages/EmailMarketingPage.jsx';
+
+// --- HR & Onboarding ---
+import HROnboardingPage from './pages/HROnboardingPage.jsx';
+import PhilippinesHRTraining from './pages/PhilippinesHRTraining.jsx';
+import DailyTasksDashboard from './pages/DailyTasksDashboard.jsx';
+import ProfessionalServices from './pages/ProfessionalServices.jsx';
+import RegulatoryIndustryPage from './pages/RegulatoryIndustryPage.jsx';
+import ImportExportCompliancePage from './pages/ImportExportCompliancePage.jsx';
+import TechDevelopmentHub from './pages/TechDevelopmentHub.jsx';
+import ISAVETechSpec from './pages/ISAVETechSpec.jsx';
+
 // ==========================================
 // 3. DATA & ACCOUNTING MODULES
 // ==========================================
@@ -108,7 +122,8 @@ import {
     Users, Settings, Calculator, Plus, Landmark, ChevronDown,
     MapPin, Wrench, Briefcase, FileText, Target, Package, 
     UserCheck, Calendar as CalendarIcon, CheckCircle, Globe, Upload, Sparkles,
-    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap, Activity
+    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap, Activity,
+    Share2, Linkedin, BookOpen, Layout, Image, Scale, Shield, Ship, Anchor
 } from 'lucide-react'; 
 
 // ==========================================
@@ -176,7 +191,7 @@ const DropdownMenu = ({ label, icon: Icon, items, activeView, setActiveView, var
 // ==========================================
 // 6. MAIN NAVIGATION HEADER
 // ==========================================
-const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, userRole }) => {
+const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, userRole, userPermissions = [] }) => {
     // Sales & CRM Menu
     const salesMenu = [
         { view: 'funnel', label: 'Sales Funnel', icon: HardHat },
@@ -195,7 +210,8 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'leadGenerator', label: 'Lead Generator', icon: Target },
         { view: 'smartScraper', label: 'Text Scraper', icon: Sparkles, badge: 'AI' },
         { view: 'boiLeads', label: 'BOI Projects', icon: Building, badge: 'NEW' },
-        { view: 'pezaZones', label: 'PEZA Zones', icon: HardHat, badge: 'NEW' }
+        { view: 'pezaZones', label: 'PEZA Zones', icon: HardHat, badge: 'NEW' },
+        { view: 'regulatory', label: 'Regulatory & Industry', icon: Shield, badge: 'NEW' }
     ];
 
     // Export Operations Menu
@@ -205,7 +221,8 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'exportCompanies', label: 'Companies', icon: Building },
         { view: 'exportContacts', label: 'Contacts', icon: Users },
         { view: 'exportCallCentre', label: 'Call Centre', icon: Phone },
-        { view: 'escoImport', label: 'Import ESCOs', icon: Upload, badge: 'AI' }
+        { view: 'escoImport', label: 'Import ESCOs', icon: Upload, badge: 'AI' },
+        { view: 'importExportCompliance', label: 'Import/Export Compliance', icon: Ship, badge: 'BOC' }
     ];
 
     // Operations Menu (Recurring Revenue)
@@ -217,6 +234,27 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'technicianView', label: 'Technician App', icon: Wrench, badge: 'MOBILE' },
         { view: 'installEstimator', label: 'Install & QC', icon: Wrench },
         { view: 'serviceInvoice', label: 'Service Invoice', icon: FileText }
+    ];
+
+    // Tech R&D Menu
+    const techRDMenu = [
+        { view: 'techHub', label: 'Product Overview', icon: Zap, badge: 'CO2' },
+        { view: 'techRoadmap', label: 'Dev Roadmap', icon: Target },
+        { view: 'techTasks', label: 'Engineering Tasks', icon: CheckCircle },
+        { view: 'techNotes', label: 'Tech Notes', icon: FileText },
+        { view: 'techDocs', label: 'Document Vault', icon: Briefcase },
+        { view: 'techPatents', label: 'IP & Patents', icon: Shield, badge: 'NEW' },
+        { view: 'isaveTechSpec', label: 'iSAVE Tech Spec', icon: FileText, badge: 'HTML' },
+    ];
+
+    // Social Media & Marketing Menu
+    const socialMediaMenu = [
+        { view: 'socialPlanner', label: 'Social Planner', icon: Layout, badge: 'NEW' },
+        { view: 'socialContent', label: 'Content Calendar', icon: CalendarIcon },
+        { view: 'socialAnalytics', label: 'Analytics Tracker', icon: BarChart2 },
+        { view: 'socialCampaigns', label: 'Campaigns', icon: Zap },
+        { view: 'socialTraining', label: 'Training Hub', icon: BookOpen },
+        { view: 'emailMarketing', label: 'Email Marketing', icon: Mail, badge: 'BREVO' },
     ];
 
     // Investment Menu
@@ -240,7 +278,14 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'rsrhCalc', label: 'RSRH Cattle', icon: Target },
         // --- ADDED NEW SOLVIVA CALCULATOR HERE ---
         { view: 'solvivaCalc', label: 'Solviva Partner', icon: Zap, badge: 'NEW' },
-        { view: 'pinchCalc', label: 'Pinch Analysis', icon: Activity, badge: 'NEW' } 
+        { view: 'pinchCalc', label: 'Pinch Analysis', icon: Activity, badge: 'NEW' }
+    ];
+
+    // HR & People Menu
+    const hrMenu = [
+        { view: 'hrOnboarding', label: 'HR & Onboarding', icon: Users, badge: 'NEW' },
+        { view: 'payroll', label: 'Payroll Manager', icon: DollarSign },
+        { view: 'hrTraining', label: 'PH HR Training', icon: BookOpen, badge: 'NEW' },
     ];
 
     return (
@@ -272,13 +317,15 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                             <Plus className="mr-1.5" size={14} /> New Quote
                         </Button>
                         
-                        <Button 
-                            onClick={() => setActiveView('admin')} 
-                            variant={activeView === 'admin' ? 'primary' : 'secondary'} 
-                            className="!p-2 h-9 w-9"
-                        >
-                            <Settings size={16} />
-                        </Button>
+                        {userRole === 'ADMIN' && (
+                            <Button
+                                onClick={() => setActiveView('admin')}
+                                variant={activeView === 'admin' ? 'primary' : 'secondary'}
+                                className="!p-2 h-9 w-9"
+                            >
+                                <Settings size={16} />
+                            </Button>
+                        )}
                         
                         <Button 
                             onClick={onLogout} 
@@ -294,12 +341,19 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                 <nav className="flex flex-wrap gap-2 items-center border-t border-gray-100 pt-3">
                     
                     {/* Dashboard */}
-                    <Button 
-                        onClick={() => setActiveView('dashboard')} 
-                        variant={activeView === 'dashboard' ? 'primary' : 'secondary'} 
+                    <Button
+                        onClick={() => setActiveView('dashboard')}
+                        variant={activeView === 'dashboard' ? 'primary' : 'secondary'}
                         className="font-bold uppercase text-[10px] tracking-widest h-9"
                     >
                         <BarChart2 className="mr-1.5" size={14} /> Dashboard
+                    </Button>
+                    <Button
+                        onClick={() => setActiveView('dailyTasks')}
+                        variant={activeView === 'dailyTasks' ? 'primary' : 'secondary'}
+                        className="font-bold uppercase text-[10px] tracking-widest h-9 border-orange-200 text-orange-700"
+                    >
+                        <CheckCircle className="mr-1.5" size={14} /> My Tasks
                     </Button>
 
                     <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
@@ -316,7 +370,18 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                         variant="orange"
                     />
                     <DropdownMenu label="Operations" icon={Wrench} items={operationsMenu} activeView={activeView} setActiveView={setActiveView} />
-                    
+                    <DropdownMenu label="Tech R&D" icon={Zap} items={techRDMenu} activeView={activeView} setActiveView={setActiveView} variant="purple" />
+
+                    {/* Social Media & Marketing */}
+                    <DropdownMenu
+                        label="Social Media"
+                        icon={Share2}
+                        items={socialMediaMenu}
+                        activeView={activeView}
+                        setActiveView={setActiveView}
+                        variant="orange"
+                    />
+
                     {/* Investment Menu with PURPLE variant */}
                     <DropdownMenu 
                         label="Investment" 
@@ -328,17 +393,32 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
                     />
                     
                     <DropdownMenu label="Calculators" icon={Calculator} items={calculatorsMenu} activeView={activeView} setActiveView={setActiveView} />
+                    <DropdownMenu label="HR & People" icon={UserCheck} items={hrMenu} activeView={activeView} setActiveView={setActiveView} />
 
-                    {/* Accounts (Admin Only) */}
-                    {userRole === 'ADMIN' && (
+                    {/* Accounts (Admin + users with accounts permission) */}
+                    {(userRole === 'ADMIN' || userPermissions.includes('accounts')) && (
                         <>
                             <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
-                            <Button 
-                                onClick={() => setActiveView('accounts')} 
+                            <Button
+                                onClick={() => setActiveView('accounts')}
                                 variant={activeView === 'accounts' ? 'primary' : 'secondary'}
                                 className="font-bold uppercase text-[10px] tracking-widest border-orange-200 text-orange-700 bg-orange-50 h-9"
                             >
                                 <Landmark className="mr-1.5" size={14} /> Accounts
+                            </Button>
+                        </>
+                    )}
+
+                    {/* Admin: Team Management */}
+                    {userRole === 'ADMIN' && (
+                        <>
+                            <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+                            <Button
+                                onClick={() => setActiveView('admin')}
+                                variant={activeView === 'admin' ? 'primary' : 'secondary'}
+                                className="font-bold uppercase text-[10px] tracking-widest h-9"
+                            >
+                                <Settings className="mr-1.5" size={14} /> Admin
                             </Button>
                         </>
                     )}
@@ -353,10 +433,12 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
 // ==========================================
 export default function App() {
     // --- Application State ---
-    const [user, setUser] = useState(null); 
-    const [userRole, setUserRole] = useState(null); 
+    const [user, setUser] = useState(null);
+    const [userRole, setUserRole] = useState(null);
+    const [userPermissions, setUserPermissions] = useState([]);
+    const [dataUid, setDataUid] = useState(null);
     const [activeView, setActiveView] = useState('dashboard');
-    const [subView, setSubView] = useState('ledger'); 
+    const [subView, setSubView] = useState('ledger');
     const [loadingAuth, setLoadingAuth] = useState(true);
     const [loadingData, setLoadingData] = useState(true);
 
@@ -385,7 +467,7 @@ export default function App() {
     // AUTHENTICATION LISTENER
     // ------------------------------------------
     useEffect(() => {
-        setLoadingAuth(true); 
+        setLoadingAuth(true);
         const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
             if (authUser) {
                 setUser(authUser);
@@ -393,108 +475,144 @@ export default function App() {
                     const userRef = doc(db, "users", authUser.uid);
                     const userSnap = await getDoc(userRef);
                     if (userSnap.exists()) {
-                        setUserRole(userSnap.data().role);
+                        const userData = userSnap.data();
+                        setUserRole(userData.role || 'STAFF');
+                        setUserPermissions(userData.permissions || []);
+                        // Use teamDataUid if set (staff), otherwise use own uid (admin/owner)
+                        setDataUid(userData.teamDataUid || authUser.uid);
+                        // Fix missing/placeholder name and sync Firebase displayName
+                        if (!userData.name || userData.name === 'Unknown' || userData.name === 'unknown') {
+                            const emailPrefix = authUser.email?.split('@')[0] || 'User';
+                            // Convert "stuart.cox" → "Stuart Cox"
+                            const fixedName = authUser.displayName || emailPrefix.split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                            await updateDoc(userRef, { name: fixedName });
+                        }
+                        // Set Firebase Auth displayName from Firestore profile if missing
+                        if (!authUser.displayName && userData.name) {
+                            await updateProfile(authUser, { displayName: userData.name });
+                        }
+                    } else {
+                        // First-ever login — set as admin with own data
+                        await setDoc(userRef, {
+                            name: authUser.displayName || authUser.email?.split('@')[0] || 'Admin',
+                            email: authUser.email,
+                            role: 'ADMIN',
+                            permissions: ['all'],
+                            teamDataUid: null,
+                            createdAt: serverTimestamp()
+                        });
+                        setUserRole('ADMIN');
+                        setUserPermissions(['all']);
+                        setDataUid(authUser.uid);
                     }
                 } catch (err) { console.error("Role Fetch Error:", err); }
             } else {
                 setUser(null);
                 setUserRole(null);
+                setUserPermissions([]);
+                setDataUid(null);
             }
-            setLoadingAuth(false); 
+            setLoadingAuth(false);
         });
-        return () => unsubscribe(); 
+        return () => unsubscribe();
     }, []);
 
     // ------------------------------------------
     // REAL-TIME DATA STREAM (ROBUST + SORTED)
     // ------------------------------------------
+    // Create a user-like object with shared data UID for child components
+    const dataUser = useMemo(() => {
+        if (!user || !dataUid) return null;
+        return { uid: dataUid, email: user.email, displayName: user.displayName };
+    }, [user, dataUid]);
+
     useEffect(() => {
-        if (user) {
-            setLoadingData(true); 
-            console.log("🚀 Starting Data Synchronization...");
-            
+        if (user && dataUid) {
+            setLoadingData(true);
+            console.log("Starting Data Synchronization...");
+
             // Safety Timer
             const safetyTimer = setTimeout(() => {
-                console.log("⚠️ Safety Timer Triggered: Forcing App Load");
+                console.log("Safety Timer Triggered: Forcing App Load");
                 setLoadingData(false);
             }, 4000);
 
             // 1. QUOTES
             const unsubQuotes = onSnapshot(
-                query(collection(db, "users", user.uid, "quotes"), orderBy("lastModified", "desc")), 
+                query(collection(db, "users", dataUid, "quotes"), orderBy("lastModified", "desc")),
                 (snap) => setQuotes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Quotes Error:", err)
             );
-            
+
             // 2. OPPORTUNITIES
             const unsubOpps = onSnapshot(
-                query(collection(db, "users", user.uid, "opportunities"), orderBy("createdAt", "desc")), 
+                query(collection(db, "users", dataUid, "opportunities"), orderBy("createdAt", "desc")),
                 (snap) => setOpportunities(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Opps Error:", err)
             );
-            
+
             // 3. COMPANIES
             const unsubCompanies = onSnapshot(
-                query(collection(db, "users", user.uid, "companies"), orderBy("companyName", "asc")), 
+                query(collection(db, "users", dataUid, "companies"), orderBy("companyName", "asc")),
                 (snap) => setCompanies(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Companies Error:", err)
             );
-            
+
             // 4. CONTACTS
             const unsubContacts = onSnapshot(
-                query(collection(db, "users", user.uid, "contacts"), orderBy("lastName", "asc")), 
+                query(collection(db, "users", dataUid, "contacts"), orderBy("lastName", "asc")),
                 (snap) => setContacts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Contacts Error:", err)
             );
-            
+
             // 5. LEDGER
             const unsubLedger = onSnapshot(
-                query(collection(db, "users", user.uid, "ledger"), orderBy("date", "desc")), 
+                query(collection(db, "users", dataUid, "ledger"), orderBy("date", "desc")),
                 (snap) => setLedgerEntries(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Ledger Error:", err)
             );
-            
+
             // 6. MANPOWER
             const unsubManpower = onSnapshot(
-                query(collection(db, "users", user.uid, "manpower_logs"), orderBy("date", "desc")), 
+                query(collection(db, "users", dataUid, "manpower_logs"), orderBy("date", "desc")),
                 (snap) => setManpowerLogs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Manpower Error:", err)
             );
-            
+
             // 7. SERVICE INVOICES
             const unsubServices = onSnapshot(
-                query(collection(db, "users", user.uid, "service_invoices"), orderBy("createdAt", "desc")), 
+                query(collection(db, "users", dataUid, "service_invoices"), orderBy("createdAt", "desc")),
                 (snap) => setServiceInvoices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => { console.warn("Service Invoices Error:", err.code); setServiceInvoices([]); }
             );
 
             // 8. SERVICE CONTRACTS
             const unsubContracts = onSnapshot(
-                query(collection(db, "users", user.uid, "service_contracts"), orderBy("createdAt", "desc")),
+                query(collection(db, "users", dataUid, "service_contracts"), orderBy("createdAt", "desc")),
                 (snap) => setServiceContracts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => { console.warn("Contracts Error:", err.code); setServiceContracts([]); }
             );
-            
+
             // 9. TERRITORIES
             const unsubTerritories = onSnapshot(
-                query(collection(db, "users", user.uid, "territories"), orderBy("name", "asc")), 
+                query(collection(db, "users", dataUid, "territories"), orderBy("name", "asc")),
                 (snap) => setTerritories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Territories Error:", err)
             );
-            
+
             // 10. AGENTS
             const unsubAgents = onSnapshot(
-                query(collection(db, "users", user.uid, "agents"), orderBy("name", "asc")), 
+                query(collection(db, "users", dataUid, "agents"), orderBy("name", "asc")),
                 (snap) => setAgents(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
                 (err) => console.warn("Agents Error:", err)
             );
-            
+
             // 11. APPOINTMENTS
             const unsubAppointments = onSnapshot(
-                query(collection(db, "users", user.uid, "appointments"), orderBy("appointmentDate", "asc")), 
+                query(collection(db, "users", dataUid, "appointments"), orderBy("appointmentDate", "asc")),
                 (snap) => {
                     setAppointments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                    setLoadingData(false); 
+                    setLoadingData(false);
                     clearTimeout(safetyTimer);
                 },
                 (err) => {
@@ -504,17 +622,17 @@ export default function App() {
                     clearTimeout(safetyTimer);
                 }
             );
-            
-            return () => { 
+
+            return () => {
                 clearTimeout(safetyTimer);
-                unsubQuotes(); unsubOpps(); unsubCompanies(); unsubContacts(); 
+                unsubQuotes(); unsubOpps(); unsubCompanies(); unsubContacts();
                 unsubLedger(); unsubManpower(); unsubServices(); unsubContracts();
                 unsubTerritories(); unsubAgents(); unsubAppointments();
             };
         } else {
             setLoadingData(false);
         }
-    }, [user]); 
+    }, [user, dataUid]); 
 
     // ------------------------------------------
     // GLOBAL HANDLERS
@@ -523,32 +641,32 @@ export default function App() {
     const handleLogout = () => signOut(auth);
     
     const handleUpdateQuoteStatus = async (quoteId, newStatus) => {
-        if (!user) return;
+        if (!dataUid) return;
         try {
-            await updateDoc(doc(db, "users", user.uid, "quotes", quoteId), { 
-                status: newStatus, 
-                lastModified: serverTimestamp() 
+            await updateDoc(doc(db, "users", dataUid, "quotes", quoteId), {
+                status: newStatus,
+                lastModified: serverTimestamp()
             });
         } catch (e) { console.error("Status Update Failed", e); }
     };
 
     const handleSaveQuote = async (quoteData) => {
-        if (!user) return;
+        if (!dataUid) return;
         try {
-            await setDoc(doc(db, "users", user.uid, "quotes", quoteData.id), { 
-                ...quoteData, 
-                lastModified: serverTimestamp() 
+            await setDoc(doc(db, "users", dataUid, "quotes", quoteData.id), {
+                ...quoteData,
+                lastModified: serverTimestamp()
             }, { merge: true });
-            setActiveView('list'); 
+            setActiveView('list');
         } catch (e) {
             console.error("Save Quote Failed", e);
             alert("Error saving quote.");
         }
     };
-    
-    const handleDeleteQuote = async (id) => { 
+
+    const handleDeleteQuote = async (id) => {
         if(window.confirm("Are you sure you want to delete this quote?")) {
-            await deleteDoc(doc(db, "users", user.uid, "quotes", id)); 
+            await deleteDoc(doc(db, "users", dataUid, "quotes", id));
         }
     };
 
@@ -584,6 +702,14 @@ export default function App() {
     );
 
     if (!user) return <LoginPage onLogin={handleLogin} />;
+    if (!dataUid) return (
+        <div className="flex items-center justify-center min-h-screen bg-white">
+            <div className="text-center">
+                <img src={KARNOT_LOGO_BASE_64} className="h-12 mx-auto mb-4 animate-bounce" alt="Loading"/>
+                <p className="font-black uppercase text-orange-600 animate-pulse tracking-[0.2em]">Loading Profile...</p>
+            </div>
+        </div>
+    );
 
     if (loadingData) return (
         <div className="flex items-center justify-center min-h-screen bg-white">
@@ -600,13 +726,14 @@ export default function App() {
     // ------------------------------------------
     return (
         <div className="bg-gray-100 min-h-screen font-sans text-gray-900">
-            <Header 
-                activeView={activeView} 
-                setActiveView={setActiveView} 
-                quoteCount={quotes.length} 
-                onLogout={handleLogout} 
-                onNewQuote={handleNewQuote} 
-                userRole={userRole} 
+            <Header
+                activeView={activeView}
+                setActiveView={setActiveView}
+                quoteCount={quotes.length}
+                onLogout={handleLogout}
+                onNewQuote={handleNewQuote}
+                userRole={userRole}
+                userPermissions={userPermissions}
             />
             <main className="container mx-auto p-4 md:p-8">
                 
@@ -614,7 +741,7 @@ export default function App() {
                 {activeView === 'dashboard' && (
                     <DashboardPage 
                         quotes={quotes} 
-                        user={user} 
+                        user={dataUser} 
                         ledgerEntries={ledgerEntries}
                         serviceInvoices={serviceInvoices}
                         appointments={appointments}
@@ -624,11 +751,21 @@ export default function App() {
                     />
                 )}
                 
+                {/* 1B. DAILY TASKS DASHBOARD */}
+                {activeView === 'dailyTasks' && (
+                    <DailyTasksDashboard
+                        user={dataUser}
+                        appointments={appointments}
+                        opportunities={opportunities}
+                        onNavigate={(view) => setActiveView(view)}
+                    />
+                )}
+
                 {/* 2. SALES FUNNEL */}
                 {activeView === 'funnel' && (
                     <FunnelPage 
                         opportunities={opportunities} 
-                        user={user} 
+                        user={dataUser} 
                         quotes={quotes} 
                         onOpenQuote={handleEditQuote} 
                         onOpen={(opp) => { setSelectedOpportunity(opp); setActiveView('opportunityDetail'); }} 
@@ -645,7 +782,7 @@ export default function App() {
                         quotes={quotes} 
                         onBack={() => setActiveView('funnel')} 
                         onOpenQuote={handleEditQuote} 
-                        user={user} 
+                        user={dataUser} 
                         companies={companies} 
                         contacts={contacts}
                         onAddQuote={() => { 
@@ -661,37 +798,37 @@ export default function App() {
 
                 {/* 4. OPERATIONS MODULES */}
                 {activeView === 'installEstimator' && (
-                    <InstallEstimator quotes={quotes} user={user} />
+                    <InstallEstimator quotes={quotes} user={dataUser} />
                 )}
                 
                 {activeView === 'serviceInvoice' && (
-                    <ServiceInvoice companies={companies} user={user} />
+                    <ServiceInvoice companies={companies} user={dataUser} />
                 )}
                 
                 {activeView === 'assets' && (
-                    <AssetsPage companies={companies} user={user} />
+                    <AssetsPage companies={companies} user={dataUser} />
                 )}
                 
                 {activeView === 'serviceContracts' && (
-                    <ServiceContractsPage companies={companies} user={user} />
+                    <ServiceContractsPage companies={companies} user={dataUser} />
                 )}
                 
                 {activeView === 'maintenanceCalendar' && (
                     <MaintenanceCalendar 
                         companies={companies} 
-                        user={user}
+                        user={dataUser}
                         appointments={appointments}
                         opportunities={opportunities}
                     />
                 )}
                 
                 {activeView === 'technicianView' && (
-                    <TechnicianMobileView companies={companies} user={user} />
+                    <TechnicianMobileView companies={companies} user={dataUser} />
                 )}
 
                 {/* BUSINESS TASKS CALENDAR */}
                 {activeView === 'businessTasks' && (
-                    <BusinessTasksCalendar user={user} />
+                    <BusinessTasksCalendar user={dataUser} />
                 )}
                 
                 {/* 5. DATA MANAGEMENT */}
@@ -700,17 +837,17 @@ export default function App() {
                         companies={companies} 
                         contacts={contacts} 
                         quotes={quotes} 
-                        user={user} 
+                        user={dataUser} 
                         onOpenQuote={handleEditQuote}
                         appointments={appointments}
                     />
                 )}
                 
                 {activeView === 'contacts' && (
-                    <ContactsPage contacts={contacts} companies={companies} user={user} />
+                    <ContactsPage contacts={contacts} companies={companies} user={dataUser} />
                 )}
                 
-                {activeView === 'suppliers' && <SupplierManager user={user} />}
+                {activeView === 'suppliers' && <SupplierManager user={dataUser} />}
                 
                 {/* 6. FIELD & TERRITORY */}
                 {activeView === 'territories' && (
@@ -718,34 +855,35 @@ export default function App() {
                         territories={territories} 
                         agents={agents} 
                         companies={companies} 
-                        user={user}
+                        user={dataUser}
                         appointments={appointments}
                     />
                 )}
                 
                 {activeView === 'agents' && (
-                    <AgentManagement agents={agents} territories={territories} user={user} quotes={quotes} />
+                    <AgentManagement agents={agents} territories={territories} user={dataUser} quotes={quotes} />
                 )}
                 
                 {activeView === 'appointments' && (
-                    <AppointmentScheduler appointments={appointments} companies={companies} agents={agents} user={user} />
+                    <AppointmentScheduler appointments={appointments} companies={companies} agents={agents} user={dataUser} />
                 )}
                 
-                {activeView === 'leadGenerator' && <TerritoryLeadGenerator territories={territories} user={user} />}
+                {activeView === 'leadGenerator' && <TerritoryLeadGenerator territories={territories} user={dataUser} />}
                 
-                {activeView === 'smartScraper' && <SmartTextScraper user={user} />}
+                {activeView === 'smartScraper' && <SmartTextScraper user={dataUser} />}
                 
-                {activeView === 'boiLeads' && <BOIProjectLeads territories={territories} user={user} />}
+                {activeView === 'boiLeads' && <BOIProjectLeads territories={territories} user={dataUser} />}
                 
-                {activeView === 'pezaZones' && <PEZAZones territories={territories} user={user} />}
+                {activeView === 'pezaZones' && <PEZAZones territories={territories} user={dataUser} />}
+                {activeView === 'regulatory' && <RegulatoryIndustryPage user={dataUser} />}
 
                 {/* 6B. EXPORT OPERATIONS */}
                 {activeView === 'aseanExport' && (
-                    <ASEANExportPage user={user} />
+                    <ASEANExportPage user={dataUser} />
                 )}
 
                 {activeView === 'ukExport' && (
-                    <UKExportPage user={user} />
+                    <UKExportPage user={dataUser} />
                 )}
 
                 {activeView === 'exportCompanies' && (
@@ -753,7 +891,7 @@ export default function App() {
                         companies={companies}
                         contacts={contacts}
                         quotes={quotes}
-                        user={user}
+                        user={dataUser}
                         onOpenQuote={handleEditQuote}
                         appointments={appointments}
                     />
@@ -763,18 +901,31 @@ export default function App() {
                     <ExportContactsPage 
                         contacts={contacts}
                         companies={companies}
-                        user={user}
+                        user={dataUser}
                     />
                 )}
 
                 {activeView === 'exportCallCentre' && (
-                    <CallCentre user={user} mode="export" />
+                    <CallCentre user={dataUser} mode="export" />
                 )}
 
                 {activeView === 'escoImport' && (
-                    <ESCOImportEnrichmentTool user={user} />
+                    <ESCOImportEnrichmentTool user={dataUser} />
                 )}
-                
+
+                {activeView === 'importExportCompliance' && (
+                    <ImportExportCompliancePage user={dataUser} />
+                )}
+
+                {/* Tech R&D Hub - all views route to same component with tab control */}
+                {['techHub','techRoadmap','techTasks','techNotes','techDocs','techPatents'].includes(activeView) && (
+                    <TechDevelopmentHub user={dataUser} initialView={activeView} />
+                )}
+
+                {activeView === 'isaveTechSpec' && (
+                    <ISAVETechSpec user={dataUser} />
+                )}
+
                 {activeView === 'rsrhCalc' && (
                     <div className="max-w-7xl mx-auto">
                         <Button onClick={() => setActiveView('calculatorsHub')} variant="secondary" className="mb-4">
@@ -788,27 +939,27 @@ export default function App() {
                 {/* 6C. INVESTMENT MODULES                 */}
                 {/* ====================================== */}
                 {activeView === 'investors' && (
-                    <InvestorsPage user={user} contacts={contacts} />
+                    <InvestorsPage user={dataUser} contacts={contacts} />
                 )}
 
                 {activeView === 'investmentCallCentre' && (
-                    <CallCentre user={user} mode="investor" />
+                    <CallCentre user={dataUser} mode="investor" />
                 )}
 
                 {activeView === 'investmentPipeline' && (
-                    <CEOInvestmentDashboard user={user} />
+                    <CEOInvestmentDashboard user={dataUser} />
                 )}
 
                 {activeView === 'fundraisingBoard' && (
-                    <FundraisingTaskBoard user={user} />
+                    <FundraisingTaskBoard user={dataUser} />
                 )}
 
                 {activeView === 'investmentTasks' && (
-                    <BusinessTasksCalendar user={user} />
+                    <BusinessTasksCalendar user={dataUser} />
                 )}
 
                 {activeView === 'investmentEmails' && (
-                    <InvestorEmailManager user={user} />
+                    <InvestorEmailManager user={dataUser} />
                 )}
 
                 {activeView === 'investorModel' && (
@@ -817,6 +968,44 @@ export default function App() {
 
                 {activeView === 'eaasCalc' && (
                     <EaaSInvestorCalculator />
+                )}
+
+                {/* ====================================== */}
+                {/* 6D. SOCIAL MEDIA & MARKETING           */}
+                {/* ====================================== */}
+                {activeView === 'socialPlanner' && (
+                    <SocialMediaPlanner user={dataUser} initialTab="overview" key="social-overview" />
+                )}
+
+                {activeView === 'socialContent' && (
+                    <SocialMediaPlanner user={dataUser} initialTab="content" key="social-content" />
+                )}
+
+                {activeView === 'socialAnalytics' && (
+                    <SocialMediaPlanner user={dataUser} initialTab="analytics" key="social-analytics" />
+                )}
+
+                {activeView === 'socialCampaigns' && (
+                    <SocialMediaPlanner user={dataUser} initialTab="campaigns" key="social-campaigns" />
+                )}
+
+                {activeView === 'socialTraining' && (
+                    <SocialMediaPlanner user={dataUser} initialTab="training" key="social-training" />
+                )}
+
+                {activeView === 'emailMarketing' && (
+                    <EmailMarketingPage user={dataUser} contacts={contacts} companies={companies} />
+                )}
+
+                {/* HR & ONBOARDING */}
+                {activeView === 'hrOnboarding' && (
+                    <HROnboardingPage user={dataUser} />
+                )}
+                {activeView === 'hrTraining' && (
+                    <PhilippinesHRTraining />
+                )}
+                {activeView === 'payroll' && (
+                    <PayrollManager user={dataUser} />
                 )}
 
                 {/* 7. QUOTING */}
@@ -857,9 +1046,9 @@ export default function App() {
                     </div>
                 )}
                 
-                {activeView === 'warmRoomCalc' && <WarmRoomCalc setActiveView={setActiveView} user={user} />}
-                {activeView === 'coldRoomCalc' && <ColdRoomCalc setActiveView={setActiveView} user={user} />}
-                {activeView === 'pinchCalc' && <PinchCalculator setActiveView={setActiveView} user={user} />}
+                {activeView === 'warmRoomCalc' && <WarmRoomCalc setActiveView={setActiveView} user={dataUser} />}
+                {activeView === 'coldRoomCalc' && <ColdRoomCalc setActiveView={setActiveView} user={dataUser} />}
+                {activeView === 'pinchCalc' && <PinchCalculator setActiveView={setActiveView} user={dataUser} />}
                 
                 {/* --- ADDED SOLVIVA VIEW HERE --- */}
                 {activeView === 'solvivaCalc' && (
@@ -871,7 +1060,7 @@ export default function App() {
                     </div>
                 )}
                 
-                {activeView === 'admin' && <AdminPage user={user} />}
+                {activeView === 'admin' && <AdminPage user={dataUser} currentUser={user} userRole={userRole} />}
                 
                 {/* ======================= */}
                 {/* 10. ACCOUNTS HUB (ADMIN) */}
@@ -908,6 +1097,9 @@ export default function App() {
                                 <Button onClick={() => setSubView('management')} variant={subView === 'management' ? 'primary' : 'secondary'} className="border-indigo-200 text-indigo-700 bg-indigo-50">
                                     <BarChart2 size={14} className="mr-1" /> Mgmt. Accounts
                                 </Button>
+                                <Button onClick={() => setSubView('profServices')} variant={subView === 'profServices' ? 'primary' : 'secondary'} className="border-slate-200 text-slate-700 bg-slate-50">
+                                    <Scale size={14} className="mr-1" /> Lawyer & Accountant
+                                </Button>
                             </div>
                         </div>
 
@@ -920,7 +1112,7 @@ export default function App() {
                         )}
                         
                         {subView === 'payroll' && (
-                            <PayrollManager user={user} />
+                            <PayrollManager user={dataUser} />
                         )}
                         
                         {subView === 'manpower' && (
@@ -928,7 +1120,7 @@ export default function App() {
                         )}
                         
                         {subView === 'services' && (
-                            <ServiceInvoice companies={companies} user={user} />
+                            <ServiceInvoice companies={companies} user={dataUser} />
                         )}
                         
                         {subView === 'projectOps' && (
@@ -948,20 +1140,24 @@ export default function App() {
                         
                         {subView === 'bankRecon' && (
                             <BankReconciliation 
-                                user={user} 
+                                user={dataUser} 
                                 quotes={quotes} 
                                 ledgerEntries={ledgerEntries} 
                             />
                         )}
 
                         {subView === 'management' && (
-                            <ManagementAccounts 
-                                user={user}
+                            <ManagementAccounts
+                                user={dataUser}
                                 quotes={quotes}
                                 ledgerEntries={ledgerEntries}
                                 opportunities={opportunities}
                                 serviceInvoices={serviceInvoices}
                             />
+                        )}
+
+                        {subView === 'profServices' && (
+                            <ProfessionalServices user={dataUser} />
                         )}
                     </div>
                 )}

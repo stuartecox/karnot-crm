@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import { Card, Button, Input, Checkbox, Textarea } from '../data/constants';
 
-const PASSWORD = "Edmund18931!"; // SECURITY CONSTANT
+// Password-based security removed — access controlled by user role
 
 // --- Default Category Icons and Colors for Stat Badges ---
 const CATEGORY_MAP = {
@@ -582,9 +582,7 @@ const ProductManager = ({ user }) => {
   const handleDeleteAll = async () => {
     if (!user) return;
 
-    const confirmedPassword = prompt("WARNING! This will permanently delete ALL products. Enter the security password to proceed:");
-    if (confirmedPassword !== PASSWORD) {
-      alert("Incorrect password or operation cancelled.");
+    if (!window.confirm("WARNING! This will permanently delete ALL products. Are you sure?")) {
       return;
     }
 

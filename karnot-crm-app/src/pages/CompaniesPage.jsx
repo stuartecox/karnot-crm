@@ -1,12 +1,12 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, writeBatch, onSnapshot, query, orderBy, deleteDoc } from "firebase/firestore";
 import Papa from 'papaparse';
 import {
     Plus, X, Edit, Trash2, Building, Upload, Search,
     CheckSquare, FileText, UserCheck, Mail, PlusCircle,
     ExternalLink, Download, Send, Handshake, Map as MapIcon, Copy,
-    Navigation, Target, Globe, User, Phone, Zap
+    Navigation, Target, Globe, User, Phone, Zap, FolderOpen, FolderPlus
 } from 'lucide-react';
 import { Card, Button, Input, Textarea, Checkbox, PRICING_TIERS } from '../data/constants.jsx';
 
@@ -357,7 +357,7 @@ const DuplicateResolver = ({ companies, onClose, onResolve }) => {
 };
 
 // --- 2. Company Modal Component ---
-const CompanyModal = ({ onClose, onSave, companyToEdit, quotes = [], contacts = [], onOpenQuote, existingCompanies = [] }) => {
+const CompanyModal = ({ onClose, onSave, companyToEdit, quotes = [], contacts = [], onOpenQuote, existingCompanies = [], folders = [] }) => {
     const [activeTab, setActiveTab] = useState('ACTIVITY');
     const [companyName, setCompanyName] = useState(companyToEdit?.companyName || '');
     const [website, setWebsite] = useState(companyToEdit?.website || '');
@@ -373,6 +373,7 @@ const CompanyModal = ({ onClose, onSave, companyToEdit, quotes = [], contacts = 
     const [isTarget, setIsTarget] = useState(companyToEdit?.isTarget || false);
     const [isEmailed, setIsEmailed] = useState(companyToEdit?.isEmailed || false);
     const [isCustomer, setIsCustomer] = useState(companyToEdit?.isCustomer || false);
+    const [folderId, setFolderId] = useState(companyToEdit?.folderId || '');
     const [notes, setNotes] = useState(companyToEdit?.notes || '');
     const [interactions, setInteractions] = useState(companyToEdit?.interactions || []);
 
@@ -483,6 +484,25 @@ const CompanyModal = ({ onClose, onSave, companyToEdit, quotes = [], contacts = 
                                 onChange={e => setIndustry(e.target.value)}
                             />
                         </div>
+
+                        {/* FOLDER SELECTOR */}
+                        {folders.length > 0 && (
+                            <div>
+                                <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">
+                                    Folder
+                                </label>
+                                <select
+                                    value={folderId}
+                                    onChange={e => setFolderId(e.target.value)}
+                                    className="w-full p-2.5 border border-gray-300 rounded-xl bg-white font-bold text-xs"
+                                >
+                                    <option value="">No Folder</option>
+                                    {folders.map(f => (
+                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         {/* WEBSITE FIELD WITH OPEN BUTTON */}
                         <div className="flex items-end gap-2">
@@ -776,6 +796,7 @@ const CompanyModal = ({ onClose, onSave, companyToEdit, quotes = [], contacts = 
                                 companyName, website, industry, address,
                                 latitude, longitude, // GPS fields
                                 tier, isVerified, isTarget, isEmailed, isCustomer,
+                                folderId: folderId || null,
                                 notes, interactions
                             })}
                             variant="primary"
@@ -802,6 +823,67 @@ const CompaniesPage = ({ companies = [], user, quotes = [], contacts = [], onOpe
     const [showProximitySearch, setShowProximitySearch] = useState(false);
     const fileInputRef = useRef(null);
 
+    // --- FOLDER STATE ---
+    const [folders, setFolders] = useState([]);
+    const [activeFolderId, setActiveFolderId] = useState(null); // null = show all
+    const [showFolderManager, setShowFolderManager] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [editingFolderId, setEditingFolderId] = useState(null);
+    const [editingFolderName, setEditingFolderName] = useState('');
+
+    // --- FOLDER FIRESTORE LISTENER ---
+    useEffect(() => {
+        if (!user) return;
+        const unsub = onSnapshot(
+            query(collection(db, "users", user.uid, "company_folders"), orderBy("name", "asc")),
+            (snap) => setFolders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
+            (err) => console.warn("Folders Error:", err)
+        );
+        return () => unsub();
+    }, [user]);
+
+    // --- FOLDER CRUD ---
+    const handleCreateFolder = async () => {
+        if (!newFolderName.trim() || !user) return;
+        await addDoc(collection(db, "users", user.uid, "company_folders"), {
+            name: newFolderName.trim(),
+            createdAt: serverTimestamp()
+        });
+        setNewFolderName('');
+    };
+
+    const handleRenameFolder = async (fId) => {
+        if (!editingFolderName.trim() || !user) return;
+        await updateDoc(doc(db, "users", user.uid, "company_folders", fId), {
+            name: editingFolderName.trim()
+        });
+        setEditingFolderId(null);
+        setEditingFolderName('');
+    };
+
+    const handleDeleteFolder = async (fId) => {
+        if (!user) return;
+        if (!confirm('Delete this folder? Companies inside will be unfiled, not deleted.')) return;
+        // Unfile all companies in this folder
+        const batch = writeBatch(db);
+        (companies || []).filter(c => c.folderId === fId).forEach(c => {
+            batch.update(doc(db, "users", user.uid, "companies", c.id), { folderId: null });
+        });
+        await batch.commit();
+        await deleteDoc(doc(db, "users", user.uid, "company_folders", fId));
+        if (activeFolderId === fId) setActiveFolderId(null);
+    };
+
+    const handleBulkMoveToFolder = async (targetFolderId) => {
+        if (!user || selectedIds.size === 0) return;
+        const batch = writeBatch(db);
+        selectedIds.forEach(id =>
+            batch.update(doc(db, "users", user.uid, "companies", id), { folderId: targetFolderId || null })
+        );
+        await batch.commit();
+        setSelectedIds(new Set());
+    };
+
     const activeCompanies = useMemo(() =>
         (companies || []).filter(c => !c.isDeleted),
         [companies]
@@ -826,8 +908,11 @@ const CompaniesPage = ({ companies = [], user, quotes = [], contacts = [], onOpe
         if (activeFilter === 'CUSTOMERS') list = list.filter(c => c.isCustomer);
         // --- ADDED ESCO FILTER ---
         if (activeFilter === 'ESCO') list = list.filter(c => (c.notes || '').includes('ESCO'));
+        // --- FOLDER FILTER ---
+        if (activeFolderId === '__unfiled__') list = list.filter(c => !c.folderId);
+        else if (activeFolderId) list = list.filter(c => c.folderId === activeFolderId);
         return list;
-    }, [activeCompanies, searchTerm, activeFilter]);
+    }, [activeCompanies, searchTerm, activeFilter, activeFolderId]);
 
     const checkHasQuotes = (compName) =>
         quotes.some(q =>
@@ -1004,6 +1089,7 @@ const CompaniesPage = ({ companies = [], user, quotes = [], contacts = [], onOpe
                     contacts={contacts}
                     onOpenQuote={onOpenQuote}
                     existingCompanies={activeCompanies}
+                    folders={folders}
                 />
             )}
 
@@ -1067,6 +1153,123 @@ const CompaniesPage = ({ companies = [], user, quotes = [], contacts = [], onOpe
                     active={activeFilter === 'ESCO'}
                     onClick={() => setActiveFilter('ESCO')}
                 />
+            </div>
+
+            {/* FOLDER BAR */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <FolderOpen size={16} className="text-gray-400 shrink-0" />
+                    <button
+                        onClick={() => setActiveFolderId(null)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            activeFolderId === null
+                                ? 'bg-orange-100 text-orange-700 border border-orange-300'
+                                : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                        }`}
+                    >
+                        All
+                    </button>
+                    <button
+                        onClick={() => setActiveFolderId('__unfiled__')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            activeFolderId === '__unfiled__'
+                                ? 'bg-orange-100 text-orange-700 border border-orange-300'
+                                : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                        }`}
+                    >
+                        Unfiled
+                    </button>
+                    {folders.map(f => (
+                        <button
+                            key={f.id}
+                            onClick={() => setActiveFolderId(f.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                activeFolderId === f.id
+                                    ? 'bg-orange-100 text-orange-700 border border-orange-300'
+                                    : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                            }`}
+                        >
+                            {f.name}
+                            <span className="ml-1 text-[10px] opacity-60">
+                                ({activeCompanies.filter(c => c.folderId === f.id).length})
+                            </span>
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setShowFolderManager(!showFolderManager)}
+                        className="px-2 py-1.5 rounded-lg text-xs font-bold bg-gray-50 text-gray-500 border border-dashed border-gray-300 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all"
+                        title="Manage Folders"
+                    >
+                        <FolderPlus size={14} />
+                    </button>
+                </div>
+
+                {/* FOLDER MANAGER PANEL */}
+                {showFolderManager && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newFolderName}
+                                onChange={e => setNewFolderName(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
+                                placeholder="New folder name..."
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                            />
+                            <button
+                                onClick={handleCreateFolder}
+                                disabled={!newFolderName.trim()}
+                                className="px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-black uppercase hover:bg-orange-700 disabled:opacity-40 transition-all"
+                            >
+                                Create
+                            </button>
+                        </div>
+                        {folders.length > 0 && (
+                            <div className="space-y-1">
+                                {folders.map(f => (
+                                    <div key={f.id} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
+                                        {editingFolderId === f.id ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={editingFolderName}
+                                                    onChange={e => setEditingFolderName(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && handleRenameFolder(f.id)}
+                                                    className="flex-1 px-2 py-1 border border-orange-300 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                                    autoFocus
+                                                />
+                                                <button onClick={() => handleRenameFolder(f.id)} className="text-green-600 hover:text-green-800 p-1"><CheckSquare size={14}/></button>
+                                                <button onClick={() => setEditingFolderId(null)} className="text-gray-400 hover:text-gray-600 p-1"><X size={14}/></button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FolderOpen size={14} className="text-orange-400 shrink-0" />
+                                                <span className="flex-1 text-xs font-bold text-gray-700">{f.name}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold">
+                                                    {activeCompanies.filter(c => c.folderId === f.id).length} companies
+                                                </span>
+                                                <button
+                                                    onClick={() => { setEditingFolderId(f.id); setEditingFolderName(f.name); }}
+                                                    className="text-gray-400 hover:text-indigo-600 p-1"
+                                                    title="Rename"
+                                                >
+                                                    <Edit size={12}/>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteFolder(f.id)}
+                                                    className="text-gray-400 hover:text-red-600 p-1"
+                                                    title="Delete folder"
+                                                >
+                                                    <Trash2 size={12}/>
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* HEADER & ACTIONS */}
@@ -1167,6 +1370,12 @@ const CompaniesPage = ({ companies = [], user, quotes = [], contacts = [], onOpe
                                     <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">
                                         {c.industry || 'Account'}
                                     </p>
+                                    {c.folderId && folders.find(f => f.id === c.folderId) && (
+                                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-orange-50 text-orange-600 rounded-md text-[9px] font-bold">
+                                            <FolderOpen size={10} />
+                                            {folders.find(f => f.id === c.folderId)?.name}
+                                        </span>
+                                    )}
                                 </div>
                                 <button
                                     onClick={() => { setEditingCompany(c); setShowModal(true); }}
@@ -1238,6 +1447,17 @@ const CompaniesPage = ({ companies = [], user, quotes = [], contacts = [], onOpe
             {selectedIds.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-6 z-50 animate-in fade-in slide-in-from-bottom-4">
                     <span className="font-bold text-sm">{selectedIds.size} Selected</span>
+                    {folders.length > 0 && (
+                        <select
+                            onChange={e => { if (e.target.value !== '') handleBulkMoveToFolder(e.target.value === '__none__' ? null : e.target.value); e.target.value = ''; }}
+                            defaultValue=""
+                            className="bg-gray-800 text-white border border-gray-600 rounded-lg px-2 py-1 text-xs font-bold cursor-pointer hover:bg-gray-700"
+                        >
+                            <option value="" disabled>Move to...</option>
+                            <option value="__none__">No Folder</option>
+                            {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                        </select>
+                    )}
                     <button
                         onClick={handleBulkEmail}
                         className="flex items-center gap-2 hover:text-orange-400 transition-colors"

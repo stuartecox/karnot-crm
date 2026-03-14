@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnot Technology | Natural Refrigerant Systems</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        /* KARNOT BRAND THEME */
+        :root {
+            --green: #27ae60;
+            --dark-green: #1e8449;
+            --blue: #2c3e50;
+            --dark-blue: #3d5a6b;
+            --darker-blue: #2d4a58;
+            --light-blue: #3498db;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --bg-light: #f5f5f7;
+            --border-color: #d2d2d7;
+            --accent: #E67E22;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-primary);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #2d5f6d 0%, #1e3a44 100%);
+            color: #fff;
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .teaser-badge {
+            display: inline-block;
+            background: transparent;
+            color: #2ecc71;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 2px solid #2ecc71;
+        }
+
+        h1 {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            letter-spacing: -1.5px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 60px 22px;
+        }
+
+        /* MARKET STATS BAR */
+        .market-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: -30px;
+            margin-bottom: 60px;
+        }
+
+        .market-pill {
+            background: var(--blue);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .market-pill span { color: #2ecc71; font-weight: 800; }
+
+        /* SECTION HEADERS */
+        .section-intro {
+            text-align: center;
+            margin-bottom: 60px;
+            margin-top: 40px;
+        }
+
+        h2 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--blue);
+        }
+
+        .lead {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 850px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+        }
+
+        h3 {
+            color: var(--blue);
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        /* GRID LAYOUTS */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 1000px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+
+        /* CARDS */
+        .tech-card {
+            background: #fff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .tech-card .icon {
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: var(--green);
+        }
+
+        .tech-card .icon.blue { color: var(--light-blue); }
+        .tech-card .icon.orange { color: var(--accent); }
+        .tech-card .icon.purple { color: #8b5cf6; }
+
+        .tech-card p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .tech-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0 0 0;
+        }
+
+        .tech-card li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .tech-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-weight: bold;
+        }
+
+        /* FEATURE BOX */
+        .feature-box {
+            background: linear-gradient(135deg, rgba(61, 90, 107, 0.08) 0%, rgba(61, 90, 107, 0.03) 100%);
+            border-left: 5px solid var(--dark-blue);
+            padding: 35px;
+            border-radius: 8px;
+            margin: 40px 0;
+        }
+
+        .feature-box h3 { margin-top: 0; margin-bottom: 20px; }
+
+        .feature-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-box li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: var(--text-secondary);
+            break-inside: avoid;
+        }
+
+        .feature-box li:before {
+            content: "⚡";
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-size: 1.2rem;
+        }
+
+        /* MOAT CARD */
+        .moat-card {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--darker-blue) 100%);
+            color: white;
+            margin-top: 80px;
+            padding: 50px;
+            border-radius: 16px;
+        }
+
+        .moat-card h2 { color: white; border-bottom: 3px solid rgba(255,255,255,0.3); padding-bottom: 15px; }
+        .moat-card p { color: rgba(255,255,255,0.9); font-size: 1.1rem; }
+        .moat-card li { color: rgba(255,255,255,0.9); margin-bottom: 12px; }
+        .moat-card li:before { color: var(--green); }
+        .moat-card h3 { color: white; }
+
+        /* TEMP RANGE BADGE */
+        .temp-badge {
+            display: inline-block;
+            background: var(--green);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .temp-badge.orange { background: var(--accent); }
+        .temp-badge.blue { background: var(--light-blue); }
+        .temp-badge.purple { background: #8b5cf6; }
+
+        /* COMPARISON TABLE */
+        .comparison-table {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin: 40px 0;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            background: var(--blue);
+            color: white;
+            padding: 18px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .comparison-table td {
+            padding: 18px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 36px; }
+            h2 { font-size: 32px; }
+            .header { padding: 60px 20px; }
+            .market-bar { flex-direction: column; align-items: center; gap: 10px; }
+            .comparison-table { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="teaser-badge">CORE TECHNOLOGY</div>
+        <h1>Low-Carbon Heating & Cooling<br>with 100% Natural Refrigerants</h1>
+        <p class="subtitle">
+            Revolutionizing temperature control across -160°C to +200°C with zero PFAS chemicals, delivering 75% energy savings and regulation-proof infrastructure.
+        </p>
+    </div>
+
+    <div class="container">
+
+        <div class="market-bar">
+            <div class="market-pill"><i class="fa-solid fa-leaf"></i> Energy Savings: <span>Up to 75%</span></div>
+            <div class="market-pill"><i class="fa-solid fa-ban"></i> Global Warming Potential: <span>GWP = 1</span></div>
+            <div class="market-pill"><i class="fa-solid fa-shield-halved"></i> PFAS Content: <span>Zero</span></div>
+        </div>
+
+        <div class="section-intro">
+            <h2>🌍 Our Approach: The 4Ds of Energy Transformation</h2>
+            <p class="lead">
+                As we navigate climate change impacts and global energy crises, Karnot's technology pivots around four essential pillars driving the future of sustainable energy systems.
+            </p>
+        </div>
+
+        <div class="grid-2">
+            <div class="tech-card">
+                <div class="icon"><i class="fa-solid fa-leaf"></i></div>
+                <h3>De-carbonization</h3>
+                <p>
+                    Eliminating combustion and fossil fuel dependency through electrified thermal systems using natural refrigerants.
+                </p>
+                <ul>
+                    <li>Replace gas boilers with CO₂ heat pumps</li>
+                    <li>Eliminate HFC/PFAS "forever chemicals"</li>
+                    <li>Reduce Scope 1 & 2 emissions by 75%+</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon blue"><i class="fa-solid fa-network-wired"></i></div>
+                <h3>Decentralization</h3>
+                <p>
+                    Enabling localized, distributed energy generation with micro-grids and near-site thermal management.
+                </p>
+                <ul>
+                    <li>Solar-assisted heat pump systems</li>
+                    <li>On-site waste heat recovery</li>
+                    <li>Grid-independent operation capability</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon orange"><i class="fa-solid fa-microchip"></i></div>
+                <h3>Digitalization</h3>
+                <p>
+                    Harnessing AI and IoT to optimize energy consumption, predict maintenance, and validate carbon savings.
+                </p>
+                <ul>
+                    <li>Karnot iSAVE AI platform with ML optimization</li>
+                    <li>Blockchain-verified carbon credit generation</li>
+                    <li>Predictive maintenance and fault detection</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon purple"><i class="fa-solid fa-users"></i></div>
+                <h3>Democratization of Energy</h3>
+                <p>
+                    Empowering individuals and communities to participate actively in energy decisions through accessible technology.
+                </p>
+                <ul>
+                    <li>Energy-as-a-Service (EaaS) financing models</li>
+                    <li>Zero-CAPEX deployment options</li>
+                    <li>Community-scale thermal infrastructure</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section-intro" style="margin-top: 100px;">
+            <h2>❄️ Natural Refrigerant Portfolio</h2>
+            <p class="lead">
+                Unlike competitors relying on synthetic HFCs and HFOs (PFAS chemicals), Karnot exclusively uses natural refrigerants with zero environmental impact. Each substance is optimized for specific temperature ranges and applications.
+            </p>
+        </div>
+
+        <div class="grid-2">
+            <div class="tech-card" style="border-top: 5px solid var(--light-blue);">
+                <div class="temp-badge blue">-38°C to +140°C</div>
+                <h3><i class="fa-solid fa-wind"></i> Carbon Dioxide (CO₂ - R744)</h3>
+                <p><strong>Industrial High-Temperature Platform</strong></p>
+                <ul>
+                    <li><strong>GWP:</strong> 1 (industry baseline)</li>
+                    <li><strong>ODP:</strong> 0 (non-ozone depleting)</li>
+                    <li><strong>Applications:</strong> Process heat, steam generation, hot water</li>
+                    <li><strong>Pressure:</strong> High-pressure transcritical cycle</li>
+                    <li><strong>Efficiency:</strong> Superior volumetric capacity</li>
+                    <li><strong>Safety:</strong> Non-toxic, non-flammable</li>
+                </ul>
+            </div>
+
+            <div class="tech-card" style="border-top: 5px solid var(--accent);">
+                <div class="temp-badge orange">+15°C to +75°C</div>
+                <h3><i class="fa-solid fa-fire"></i> Propane (R290)</h3>
+                <p><strong>Commercial & Residential Systems</strong></p>
+                <ul>
+                    <li><strong>GWP:</strong> 3 (99.8% lower than R410a)</li>
+                    <li><strong>ODP:</strong> 0</li>
+                    <li><strong>Applications:</strong> Space heating, domestic hot water, light commercial</li>
+                    <li><strong>Efficiency:</strong> A+++ energy rating achievable</li>
+                    <li><strong>Charge:</strong> Minimal refrigerant quantity required</li>
+                    <li><strong>Safety:</strong> A3 classification (flammable but manageable)</li>
+                </ul>
+            </div>
+
+            <div class="tech-card" style="border-top: 5px solid var(--green);">
+                <div class="temp-badge">+90°C to +200°C</div>
+                <h3><i class="fa-solid fa-droplet"></i> Water (H₂O - R718)</h3>
+                <p><strong>Steam & High-Temperature Heat Recovery</strong></p>
+                <ul>
+                    <li><strong>GWP:</strong> 0</li>
+                    <li><strong>ODP:</strong> 0</li>
+                    <li><strong>Applications:</strong> Mechanical Vapor Recompression (MVR), steam generation</li>
+                    <li><strong>Technology:</strong> Turbo-compressor with energy recovery</li>
+                    <li><strong>Efficiency:</strong> Up to 75% waste heat recovery</li>
+                    <li><strong>Cost:</strong> Virtually free refrigerant</li>
+                </ul>
+            </div>
+
+            <div class="tech-card" style="border-top: 5px solid #6366f1;">
+                <div class="temp-badge purple">-38°C to -160°C</div>
+                <h3><i class="fa-solid fa-temperature-low"></i> Air (R729)</h3>
+                <p><strong>Cryogenic & Ultra-Low Temperature</strong></p>
+                <ul>
+                    <li><strong>GWP:</strong> 0</li>
+                    <li><strong>ODP:</strong> 0</li>
+                    <li><strong>Applications:</strong> Biomedical storage, food preservation, gas liquefaction</li>
+                    <li><strong>Technology:</strong> Air cycle with turbo-expander</li>
+                    <li><strong>Benefit:</strong> No refrigerant refills required</li>
+                    <li><strong>Safety:</strong> Completely inert and safe</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="moat-card">
+            <h2>🚫 Why We Don't Use Synthetic Refrigerants</h2>
+            <p style="margin-bottom: 30px;">
+                The majority of HFCs and new-generation refrigerants belong to the PFAS family—"forever chemicals" linked to serious health risks and environmental persistence. Karnot categorically refuses to use these substances.
+            </p>
+
+            <div class="grid-2">
+                <div>
+                    <h3><i class="fa-solid fa-triangle-exclamation"></i> Health Impacts of PFAS</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding-left: 0;">• Developmental issues (low birth weight)</li>
+                        <li style="padding-left: 0;">• Increased cancer risk (kidney, testicular)</li>
+                        <li style="padding-left: 0;">• Immune system suppression</li>
+                        <li style="padding-left: 0;">• Liver damage and thyroid disease</li>
+                        <li style="padding-left: 0;">• Cholesterol level alterations</li>
+                        <li style="padding-left: 0;">• Reproductive issues</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3><i class="fa-solid fa-ban"></i> Regulatory Crackdown</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding-left: 0;">• <strong>EU ECHA:</strong> Proposed ban on 10,000+ PFAS substances</li>
+                        <li style="padding-left: 0;">• <strong>Kigali Amendment:</strong> 80% HFC phase-down by 2036</li>
+                        <li style="padding-left: 0;">• <strong>US EPA:</strong> PFAS Strategic Roadmap enforcement</li>
+                        <li style="padding-left: 0;">• <strong>Result:</strong> R410a, R32, R454B systems become stranded assets</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-intro" style="margin-top: 100px;">
+            <h2>⚙️ Enabling Technologies</h2>
+            <p class="lead">
+                Beyond natural refrigerants, Karnot integrates advanced auxiliary systems to maximize efficiency, reduce costs, and enable smart grid integration.
+            </p>
+        </div>
+
+        <div class="grid-3">
+            <div class="tech-card">
+                <div class="icon"><i class="fa-solid fa-solar-panel"></i></div>
+                <h3>Karnot®PVT Hybrid Solar</h3>
+                <p><strong>Photovoltaic + Thermal</strong></p>
+                <ul>
+                    <li>425W electrical output per panel</li>
+                    <li>Thermal energy collection for heat pumps</li>
+                    <li>5-15% efficiency boost via active cooling</li>
+                    <li>25-year PV yield: 84.8%</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon blue"><i class="fa-solid fa-solar-panel"></i></div>
+                <h3>Karnot®OPV Flexible Panels</h3>
+                <p><strong>Organic Photovoltaic Technology</strong></p>
+                <ul>
+                    <li>Ultra-lightweight: <2.5 kg/m² (vs 20-30 kg/m²)</li>
+                    <li>Semi-flexible polymer construction</li>
+                    <li>Ideal for metal roofs & curved surfaces</li>
+                    <li>410W monocrystalline cells</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon orange"><i class="fa-solid fa-database"></i></div>
+                <h3>Karnot®STOR Phase-Change</h3>
+                <p><strong>Thermal Energy Storage</strong></p>
+                <ul>
+                    <li>High-density PCM in sealed HDPE containers</li>
+                    <li>Load-shifting from peak to off-peak hours</li>
+                    <li>Integration: Ceiling-mounted or pallet-based</li>
+                    <li>Applications: Cold storage, building HVAC</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon purple"><i class="fa-solid fa-grip"></i></div>
+                <h3>Karnot®MESH Adiabatic Pre-Cooling</h3>
+                <p><strong>Instant Efficiency Retrofit</strong></p>
+                <ul>
+                    <li>15-25% energy reduction on air-cooled systems</li>
+                    <li>Intermittent water spray on mesh surface</li>
+                    <li>8-12°C air temperature reduction</li>
+                    <li>Payback: <6 months</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon"><i class="fa-solid fa-brain"></i></div>
+                <h3>Karnot iSAVE AI Platform</h3>
+                <p><strong>Machine Learning Optimization</strong></p>
+                <ul>
+                    <li>Real-time performance optimization</li>
+                    <li>Predictive maintenance & fault detection</li>
+                    <li>Blockchain-verified carbon credit generation</li>
+                    <li>Cloud-based energy monitoring</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <div class="icon blue"><i class="fa-solid fa-plug-circle-bolt"></i></div>
+                <h3>Smart Grid Integration</h3>
+                <p><strong>Demand Response Capability</strong></p>
+                <ul>
+                    <li>Automated load shifting during peak pricing</li>
+                    <li>Virtual Power Plant (VPP) participation</li>
+                    <li>Frequency regulation services</li>
+                    <li>Revenue generation from grid services</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="comparison-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Temperature Range</th>
+                        <th>Refrigerant</th>
+                        <th>Primary Applications</th>
+                        <th>Key Advantage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>-160°C to -38°C</strong></td>
+                        <td>Air (R729)</td>
+                        <td>Cryogenic storage, mRNA vaccines, biomedical</td>
+                        <td>Zero maintenance, no refrigerant cost</td>
+                    </tr>
+                    <tr>
+                        <td><strong>-38°C to +15°C</strong></td>
+                        <td>CO₂ (R744)</td>
+                        <td>Cold chain, food storage, refrigeration</td>
+                        <td>High efficiency at low temps</td>
+                    </tr>
+                    <tr>
+                        <td><strong>+15°C to +75°C</strong></td>
+                        <td>Propane (R290)</td>
+                        <td>Residential heating, domestic hot water</td>
+                        <td>Lowest cost, highest COP</td>
+                    </tr>
+                    <tr>
+                        <td><strong>+40°C to +140°C</strong></td>
+                        <td>CO₂ (R744)</td>
+                        <td>Industrial process heat, pasteurization</td>
+                        <td>Eliminates gas boilers</td>
+                    </tr>
+                    <tr>
+                        <td><strong>+90°C to +200°C</strong></td>
+                        <td>Water (R718 MVR)</td>
+                        <td>Steam generation, distillation, drying</td>
+                        <td>75% waste heat recovery</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-intro" style="margin-top: 100px;">
+            <h2>🏭 Target Applications & Markets</h2>
+            <p class="lead">
+                Karnot's technology portfolio addresses thermal needs across the entire industrial and commercial spectrum, from ultra-cold cryogenics to high-temperature steam production.
+            </p>
+        </div>
+
+        <div class="grid-4">
+            <div class="tech-card" style="border-left: 4px solid var(--light-blue);">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-snowflake"></i> Cold Chain</h3>
+                <p style="font-size: 0.95rem;">
+                    Addressing $1B+ annual ASEAN food losses with efficient, PFAS-free refrigeration for agriculture and logistics.
+                </p>
+            </div>
+
+            <div class="tech-card" style="border-left: 4px solid var(--accent);">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-wheat-awn"></i> Near-Farm Storage</h3>
+                <p style="font-size: 0.95rem;">
+                    Solar-powered cold storage to reduce 50% post-harvest losses in root crops, vegetables, and fish.
+                </p>
+            </div>
+
+            <div class="tech-card" style="border-left: 4px solid var(--green);">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-hotel"></i> Hospitality</h3>
+                <p style="font-size: 0.95rem;">
+                    Simultaneous hot water (80°C) and cooling delivery for hotels with waste heat recovery.
+                </p>
+            </div>
+
+            <div class="tech-card" style="border-left: 4px solid #8b5cf6;">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-burger"></i> Food Processing</h3>
+                <p style="font-size: 0.95rem;">
+                    Pasteurization, sterilization, CIP systems, and dairy processing with natural refrigerants.
+                </p>
+            </div>
+
+            <div class="tech-card" style="border-left: 4px solid var(--light-blue);">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-server"></i> Data Centers</h3>
+                <p style="font-size: 0.95rem;">
+                    Liquid cooling with heat recovery for AI/GPU clusters, reducing PUE to <1.2.
+                </p>
+            </div>
+
+            <div class="tech-card" style="border-left: 4px solid var(--accent);">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-industry"></i> Industrial Process</h3>
+                <p style="font-size: 0.95rem;">
+                    Replacing fossil fuel boilers with electric heat pumps for chemical, textile, and manufacturing plants.
+                </p>
+            </div>
+
+            <div class="tech-card" style="border-left: 4px solid var(--green);">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-droplet"></i> Desalination</h3>
+                <p style="font-size: 0.95rem;">
+                    Low-temperature distillation with MVR systems for energy-efficient water treatment.
+                </p>
+            </div>
+
+            <div class="tech-card" style="border-left: 4px solid #8b5cf6;">
+                <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-vial"></i> Biomedical</h3>
+                <p style="font-size: 0.95rem;">
+                    Ultra-low temperature storage for mRNA vaccines, biological samples, and pharmaceuticals.
+                </p>
+            </div>
+        </div>
+
+        <div class="feature-box" style="margin-top: 60px;">
+            <h3>🔬 Validated Performance: Third-Party Certifications</h3>
+            <ul>
+                <li><strong>ISO 50001:</strong> Energy Management System certification for operational excellence</li>
+                <li><strong>EN 14511:</strong> European standard for heat pump testing and performance verification</li>
+                <li><strong>AHRI Certified:</strong> Air-Conditioning, Heating, and Refrigeration Institute performance ratings</li>
+                <li><strong>UL/CSA Listed:</strong> North American safety certifications for electrical and pressure equipment</li>
+                <li><strong>EcoDesign Compliant:</strong> EU energy efficiency directives for sustainable product design</li>
+                <li><strong>BOI-SIPP Registered:</strong> Philippine Board of Investments Strategic Investment Priority Plan enterprise</li>
+            </ul>
+        </div>
+
+        <div class="moat-card" style="margin-top: 60px;">
+            <h2>🎯 Technology Roadmap: 2026-2028</h2>
+            
+            <div class="grid-2">
+                <div>
+                    <h3 style="color: #2ecc71;"><i class="fa-solid fa-calendar-check"></i> 2026: Market Entry</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding-left: 0;"><strong>Q1:</strong> Commercial launch of R290 residential units</li>
+                        <li style="padding-left: 0;"><strong>Q2:</strong> Pilot installations with Fortune 500 clients (Lufthansa Technik)</li>
+                        <li style="padding-left: 0;"><strong>Q3:</strong> UL/CSA certification for North American exports</li>
+                        <li style="padding-left: 0;"><strong>Q4:</strong> iSAVE AI platform beta launch</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 style="color: #3498db;"><i class="fa-solid fa-rocket"></i> 2027: Scale Manufacturing</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding-left: 0;"><strong>Q1:</strong> Series A funding close ($1.5M)</li>
+                        <li style="padding-left: 0;"><strong>Q2:</strong> Pangasinan factory construction begins</li>
+                        <li style="padding-left: 0;"><strong>Q3:</strong> Partner network expansion (30+ equity partners)</li>
+                        <li style="padding-left: 0;"><strong>Q4:</strong> First dividend distribution to investors</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 style="color: #E67E22;"><i class="fa-solid fa-chart-line"></i> 2028: Regional Dominance</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding-left: 0;"><strong>Q1:</strong> Full-scale local manufacturing operational</li>
+                        <li style="padding-left: 0;"><strong>Q2:</strong> Product portfolio expansion (MVR steam systems)</li>
+                        <li style="padding-left: 0;"><strong>Q3:</strong> EaaS financing vehicle launch (Canadian SPV)</li>
+                        <li style="padding-left: 0;"><strong>Q4:</strong> Prepare for strategic exit or Series B</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 style="color: #8b5cf6;"><i class="fa-solid fa-flask"></i> R&D Pipeline</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding-left: 0;">• FLX Defrost™ cold-climate module (graphene PCM)</li>
+                        <li style="padding-left: 0;">• 120V residential retrofit architecture</li>
+                        <li style="padding-left: 0;">• Blockchain carbon credit marketplace integration</li>
+                        <li style="padding-left: 0;">• AI-driven predictive maintenance algorithms</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p><strong>CONFIDENTIAL - DO NOT DISSEMINATE</strong></p>
+        <p>Karnot Energy Solutions Inc. | Technology Overview</p>
+        <p>SEC Reg. No. 2025060205860-05</p>
+        <p style="margin-top: 10px; opacity: 0.6;">
+            Cosmos Farm Low Carbon Innovation Centre, Mapandan, Pangasinan 2428<br>
+            Contact: <strong>stuart.cox@karnot.com</strong> | +63 960 289 2001
+        </p>
+    </footer>
+
+</body>
+</html>

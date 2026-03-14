@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karnot iHEAT — Investor Model</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #0a0e1a;
+    --card: #111827;
+    --card2: #1a2235;
+    --border: #1e293b;
+    --blue: #3b82f6;
+    --teal: #14b8a6;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --php: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--navy); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+  /* HEADER */
+  .header { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f2027 100%); border-bottom: 1px solid #3b82f620; padding: 24px 16px 20px; text-align: center; }
+  .header h1 { font-size: clamp(20px, 4vw, 32px); font-weight: 800; letter-spacing: -0.5px; }
+  .header h1 span.k { color: var(--blue); }
+  .header h1 span.i { color: var(--teal); }
+  .header p { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .karnot-badge { display: inline-flex; align-items: center; gap: 8px; background: #1e293b; border: 1px solid #3b82f640; border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+
+  /* CLN ASK PANEL */
+  .cln-panel { background: linear-gradient(135deg, #1e1b4b, #1a1040); border: 2px solid #8b5cf640; border-radius: 12px; padding: 20px; margin: 16px 0; }
+  .cln-panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--purple); margin-bottom: 12px; }
+  .cln-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .cln-stat { background: #0f0c2a; border-radius: 8px; padding: 12px; border: 1px solid #8b5cf620; }
+  .cln-stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 4px; }
+  .cln-stat .value { font-size: 20px; font-weight: 700; color: var(--purple); }
+  .cln-stat .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .cln-scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .cln-scenario { border-radius: 8px; padding: 14px; }
+  .cln-scenario.repay { background: #0f172a; border: 1px solid #ef444440; }
+  .cln-scenario.convert { background: #0c1a0c; border: 2px solid #22c55e60; }
+  .cln-scenario .s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+  .cln-scenario .s-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .cln-scenario.repay .s-title { color: #ef4444; }
+  .cln-scenario.convert .s-title { color: var(--green); }
+  .cln-scenario p { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .cln-scenario p b { color: var(--text); }
+  .convert-badge { display: inline-block; background: #22c55e20; color: var(--green); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+
+  /* SLIDERS */
+  .sliders-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 16px 0; }
+  .sliders-panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 16px; }
+  .sliders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .slider-item label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .slider-item label span { font-weight: 700; color: var(--text); font-size: 14px; }
+  input[type=range] { width: 100%; height: 6px; appearance: none; background: var(--border); border-radius: 3px; outline: none; cursor: pointer; }
+  input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; }
+  .slider-grid { background: #3b82f6; } .slider-grid::-webkit-slider-thumb { background: #60a5fa; }
+  .slider-rdsp { background: #14b8a6; } .slider-rdsp::-webkit-slider-thumb { background: #2dd4bf; }
+  .slider-eaas { background: #f59e0b; } .slider-eaas::-webkit-slider-thumb { background: #fbbf24; }
+  .slider-rate { background: #8b5cf6; } .slider-rate::-webkit-slider-thumb { background: #a78bfa; }
+  .slider-range { display: flex; justify-content: space-between; font-size: 10px; color: #475569; margin-top: 2px; }
+
+  /* MODE TOGGLE */
+  .mode-toggle { display: flex; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin: 16px 0; gap: 4px; }
+  .mode-btn { flex: 1; padding: 10px; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: var(--muted); background: transparent; }
+  .mode-btn.active { background: var(--blue); color: white; }
+
+  /* KPI CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 16px 0; }
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .kpi-card .k-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 4px; }
+  .kpi-card .k-value { font-size: 22px; font-weight: 800; line-height: 1; }
+  .kpi-card .k-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .kpi-card.blue .k-value { color: var(--blue); }
+  .kpi-card.teal .k-value { color: var(--teal); }
+  .kpi-card.green .k-value { color: var(--green); }
+  .kpi-card.amber .k-value { color: var(--amber); }
+  .kpi-card.purple .k-value { color: var(--purple); }
+  .kpi-card.red .k-value { color: var(--red); }
+
+  /* CHART */
+  .chart-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 16px 0; }
+  .chart-panel h3 { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* TABLE */
+  .table-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+  .table-panel h3 { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; min-width: 600px; }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  th:first-child { text-align: left; }
+  td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #1e293b50; font-size: 12px; }
+  td:first-child { text-align: left; font-weight: 600; }
+  tr.highlight td { background: #22c55e10; }
+  tr.highlight-amber td { background: #f59e0b10; }
+  .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px; vertical-align: middle; margin-left: 4px; }
+  .badge.green { background: #22c55e20; color: var(--green); }
+  .badge.amber { background: #f59e0b20; color: var(--amber); }
+  .badge.red { background: #ef444420; color: var(--red); }
+  .badge.blue { background: #3b82f620; color: var(--blue); }
+
+  /* STRESS TEST */
+  .stress-panel { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 16px 0; }
+  .stress-panel h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 12px; }
+  .stress-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stress-btn { padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .stress-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .stress-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+  .stress-result { margin-top: 12px; padding: 12px; background: #0f172a; border-radius: 8px; font-size: 12px; color: var(--muted); min-height: 40px; }
+  .stress-result b { color: var(--text); }
+
+  /* REVENUE STREAMS */
+  .streams-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 16px 0; }
+  .streams-panel h3 { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .streams-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .stream-card { border-radius: 8px; padding: 12px; border: 1px solid; }
+  .stream-card .s-num { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .stream-card .s-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .stream-card .s-desc { font-size: 11px; line-height: 1.5; }
+  .stream-card.s1 { background: #0f172a; border-color: #3b82f630; } .stream-card.s1 .s-num { color: var(--blue); }
+  .stream-card.s2 { background: #0c1a10; border-color: #22c55e30; } .stream-card.s2 .s-num { color: var(--green); }
+  .stream-card.s3 { background: #0a1a20; border-color: #14b8a630; } .stream-card.s3 .s-num { color: var(--teal); }
+  .stream-card.s4 { background: #1a1505; border-color: #f59e0b30; } .stream-card.s4 .s-num { color: var(--amber); }
+  .stream-card.s5 { background: #130f1a; border-color: #8b5cf630; } .stream-card.s5 .s-num { color: var(--purple); }
+  .stream-card.active-stream { border-width: 2px; }
+  .active-badge { display: inline-block; background: #22c55e20; color: var(--green); font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-left: 6px; }
+
+  /* FOOTER */
+  .footer { text-align: center; padding: 24px; color: #334155; font-size: 11px; }
+
+  /* HIDDEN */
+  .hidden { display: none; }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    .cln-scenarios { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-wrap { height: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="karnot-badge">⚡ KARNOT ENERGY SOLUTIONS INC &nbsp;·&nbsp; INVESTOR MODEL &nbsp;·&nbsp; Feb 2026</div>
+  <h1><span class="k">Karnot</span> <span class="i">iHEAT</span> — VPP Revenue Model</h1>
+  <p>Interactive 5-year cash flow · Revenue Streams 2 &amp; 3 · iHEAT EaaS + RDSP Demand Response</p>
+</div>
+
+<div class="container">
+
+  <!-- CLN PANEL -->
+  <div class="cln-panel">
+    <h2>💰 The Ask — Convertible Loan Note (CLN)</h2>
+    <div class="cln-grid">
+      <div class="cln-stat">
+        <div class="label">Principal</div>
+        <div class="value">$250,000</div>
+        <div class="sub">USD · Single tranche</div>
+      </div>
+      <div class="cln-stat">
+        <div class="label">Interest Rate</div>
+        <div class="value">10% p.a.</div>
+        <div class="sub">Accruing · Not monthly cash</div>
+      </div>
+      <div class="cln-stat">
+        <div class="label">Term</div>
+        <div class="value">24 months</div>
+        <div class="sub">Max. Until Series A trigger</div>
+      </div>
+      <div class="cln-stat">
+        <div class="label">Conversion</div>
+        <div class="value">Series A</div>
+        <div class="sub">Automatic · 20% discount</div>
+      </div>
+    </div>
+    <div class="cln-scenarios">
+      <div class="cln-scenario repay">
+        <div class="s-label">Scenario A — Cash Repayment</div>
+        <div class="s-title">❌ Repay at Month 13</div>
+        <p>Principal <b>$250,000</b> + accrued interest <b>$27,083</b> = <b>$277,083 total</b>. Our model shows <b id="cln-cash-m13">$257,800</b> in the bank at Month 13 — we can cover it. But why would you want cash back?</p>
+      </div>
+      <div class="cln-scenario convert">
+        <div class="s-label">Scenario B — Convert to Equity ✅ Recommended</div>
+        <div class="s-title">🚀 Convert at Series A</div>
+        <p>At Series A (est. Month 18–24), company valued at <b id="cln-valuation">~₱230M (~$4M)</b>. Your $250k converts at 20% discount → <b id="cln-equity">~7.9% equity</b>. That stake is worth <b id="cln-stake-value">$316k+</b> on Day 1 of conversion — and multiples more at exit.</p>
+        <span class="convert-badge">CONVERT = HIGHER RETURN</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDERS -->
+  <div class="sliders-panel">
+    <h2>⚙️ Control Panel — Adjust Assumptions</h2>
+    <div class="sliders-grid">
+      <div class="slider-item">
+        <label>Grid Electricity Price <span id="lbl-grid">₱14/kWh</span></label>
+        <input type="range" class="slider-grid" id="sl-grid" min="10" max="20" step="0.5" value="14">
+        <div class="slider-range"><span>₱10</span><span>₱20</span></div>
+      </div>
+      <div class="slider-item">
+        <label>RDSP Capacity Rate <span id="lbl-rdsp">₱500/kW</span></label>
+        <input type="range" class="slider-rdsp" id="sl-rdsp" min="0" max="1000" step="50" value="500">
+        <div class="slider-range"><span>₱0</span><span>₱1,000</span></div>
+      </div>
+      <div class="slider-item">
+        <label>EaaS Savings Split <span id="lbl-eaas">50%</span></label>
+        <input type="range" class="slider-eaas" id="sl-eaas" min="25" max="75" step="5" value="50">
+        <div class="slider-range"><span>25%</span><span>75%</span></div>
+      </div>
+      <div class="slider-item" id="scale-rate-row">
+        <label>Install Rate <span id="lbl-rate">8 units/mo</span></label>
+        <input type="range" class="slider-rate" id="sl-rate" min="2" max="20" step="2" value="8">
+        <div class="slider-range"><span>2/mo</span><span>20/mo</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE TOGGLE -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btn-pilot" onclick="setMode('pilot')">📊 30-Unit Pilot — The Ask</button>
+    <button class="mode-btn" id="btn-scale" onclick="setMode('scale')">🚀 5-Year Scale — The Opportunity</button>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid" id="kpi-area"></div>
+
+  <!-- CHART -->
+  <div class="chart-panel">
+    <h3 id="chart-title">📈 Monthly Cash Flow — 30-Unit Pilot</h3>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-panel">
+    <h3 id="table-title">📋 Month-by-Month Detail</h3>
+    <div id="table-area"></div>
+  </div>
+
+  <!-- STRESS TEST -->
+  <div class="stress-panel">
+    <h3>🔬 Stress Test — What If…</h3>
+    <div class="stress-btns">
+      <button class="stress-btn" id="btn-inflation" onclick="stressTest('inflation')">📈 Inflation +5%/yr Grid Price</button>
+      <button class="stress-btn" id="btn-rdsp0" onclick="stressTest('rdsp0')">⚡ RDSP Drops to Zero</button>
+      <button class="stress-btn" id="btn-double" onclick="stressTest('double')">🚀 Double Install Rate</button>
+      <button class="stress-btn" id="btn-onbill" onclick="stressTest('onbill')">🏦 On-Bill Repayment (Zero Default)</button>
+      <button class="stress-btn" id="btn-reset" onclick="stressTest('reset')">↺ Reset</button>
+    </div>
+    <div class="stress-result" id="stress-result">Select a scenario to see the impact on the model.</div>
+  </div>
+
+  <!-- REVENUE STREAMS -->
+  <div class="streams-panel">
+    <h3>📊 Where This Fits — Karnot's 5 Revenue Streams</h3>
+    <div class="streams-grid">
+      <div class="stream-card s1">
+        <div class="s-num">Stream 1</div>
+        <div class="s-name">Hardware Margin</div>
+        <div class="s-desc">50% gross margin on equipment sales. One-time per install. Already baked into capex model ($6k cost → $12k invoice).</div>
+      </div>
+      <div class="stream-card s2 active-stream">
+        <div class="s-num">Stream 2 <span class="active-badge">THIS MODEL</span></div>
+        <div class="s-name">EaaS — Savings Share</div>
+        <div class="s-desc">50% of verified energy savings per month. ₱59,166/site/month at ₱14/kWh. Pure recurring, 5-year locked contract.</div>
+      </div>
+      <div class="stream-card s3 active-stream">
+        <div class="s-num">Stream 3 <span class="active-badge">THIS MODEL</span></div>
+        <div class="s-name">VPP / RDSP Demand Response</div>
+        <div class="s-desc">₱500/kW/month capacity payment from utility (Meralco RDSP / VECO). 4.5 kW per iHEAT = ₱2,250/site/month.</div>
+      </div>
+      <div class="stream-card s4">
+        <div class="s-num">Stream 4</div>
+        <div class="s-name">Carbon Credits</div>
+        <div class="s-desc">~63 tCO₂/yr per site. Rubidex blockchain MRV. ~₱4,700/site/month. Included in model as conservative upside.</div>
+      </div>
+      <div class="stream-card s5">
+        <div class="s-num">Stream 5</div>
+        <div class="s-name">Control Centre SaaS</div>
+        <div class="s-desc">Karnot Control Centre API + fleet management platform. Future Series A story. OpenADR 2.0b utility portal.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Karnot Energy Solutions INC · Confidential Investor Model · Stuart Cox, Founder · stuart@karnot.com · Feb 2026</div>
+</div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const HEATER_KW = 15, ANNUAL_HOURS = 8000, COP = 4.14;
+const SOLAR_KWH = 12650, SYS_LOSS = 0.08, CURTAILABLE_KW = 4.47;
+const CARBON_PER_UNIT_PHP = 4700; // ₱/unit/month
+const PHP_USD = 58;
+const CLN_USD = 250000, CLN_RATE = 0.10;
+const BATCH_SIZE = 30, BATCH_COST_USD = 185000;
+const PILOT_MONTHS = 18, SCALE_MONTHS = 60;
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let mode = 'pilot';
+let stressActive = null;
+let chart = null;
+
+function getSliders() {
+  return {
+    grid: parseFloat(document.getElementById('sl-grid').value),
+    rdsp: parseFloat(document.getElementById('sl-rdsp').value),
+    eaas: parseFloat(document.getElementById('sl-eaas').value) / 100,
+    rate: parseInt(document.getElementById('sl-rate').value)
+  };
+}
+
+// ─── CALCULATIONS ────────────────────────────────────────────────────────────
+function calcRevPerUnit(grid, rdsp, eaasSplit, inflation = 0, month = 1) {
+  const g = grid * Math.pow(1 + inflation / 12, month - 1);
+  const baseline = HEATER_KW * ANNUAL_HOURS * g;
+  const iheatKwh = (HEATER_KW * ANNUAL_HOURS / COP) * (1 + SYS_LOSS) - SOLAR_KWH;
+  const savings = baseline - iheatKwh * g;
+  const eaas = savings * eaasSplit / 12;
+  const rdspRev = CURTAILABLE_KW * rdsp;
+  const carbon = CARBON_PER_UNIT_PHP;
+  return { eaas, rdsp: rdspRev, carbon, total: eaas + rdspRev + carbon };
+}
+
+function runPilot(grid, rdsp, eaasSplit) {
+  let cash = CLN_USD * PHP_USD; // Start with CLN in PHP
+  let months = [];
+  let interestAccrued = 0;
+  const rev = calcRevPerUnit(grid, rdsp, eaasSplit);
+  for (let m = 1; m <= PILOT_MONTHS; m++) {
+    let capexPhp = 0;
+    if (m === 4) capexPhp = (BATCH_COST_USD) * PHP_USD;
+    const cumUnits = m < 6 ? 0 : Math.min(30, Math.floor((m - 5) * 2));
+    const revPhp = cumUnits * rev.total;
+    cash += revPhp - capexPhp;
+    interestAccrued += (CLN_USD * CLN_RATE) / 12;
+    months.push({
+      m, cumUnits, capexPhp, revPhp,
+      eaasPhp: cumUnits * rev.eaas,
+      rdspPhp: cumUnits * rev.rdsp,
+      carbonPhp: cumUnits * rev.carbon,
+      cash, interestAccrued,
+      capexUsd: capexPhp / PHP_USD,
+      revUsd: revPhp / PHP_USD,
+      cashUsd: cash / PHP_USD
+    });
+  }
+  return months;
+}
+
+function runScale(grid, rdsp, eaasSplit, rate, inflation = 0) {
+  let cash = CLN_USD * PHP_USD;
+  let stock = 0, cumUnits = 0;
+  let months = [], interestAccrued = 0;
+  for (let m = 1; m <= SCALE_MONTHS; m++) {
+    let capexPhp = 0;
+    if (stock < rate) { capexPhp = BATCH_COST_USD * PHP_USD; stock += BATCH_SIZE; }
+    const installs = Math.min(rate, stock);
+    stock -= installs; cumUnits += installs;
+    const rev = calcRevPerUnit(grid, rdsp, eaasSplit, inflation, m);
+    const revPhp = cumUnits * rev.total;
+    cash += revPhp - capexPhp;
+    interestAccrued += (CLN_USD * CLN_RATE) / 12;
+    months.push({
+      m, cumUnits, capexPhp, revPhp,
+      eaasPhp: cumUnits * rev.eaas,
+      rdspPhp: cumUnits * rev.rdsp,
+      carbonPhp: cumUnits * rev.carbon,
+      cash, interestAccrued,
+      capexUsd: capexPhp / PHP_USD,
+      revUsd: revPhp / PHP_USD,
+      cashUsd: cash / PHP_USD
+    });
+  }
+  return months;
+}
+
+// ─── FORMATTING ──────────────────────────────────────────────────────────────
+function fPhp(v, dec=0) {
+  if (Math.abs(v) >= 1e6) return '₱' + (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1e3) return '₱' + (v/1e3).toFixed(0) + 'k';
+  return '₱' + v.toFixed(dec);
+}
+function fUsd(v, dec=0) {
+  if (Math.abs(v) >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1e3) return '$' + (v/1e3).toFixed(0) + 'k';
+  return '$' + v.toFixed(dec);
+}
+function fBoth(php, dec=0) { return fPhp(php, dec) + ' <span class="usd">('+fUsd(php/PHP_USD, dec)+')</span>'; }
+
+// ─── CLN PANEL UPDATE ────────────────────────────────────────────────────────
+function updateCLN(months) {
+  const m13 = months.find(x => x.m === 13) || months[months.length-1];
+  const repay = CLN_USD + (CLN_USD * CLN_RATE / 12 * 13);
+  document.getElementById('cln-cash-m13').textContent = fUsd(m13.cashUsd);
+  // Estimate Series A valuation
+  const m18 = months.find(x => x.m === 18) || months[months.length-1];
+  const arr = m18.revUsd * 12;
+  const val = arr * 10;
+  const effectiveVal = val * 0.8;
+  const equity = (CLN_USD / effectiveVal * 100).toFixed(1);
+  const stakeVal = CLN_USD / effectiveVal * val;
+  document.getElementById('cln-valuation').textContent = fPhp(val*PHP_USD) + ' (' + fUsd(val) + ')';
+  document.getElementById('cln-equity').textContent = equity + '% equity';
+  document.getElementById('cln-stake-value').textContent = fUsd(stakeVal);
+}
+
+// ─── KPI CARDS ───────────────────────────────────────────────────────────────
+function renderKPI(months, isPilot) {
+  const last = months[months.length-1];
+  const maxCash = months.reduce((a,b) => Math.max(a, b.cash), -Infinity);
+  const minCash = months.reduce((a,b) => Math.min(a, b.cash), Infinity);
+  const minMonth = months.find(x => x.cash === minCash);
+  const recoveryMonth = months.find(x => x.cashUsd >= CLN_USD);
+  const firstProfit = months.find(x => x.revPhp > 0 && x.cash > (months[0] ? months[0].cash : 0));
+
+  let kpis;
+  if (isPilot) {
+    const finalMrr = last.revUsd;
+    kpis = [
+      { label: 'Peak Monthly Revenue', value: fPhp(last.revPhp), sub: fUsd(last.revUsd) + '/mo · Month '+last.m, cls: 'blue' },
+      { label: 'Min. Cash Balance', value: fPhp(minCash), sub: fUsd(minCash/PHP_USD) + ' · Month '+minMonth.m, cls: 'red' },
+      { label: 'CLN Recovered', value: recoveryMonth ? 'Month '+recoveryMonth.m : 'M18+', sub: recoveryMonth ? 'Cash > $250k raise' : 'Extend runway', cls: 'green' },
+      { label: 'Units Live at M18', value: last.cumUnits + ' sites', sub: 'All 30 units active', cls: 'teal' },
+      { label: '18-Month Total Rev', value: fPhp(months.reduce((a,b)=>a+b.revPhp,0)), sub: fUsd(months.reduce((a,b)=>a+b.revUsd,0)) + ' cumulative', cls: 'amber' },
+      { label: 'Hardware Payback', value: '~7 months', sub: 'Per site · From first revenue', cls: 'purple' }
+    ];
+  } else {
+    const yr5 = months.filter(x => x.m >= 49 && x.m <= 60);
+    const yr5rev = yr5.reduce((a,b)=>a+b.revPhp,0);
+    kpis = [
+      { label: 'Month 60 MRR', value: fPhp(last.revPhp), sub: fUsd(last.revUsd) + '/mo', cls: 'blue' },
+      { label: 'Year 5 ARR', value: fPhp(last.revPhp*12), sub: fUsd(last.revUsd*12) + '/yr', cls: 'teal' },
+      { label: 'Units at Year 5', value: last.cumUnits + ' sites', sub: (last.cumUnits * CURTAILABLE_KW / 1000).toFixed(2) + ' MW VPP fleet', cls: 'green' },
+      { label: 'VPP Capacity', value: (last.cumUnits * CURTAILABLE_KW / 1000).toFixed(2) + ' MW', sub: last.cumUnits + ' × 4.5 kW per unit', cls: 'amber' },
+      { label: '5-Year Total Revenue', value: fPhp(months.reduce((a,b)=>a+b.revPhp,0)), sub: fUsd(months.reduce((a,b)=>a+b.revUsd,0)) + ' cumulative', cls: 'purple' },
+      { label: 'CLN Recovered', value: recoveryMonth ? 'Month '+recoveryMonth.m : 'M60+', sub: recoveryMonth ? 'Cash > $250k raise' : '', cls: 'red' }
+    ];
+  }
+  document.getElementById('kpi-area').innerHTML = kpis.map(k =>
+    `<div class="kpi-card ${k.cls}"><div class="k-label">${k.label}</div><div class="k-value">${k.value}</div><div class="k-sub">${k.sub}</div></div>`
+  ).join('');
+}
+
+// ─── CHART ───────────────────────────────────────────────────────────────────
+function renderChart(months, isPilot) {
+  const labels = months.map(x => 'M' + x.m);
+  const eaas = months.map(x => x.eaasPhp / 1e6);
+  const rdspData = months.map(x => x.rdspPhp / 1e6);
+  const carbon = months.map(x => x.carbonPhp / 1e6);
+  const capex = months.map(x => -x.capexPhp / 1e6);
+  const balance = months.map(x => x.cash / 1e6);
+
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'EaaS Revenue', data: eaas, backgroundColor: '#3b82f680', stack: 'rev', borderWidth: 0 },
+        { label: 'RDSP Revenue', data: rdspData, backgroundColor: '#14b8a680', stack: 'rev', borderWidth: 0 },
+        { label: 'Carbon Credits', data: carbon, backgroundColor: '#f59e0b60', stack: 'rev', borderWidth: 0 },
+        { label: 'CapEx', data: capex, backgroundColor: '#ef444460', stack: 'rev', borderWidth: 0 },
+        { label: 'Cash Balance', data: balance, type: 'line', borderColor: '#22c55e', backgroundColor: 'transparent', borderWidth: 2, pointRadius: isPilot ? 3 : 1, tension: 0.3, yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return ' ' + ctx.dataset.label + ': ₱' + Math.abs(v).toFixed(2) + 'M ($' + Math.abs(v * 1e6 / PHP_USD / 1000).toFixed(0) + 'k)';
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 }, maxTicksLimit: 12 }, grid: { color: '#1e293b' } },
+        y: { stacked: true, ticks: { color: '#64748b', font: { size: 10 }, callback: v => '₱'+v.toFixed(1)+'M' }, grid: { color: '#1e293b' }, title: { display: true, text: 'Monthly ₱M', color: '#64748b', font: { size: 10 } } },
+        y2: { position: 'right', ticks: { color: '#22c55e', font: { size: 10 }, callback: v => '₱'+v.toFixed(0)+'M' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Balance ₱M', color: '#22c55e', font: { size: 10 } } }
+      }
+    }
+  });
+  document.getElementById('chart-title').textContent = isPilot
+    ? '📈 Monthly Revenue & Cash Balance — 30-Unit Pilot (18 months)'
+    : '📈 Monthly Revenue Stack & Cash Balance — 5-Year Scale (60 months)';
+}
+
+// ─── TABLE ───────────────────────────────────────────────────────────────────
+function renderPilotTable(months) {
+  const rows = months.map(m => {
+    let badge = '';
+    if (m.cash === months.reduce((a,b)=>b.cash<a?b.cash:a, months[0]).cash) badge = '<span class="badge red">LOW</span>';
+    if (m.cashUsd >= CLN_USD && (!months.find(x=>x.m<m.m&&x.cashUsd>=CLN_USD))) badge = '<span class="badge green">CLN COVERED</span>';
+    if (m.cumUnits === 30 && !months.find(x=>x.m<m.m&&x.cumUnits===30)) badge = '<span class="badge amber">FULL FLEET</span>';
+    const hl = m.cashUsd >= CLN_USD && (!months.find(x=>x.m<m.m&&x.cashUsd>=CLN_USD)) ? 'highlight' : '';
+    return `<tr class="${hl}">
+      <td>Month ${m.m}${badge}</td>
+      <td>${m.cumUnits}</td>
+      <td>${m.eaasPhp>0?fPhp(m.eaasPhp):'—'}</td>
+      <td>${m.rdspPhp>0?fPhp(m.rdspPhp):'—'}</td>
+      <td>${m.carbonPhp>0?fPhp(m.carbonPhp):'—'}</td>
+      <td>${m.capexPhp>0?'<span style="color:#ef4444">'+fPhp(-m.capexPhp)+'</span>':'—'}</td>
+      <td style="color:${m.cash<0?'#ef4444':m.cashUsd>=CLN_USD?'#22c55e':'#f1f5f9'}">${fPhp(m.cash)}</td>
+      <td style="color:${m.cash<0?'#ef4444':m.cashUsd>=CLN_USD?'#22c55e':'#94a3b8'}">${fUsd(m.cashUsd)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('table-area').innerHTML = `
+    <table>
+      <thead><tr>
+        <th style="text-align:left">Period</th><th>Sites</th>
+        <th>EaaS ₱</th><th>RDSP ₱</th><th>Carbon ₱</th>
+        <th>CapEx</th><th>Balance ₱</th><th>Balance $</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  document.getElementById('table-title').textContent = '📋 30-Unit Pilot — Month-by-Month Detail';
+}
+
+function renderScaleTable(months) {
+  const years = [12, 24, 36, 48, 60];
+  const rows = years.map(ym => {
+    const m = months[ym-1];
+    const prev = months[ym-13] || { cash: CLN_USD * PHP_USD, revPhp: 0 };
+    const yearRevPhp = months.slice(ym-12, ym).reduce((a,b)=>a+b.revPhp,0);
+    const yearCapexPhp = months.slice(ym-12, ym).reduce((a,b)=>a+b.capexPhp,0);
+    const yearNet = yearRevPhp - yearCapexPhp;
+    const hl = ym===12?'highlight-amber':ym===60?'highlight':'';
+    return `<tr class="${hl}">
+      <td>Year ${ym/12} (M${ym})</td>
+      <td>${m.cumUnits} sites</td>
+      <td>${fPhp(m.revPhp)}<br><small style="color:#64748b">${fUsd(m.revUsd)}/mo</small></td>
+      <td>${fPhp(m.revPhp*12)}</td>
+      <td style="color:#ef4444">${fPhp(-yearCapexPhp)}</td>
+      <td style="color:${yearNet>0?'#22c55e':'#ef4444'}">${fPhp(yearNet)}</td>
+      <td style="color:${m.cashUsd>=CLN_USD?'#22c55e':'#f1f5f9'}">${fPhp(m.cash)}<br><small style="color:#64748b">${fUsd(m.cashUsd)}</small></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('table-area').innerHTML = `
+    <table>
+      <thead><tr>
+        <th style="text-align:left">Year</th><th>Fleet</th>
+        <th>Month-End MRR</th><th>ARR Run Rate</th>
+        <th>Year CapEx</th><th>Year Net</th><th>Cash Balance</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  document.getElementById('table-title').textContent = '📋 5-Year Annual Snapshot';
+}
+
+// ─── MAIN RENDER ─────────────────────────────────────────────────────────────
+function render() {
+  const { grid, rdsp, eaas, rate } = getSliders();
+  document.getElementById('lbl-grid').textContent = '₱' + grid + '/kWh';
+  document.getElementById('lbl-rdsp').textContent = '₱' + rdsp + '/kW';
+  document.getElementById('lbl-eaas').textContent = eaas*100 + '%';
+  document.getElementById('lbl-rate').textContent = rate + ' units/mo';
+
+  let inflation = 0;
+  if (stressActive === 'inflation') inflation = 0.05;
+  let adjRdsp = rdsp;
+  if (stressActive === 'rdsp0') adjRdsp = 0;
+  let adjRate = rate;
+  if (stressActive === 'double') adjRate = Math.min(rate * 2, 20);
+
+  const isPilot = mode === 'pilot';
+  document.getElementById('scale-rate-row').style.opacity = isPilot ? '0.4' : '1';
+
+  const months = isPilot
+    ? runPilot(grid, adjRdsp, eaas)
+    : runScale(grid, adjRdsp, eaas, adjRate, inflation);
+
+  updateCLN(months);
+  renderKPI(months, isPilot);
+  renderChart(months, isPilot);
+  isPilot ? renderPilotTable(months) : renderScaleTable(months);
+}
+
+// ─── MODE TOGGLE ─────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-pilot').classList.toggle('active', m==='pilot');
+  document.getElementById('btn-scale').classList.toggle('active', m==='scale');
+  render();
+}
+
+// ─── STRESS TEST ─────────────────────────────────────────────────────────────
+function stressTest(type) {
+  const btns = ['inflation','rdsp0','double','onbill'];
+  btns.forEach(b => document.getElementById('btn-'+b).classList.remove('active'));
+  const messages = {
+    inflation: '📈 <b>Inflation Scenario:</b> Grid price rises 5%/yr. Because Karnot takes 50% of savings and savings grow with the grid price, <b>EaaS revenue automatically inflates year-over-year</b>. Your contracts are inflation-proof — the harder it gets for the customer, the more valuable the iHEAT becomes.',
+    rdsp0: '⚡ <b>RDSP Zero Scenario:</b> The demand response programme is removed entirely. EaaS energy savings alone still make each site viable. <b>The business still works without RDSP</b> — demand response is pure upside margin, not the core.',
+    double: '🚀 <b>Double Install Rate:</b> Two crews, two containers per quarter. Capital recovery happens faster, VPP fleet reaches 2MW+ in under 3 years. <b>The model scales linearly</b> — every unit added is identical margin.',
+    onbill: '🏦 <b>On-Bill Repayment:</b> Karnot fee collected on the utility\'s monthly electricity invoice (VECO/Meralco). If the customer doesn\'t pay, <b>the utility cuts their power</b>. Default risk drops to near zero. This is the "holy grail" of EaaS structures in the Philippines utility market.',
+    reset: ''
+  };
+  if (type === 'reset') {
+    stressActive = null;
+    document.getElementById('stress-result').innerHTML = 'Select a scenario to see the impact on the model.';
+  } else {
+    stressActive = type;
+    document.getElementById('btn-' + type).classList.add('active');
+    document.getElementById('stress-result').innerHTML = messages[type];
+  }
+  render();
+}
+
+// ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
+['sl-grid','sl-rdsp','sl-eaas','sl-rate'].forEach(id =>
+  document.getElementById(id).addEventListener('input', render));
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>

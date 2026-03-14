@@ -1,14 +1,22 @@
 import React from 'react';
 import DataImporter from '../components/DataImporter';
-import ProductManager from '../components/ProductManager'; 
+import ProductManager from '../components/ProductManager';
+import UserManagement from '../components/UserManagement';
 import { Card } from '../data/constants';
 
-export default function AdminPage({ user }) {
+export default function AdminPage({ user, currentUser, userRole }) {
     return (
         <div className="space-y-8 pb-20">
             <h1 className="text-3xl font-bold text-gray-800 tracking-tight">System Administration</h1>
-            
-            {/* --- SECTION 1: PRODUCT MANAGER --- */}
+
+            {/* --- SECTION 1: TEAM MANAGEMENT --- */}
+            <section>
+                <UserManagement currentUser={currentUser} />
+            </section>
+
+            <hr className="border-gray-300 my-8"/>
+
+            {/* --- SECTION 2: PRODUCT MANAGER --- */}
             <section>
                 <div className="mb-4">
                     <h2 className="text-xl font-semibold text-gray-700">Product Management</h2>
@@ -21,7 +29,7 @@ export default function AdminPage({ user }) {
 
             <hr className="border-gray-300 my-8"/>
 
-            {/* --- SECTION 2: BULK IMPORTERS --- */}
+            {/* --- SECTION 3: BULK IMPORTERS --- */}
             <section>
                 <div className="mb-4">
                     <h2 className="text-xl font-semibold text-gray-700">Bulk Data Import</h2>

@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iSAVE Platform — Roadmap & Technical Specifications</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #007aff;
+            --accent-green: #34c759;
+            --accent-gold: #FFB800;
+            --karnot-orange: #F56600;
+            --rubidex-purple: #6B21A8;
+            --utterberry-teal: #0D9488;
+            --philippines-red: #CE1126;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --bg-light: #f5f5f7;
+            --bg-main: #ffffff;
+            --border-color: #d2d2d7;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* ─── HERO ─── */
+        .hero {
+            background: linear-gradient(135deg, #0051a5 0%, #007aff 50%, #F56600 100%);
+            color: white;
+            padding: 100px 20px 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: "";
+            position: absolute; top:0; left:0; right:0; bottom:0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="g" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/></pattern></defs><rect width="100%25" height="100%25" fill="url(%23g)"/></svg>');
+        }
+        .hero-content { position: relative; z-index:1; max-width: 1000px; margin: 0 auto; }
+        .hero-badge {
+            display: inline-block; padding: 8px 20px;
+            background: rgba(255,255,255,0.2); border-radius: 30px;
+            font-size: 13px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1.5px; margin-bottom: 24px; backdrop-filter: blur(10px);
+        }
+        .hero h1 { font-size: 58px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+        .hero .subtitle { font-size: 22px; opacity: 0.9; margin-bottom: 12px; }
+        .hero .sub2 { font-size: 17px; opacity: 0.8; margin-bottom: 40px; }
+        .partner-strip {
+            display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 40px;
+        }
+        .partner-chip {
+            padding: 10px 24px; border-radius: 30px;
+            font-size: 14px; font-weight: 700;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3);
+        }
+        .chip-rubidex { background: rgba(107,33,168,0.4); }
+        .chip-utterberry { background: rgba(13,148,136,0.4); }
+        .chip-karnot { background: rgba(245,102,0,0.4); }
+
+        /* ─── SECTION WRAPPER ─── */
+        .section { max-width: 1200px; margin: 80px auto; padding: 0 20px; }
+        .section-header { text-align: center; margin-bottom: 56px; }
+        .section-header .tag {
+            display: inline-block; padding: 6px 18px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .tag-phase1 { background: #DBEAFE; color: #1E40AF; }
+        .tag-phase2 { background: #D1FAE5; color: #065F46; }
+        .tag-ph { background: #FEE2E2; color: #991B1B; }
+        .tag-tech { background: #EDE9FE; color: #5B21B6; }
+        .tag-sensor { background: #CCFBF1; color: #134E4A; }
+        .tag-blockchain { background: #F3E8FF; color: #6B21A8; }
+        .section-header h2 { font-size: 40px; font-weight: 700; margin-bottom: 12px; }
+        .section-header p { font-size: 19px; color: var(--text-secondary); max-width: 700px; margin: 0 auto; }
+
+        /* ─── TIMELINE ROADMAP ─── */
+        .timeline { position: relative; max-width: 900px; margin: 0 auto; }
+        .timeline::before {
+            content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 3px; background: linear-gradient(to bottom, #007aff, #34c759, #F56600);
+            transform: translateX(-50%);
+        }
+        .timeline-item {
+            display: flex; gap: 40px; margin-bottom: 60px; position: relative;
+        }
+        .timeline-item:nth-child(odd) { flex-direction: row; }
+        .timeline-item:nth-child(even) { flex-direction: row-reverse; }
+        .timeline-dot {
+            position: absolute; left: 50%; top: 24px;
+            width: 20px; height: 20px; border-radius: 50%;
+            border: 3px solid white;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+        .timeline-content {
+            width: calc(50% - 40px);
+            background: white; border-radius: 16px; padding: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .timeline-date {
+            font-size: 13px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 8px;
+        }
+        .timeline-content h3 { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+        .timeline-content p { font-size: 15px; color: var(--text-secondary); margin-bottom: 12px; }
+        .timeline-content ul { padding-left: 0; list-style: none; }
+        .timeline-content li {
+            font-size: 14px; color: var(--text-secondary);
+            padding: 6px 0 6px 22px; position: relative; border-bottom: 1px solid var(--bg-light);
+        }
+        .timeline-content li:last-child { border-bottom: none; }
+        .timeline-content li::before { content: "→"; position: absolute; left: 0; color: var(--primary-blue); }
+
+        /* ─── CARDS GRID ─── */
+        .cards-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
+        .cards-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 28px; }
+        .cards-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
+        .card {
+            background: white; border-radius: 20px; padding: 36px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,122,255,0.12); }
+        .card-icon { font-size: 44px; margin-bottom: 18px; }
+        .card h3 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+        .card p { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+        .card ul { list-style: none; padding: 0; margin-top: 12px; }
+        .card li {
+            font-size: 14px; color: var(--text-secondary);
+            padding: 7px 0 7px 24px; position: relative;
+            border-bottom: 1px solid var(--bg-light);
+        }
+        .card li:last-child { border-bottom: none; }
+        .card li::before { content: "✓"; position: absolute; left: 0; color: var(--accent-green); font-weight: 700; }
+
+        /* ─── SPEC TABLE ─── */
+        .spec-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .spec-table th { background: var(--primary-blue); color: white; padding: 16px 20px; text-align: left; font-size: 14px; font-weight: 600; }
+        .spec-table td { padding: 14px 20px; border-bottom: 1px solid var(--bg-light); font-size: 14px; vertical-align: top; }
+        .spec-table tr:last-child td { border-bottom: none; }
+        .spec-table tr:hover td { background: #f8f8fa; }
+        .spec-table td:first-child { font-weight: 600; color: var(--text-primary); width: 28%; }
+        .spec-table td:last-child { color: var(--text-secondary); }
+        .badge-small {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; margin-right: 4px; margin-bottom: 4px;
+        }
+        .b-blue { background: #DBEAFE; color: #1E40AF; }
+        .b-green { background: #D1FAE5; color: #065F46; }
+        .b-orange { background: #FED7AA; color: #9A3412; }
+        .b-purple { background: #EDE9FE; color: #5B21B6; }
+        .b-teal { background: #CCFBF1; color: #134E4A; }
+
+        /* ─── DARK SECTIONS ─── */
+        .dark-section {
+            padding: 80px 20px;
+            color: white;
+        }
+        .rubidex-section { background: linear-gradient(135deg, #3B0764 0%, #6B21A8 100%); }
+        .utterberry-section { background: linear-gradient(135deg, #042F2E 0%, #0D9488 100%); }
+        .ph-section { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+        .control-section { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); }
+        .dark-inner { max-width: 1200px; margin: 0 auto; }
+        .dark-section .section-header h2 { color: white; }
+        .dark-section .section-header p { color: rgba(255,255,255,0.85); }
+        .dark-card {
+            background: rgba(255,255,255,0.1); border-radius: 20px; padding: 36px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);
+            transition: all 0.3s ease;
+        }
+        .dark-card:hover { background: rgba(255,255,255,0.15); }
+        .dark-card h3 { font-size: 20px; font-weight: 700; color: white; margin-bottom: 10px; }
+        .dark-card p { font-size: 15px; color: rgba(255,255,255,0.85); line-height: 1.7; }
+        .dark-card ul { list-style: none; padding: 0; margin-top: 12px; }
+        .dark-card li {
+            font-size: 14px; color: rgba(255,255,255,0.8);
+            padding: 7px 0 7px 24px; position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .dark-card li:last-child { border-bottom: none; }
+        .dark-card li::before { content: "→"; position: absolute; left: 0; color: var(--accent-gold); }
+
+        /* ─── ARCHITECTURE DIAGRAM ─── */
+        .arch-diagram {
+            background: white; border-radius: 20px; padding: 48px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            font-family: 'Inter', monospace;
+        }
+        .arch-layer {
+            border: 2px solid; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+            position: relative;
+        }
+        .arch-layer-label {
+            position: absolute; top: -13px; left: 20px;
+            padding: 2px 14px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .layer-cloud { border-color: #007aff; }
+        .layer-cloud .arch-layer-label { background: #007aff; color: white; }
+        .layer-edge { border-color: #F56600; }
+        .layer-edge .arch-layer-label { background: #F56600; color: white; }
+        .layer-sensor { border-color: #0D9488; }
+        .layer-sensor .arch-layer-label { background: #0D9488; color: white; }
+        .layer-blockchain { border-color: #6B21A8; }
+        .layer-blockchain .arch-layer-label { background: #6B21A8; color: white; }
+        .arch-components { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .arch-comp {
+            padding: 8px 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 600;
+        }
+        .comp-blue { background: #DBEAFE; color: #1E40AF; }
+        .comp-orange { background: #FED7AA; color: #9A3412; }
+        .comp-teal { background: #CCFBF1; color: #134E4A; }
+        .comp-purple { background: #EDE9FE; color: #5B21B6; }
+        .comp-green { background: #D1FAE5; color: #065F46; }
+        .comp-gray { background: #F3F4F6; color: #374151; }
+        .arch-arrow {
+            text-align: center; font-size: 24px; color: var(--text-secondary);
+            margin: 4px 0; line-height: 1;
+        }
+
+        /* ─── PHASE HEADERS ─── */
+        .phase-header {
+            border-radius: 20px; padding: 50px 60px; margin-bottom: 48px; color: white;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+        }
+        .phase-header h2 { font-size: 38px; font-weight: 800; }
+        .phase-header p { font-size: 19px; opacity: 0.9; margin-top: 10px; max-width: 600px; }
+        .phase-header .phase-num {
+            font-size: 100px; font-weight: 800; opacity: 0.15; line-height: 1; flex-shrink: 0;
+        }
+        .ph1-header { background: linear-gradient(135deg, #0051a5, #007aff); }
+        .ph2-header { background: linear-gradient(135deg, #065F46, #34c759); }
+
+        /* ─── REVENUE TABLE ─── */
+        .revenue-grid {
+            display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 40px;
+        }
+        .revenue-card {
+            background: white; border-radius: 16px; padding: 32px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .revenue-value { font-size: 44px; font-weight: 800; margin-bottom: 8px; }
+        .revenue-label { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .revenue-note { font-size: 13px; color: var(--text-secondary); }
+
+        /* ─── STATUS PILLS ─── */
+        .status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-now { background: #D1FAE5; color: #065F46; }
+        .status-q3 { background: #DBEAFE; color: #1E40AF; }
+        .status-q4 { background: #FEF3C7; color: #92400E; }
+        .status-future { background: #F3E8FF; color: #6B21A8; }
+        .status::before { content: "●"; font-size: 8px; }
+
+        /* ─── FOOTER ─── */
+        footer {
+            background: #1d1d1f; color: rgba(255,255,255,0.7);
+            text-align: center; padding: 48px 20px;
+        }
+        footer h3 { color: white; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        footer p { font-size: 15px; line-height: 1.8; }
+        footer .footer-partners { display: flex; justify-content: center; gap: 32px; margin-top: 32px; flex-wrap: wrap; }
+        footer .fp { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.6); }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 968px) {
+            .cards-3, .cards-4 { grid-template-columns: 1fr; }
+            .cards-2 { grid-template-columns: 1fr; }
+            .revenue-grid { grid-template-columns: 1fr; }
+            .timeline::before { display: none; }
+            .timeline-item, .timeline-item:nth-child(even) { flex-direction: column; }
+            .timeline-content { width: 100%; }
+            .timeline-dot { display: none; }
+            .hero h1 { font-size: 38px; }
+            .phase-header { flex-direction: column; }
+            .phase-header .phase-num { font-size: 60px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════════════ -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">Confidential — Karnot Energy Solutions INC</div>
+        <h1>iSAVE Platform<br>Roadmap &amp; Specifications</h1>
+        <p class="subtitle">Smart Energy Intelligence for Heat Pumps, Solar, Thermal &amp; Electric Storage</p>
+        <p class="sub2">Powered by Utterberry IoT Sensors &nbsp;•&nbsp; Secured by Rubidex Blockchain &nbsp;•&nbsp; Built for the Philippines &amp; Beyond</p>
+        <div class="partner-strip">
+            <div class="partner-chip chip-karnot">⚡ Karnot Energy</div>
+            <div class="partner-chip chip-utterberry">🔬 Utterberry Sensors</div>
+            <div class="partner-chip chip-rubidex">🔗 Rubidex Blockchain</div>
+            <div class="partner-chip" style="background:rgba(206,17,38,0.4);">🇵🇭 Philippines Market</div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-phase1">Executive Summary</div>
+        <h2>What We Are Building</h2>
+        <p>A two-phase intelligent energy platform — starting with an IoT edge device for heat pumps, expanding to a utility-grade control centre for the Philippines market</p>
+    </div>
+    <div class="cards-3">
+        <div class="card">
+            <div class="card-icon">🧠</div>
+            <h3>Phase 1 — iSAVE Edge</h3>
+            <p>An intelligent edge controller that connects heat pumps, solar PV, thermal batteries, and electric batteries. Utterberry sensors provide real-time health data. Rubidex blockchain locks data integrity and carbon credit verification.</p>
+            <ul>
+                <li>Heat pump monitoring &amp; demand response</li>
+                <li>Solar self-consumption optimisation</li>
+                <li>Thermal &amp; electric battery dispatch</li>
+                <li>Predictive maintenance AI</li>
+                <li>Blockchain-verified energy data</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🏢</div>
+            <h3>Phase 2 — Karnot Control Centre</h3>
+            <p>A fleet management and grid intelligence platform — the Karnot version of Octopus Kraken. Aggregates data from thousands of iSAVE devices, provides dispatch decisions, and feeds utility-grade APIs for demand response at scale.</p>
+            <ul>
+                <li>Fleet-wide energy monitoring dashboard</li>
+                <li>OpenADR 2.0 demand response engine</li>
+                <li>Structured data API for VPP platforms</li>
+                <li>Utility company interface &amp; billing</li>
+                <li>AI forecasting for grid services</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🇵🇭</div>
+            <h3>Philippines Market Strategy</h3>
+            <p>Low-cost, tropics-ready hardware optimised for the Philippine grid environment. Target distribution utilities (DUs), commercial buildings, and industrial sites where electricity prices are among the highest in SE Asia.</p>
+            <ul>
+                <li>Hardware BOM target under $150 USD</li>
+                <li>LTE/4G primary connectivity</li>
+                <li>Tropical rated: 45°C, 95% RH, IP65</li>
+                <li>Meralco &amp; DU demand response ready</li>
+                <li>Bundled with Karnot heat pumps &amp; thermal storage</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ROADMAP TIMELINE
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-phase1">Master Roadmap</div>
+        <h2>Delivery Timeline</h2>
+        <p>From concept to Philippines utility deployment in 24 months</p>
+    </div>
+    <div class="timeline">
+
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:#007aff;"></div>
+            <div class="timeline-content">
+                <div class="timeline-date" style="color:#007aff;">Q2 2026 — NOW</div>
+                <h3>Architecture &amp; Partner Agreements</h3>
+                <p>Define technical architecture, sign partnership MOUs with Utterberry and Rubidex, finalise Philippines market entry plan.</p>
+                <ul>
+                    <li>iSAVE system architecture document</li>
+                    <li>Utterberry sensor integration specification</li>
+                    <li>Rubidex blockchain API integration design</li>
+                    <li>Philippines pilot site identification</li>
+                    <li>Hardware BOM and cost modelling</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:#F56600;"></div>
+            <div class="timeline-content">
+                <div class="timeline-date" style="color:#F56600;">Q3 2026</div>
+                <h3>iSAVE Alpha Hardware + Software</h3>
+                <p>First prototype edge device. Core software stack running heat pump monitoring, sensor data ingestion, and basic Rubidex data hashing.</p>
+                <ul>
+                    <li>Edge controller PCB prototype (10 units)</li>
+                    <li>Utterberry gateway integration</li>
+                    <li>MQTT data pipeline to cloud</li>
+                    <li>Rubidex data hashing layer live</li>
+                    <li>Basic web dashboard (internal)</li>
+                    <li>Heat pump ModBus integration complete</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:#34c759;"></div>
+            <div class="timeline-content">
+                <div class="timeline-date" style="color:#34c759;">Q4 2026</div>
+                <h3>iSAVE Beta — Philippines Pilot</h3>
+                <p>Deploy 20–50 units on Philippine pilot sites (commercial buildings, utilities). Solar integration, demand response, and predictive maintenance live.</p>
+                <ul>
+                    <li>Solar PV integration &amp; optimisation</li>
+                    <li>Thermal battery charge/discharge control</li>
+                    <li>Electric battery (BESS) dispatch logic</li>
+                    <li>Demand response event handling (manual)</li>
+                    <li>Predictive maintenance alerts (beta)</li>
+                    <li>iOS + Android app (beta)</li>
+                    <li>Carbon credit data pipeline to Rubidex</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:#6B21A8;"></div>
+            <div class="timeline-content">
+                <div class="timeline-date" style="color:#6B21A8;">Q1 2027</div>
+                <h3>Phase 2 — Karnot Control Centre Alpha</h3>
+                <p>Fleet-wide control centre platform. First utility-facing dashboard. OpenADR 2.0 demand response engine. Aggregated data API for VPP integration.</p>
+                <ul>
+                    <li>Fleet management dashboard (web)</li>
+                    <li>OpenADR 2.0 server implementation</li>
+                    <li>Automated DR event dispatch to devices</li>
+                    <li>Utility company portal (read access)</li>
+                    <li>Data normalisation &amp; API v1 (REST)</li>
+                    <li>Grid signal integration (price, frequency)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:#FFB800;"></div>
+            <div class="timeline-content">
+                <div class="timeline-date" style="color:#92400E;">Q2–Q3 2027</div>
+                <h3>Commercial Launch — Philippines</h3>
+                <p>Full commercial deployment. Utility partnerships signed. iSAVE + Karnot heat pumps + thermal storage sold as bundled solution to DUs and ESCOs.</p>
+                <ul>
+                    <li>Meralco / DU commercial agreements</li>
+                    <li>ESCO partnership programme launch</li>
+                    <li>Carbon credit revenue sharing model live</li>
+                    <li>200+ device fleet operational</li>
+                    <li>VPP API integration (Kraken-compatible)</li>
+                    <li>Predictive maintenance AI v2 (fleet-trained)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:#CE1126;"></div>
+            <div class="timeline-content">
+                <div class="timeline-date" style="color:#CE1126;">Q4 2027+</div>
+                <h3>Scale &amp; Regional Expansion</h3>
+                <p>Expand to Vietnam, Indonesia, Thailand. European iSAVE variant for UK/EU heat pump market with Matter certification.</p>
+                <ul>
+                    <li>SE Asia market rollout</li>
+                    <li>Matter-certified EU/UK variant</li>
+                    <li>Gold Standard carbon credit programme live</li>
+                    <li>1,000+ device fleet</li>
+                    <li>SaaS licensing to other utilities</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PHASE 1 — iSAVE EDGE
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="phase-header ph1-header">
+        <div>
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;opacity:0.8;margin-bottom:8px;">Phase One</div>
+            <h2>iSAVE Edge Intelligence Platform</h2>
+            <p>The on-site brain — connecting heat pumps, solar, batteries, and Utterberry sensors, secured by Rubidex blockchain</p>
+        </div>
+        <div class="phase-num">01</div>
+    </div>
+
+    <!-- WHAT IT CONTROLS -->
+    <div class="section-header" style="margin-top:0;">
+        <div class="tag tag-phase1">Core Capabilities</div>
+        <h2>What iSAVE Controls</h2>
+        <p>One device to rule all energy assets on-site</p>
+    </div>
+    <div class="cards-3">
+        <div class="card">
+            <div class="card-icon">🔥</div>
+            <h3>Heat Pump Management</h3>
+            <p>Full monitoring and control of Karnot iHEAT heat pumps via ModBus RS485. Smart scheduling, defrost management, and demand response.</p>
+            <ul>
+                <li>Compressor on/off &amp; speed control</li>
+                <li>Defrost cycle detection &amp; optimisation</li>
+                <li>Inlet/outlet temperature monitoring</li>
+                <li>COP calculation in real time</li>
+                <li>Refrigerant pressure trend monitoring</li>
+                <li>DR curtailment: on/off + load reduction</li>
+                <li>Pre-conditioning before DR events</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">☀️</div>
+            <h3>Solar PV Integration</h3>
+            <p>Read generation data from inverters (SunSpec ModBus / Enphase / SolarEdge API). Maximise self-consumption and store surplus in thermal or electric storage.</p>
+            <ul>
+                <li>Real-time generation vs. consumption</li>
+                <li>Auto-dispatch to thermal battery on surplus</li>
+                <li>Auto-charge electric battery on surplus</li>
+                <li>Grid export limiting where required</li>
+                <li>Time-of-use tariff awareness</li>
+                <li>Solar forecast integration (weather API)</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🏦</div>
+            <h3>Thermal Battery Control</h3>
+            <p>Charge/discharge Karnot thermal storage tanks. Use low-cost or solar energy to store heat or cold, dispatch during peak tariff or DR events.</p>
+            <ul>
+                <li>State of Charge (SoC) monitoring</li>
+                <li>Temperature stratification sensing</li>
+                <li>Charge during off-peak / solar surplus</li>
+                <li>Discharge during peak or DR event</li>
+                <li>Round-trip efficiency tracking</li>
+                <li>Insulation loss modelling</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔋</div>
+            <h3>Electric Battery (BESS)</h3>
+            <p>Interface with third-party BESS via CAN bus or ModBus. Coordinate charge/discharge with solar, tariff schedule, and DR signals.</p>
+            <ul>
+                <li>Battery SoC, SoH monitoring</li>
+                <li>Charge from solar / off-peak grid</li>
+                <li>Discharge to offset peak demand</li>
+                <li>DR event: battery discharge to reduce load</li>
+                <li>Cycle counting and degradation tracking</li>
+                <li>Compatible: BYD, Pylontech, CATL</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>Demand Response Switching</h3>
+            <p>Automated load switching in response to utility DR signals (OpenADR 2.0), price spikes, or frequency deviation. Precision control of which assets to curtail and for how long.</p>
+            <ul>
+                <li>OpenADR 2.0b VEN (end-device client)</li>
+                <li>Curtailment duration rules per asset</li>
+                <li>Minimum comfort temperature limits</li>
+                <li>Asset priority ranking for curtailment</li>
+                <li>Rebound management (staggered recovery)</li>
+                <li>DR event logging for utility verification</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔧</div>
+            <h3>Preventive Maintenance AI</h3>
+            <p>On-device TinyML models analyse Utterberry sensor streams to detect anomalies before failures occur. Automated service alerts to Karnot engineers.</p>
+            <ul>
+                <li>Compressor vibration anomaly detection</li>
+                <li>Bearing wear signature recognition</li>
+                <li>Refrigerant leak: pressure trend analysis</li>
+                <li>Condenser fouling: efficiency delta</li>
+                <li>Defrost failure detection</li>
+                <li>Automated service ticket generation</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     UTTERBERRY SENSOR INTEGRATION
+═══════════════════════════════════════════════════════ -->
+<section class="dark-section utterberry-section">
+    <div class="dark-inner">
+        <div class="section-header">
+            <div class="tag" style="background:rgba(255,255,255,0.2);color:white;">Utterberry Partnership</div>
+            <h2>Utterberry Smart Sensor Network</h2>
+            <p style="color:rgba(255,255,255,0.85);">Ultra-low-power wireless sensor motes for real-time heat pump health monitoring — developed by Dr. Heba Bevan</p>
+        </div>
+        <div class="cards-3" style="gap:24px;">
+            <div class="dark-card">
+                <div style="font-size:40px;margin-bottom:16px;">🌡️</div>
+                <h3>Temperature Sensors</h3>
+                <p>Multi-point temperature mapping across heat pump refrigerant circuit, water circuit, and ambient environment. ±0.1°C accuracy.</p>
+                <ul>
+                    <li>Refrigerant suction &amp; discharge temp</li>
+                    <li>Water inlet &amp; outlet temperatures</li>
+                    <li>Ambient air temperature</li>
+                    <li>Thermal battery zone temperatures</li>
+                    <li>Evaporator coil surface temp (ice detection)</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <div style="font-size:40px;margin-bottom:16px;">💧</div>
+                <h3>Humidity Sensors</h3>
+                <p>Indoor and outdoor humidity monitoring for optimal heat pump operation and defrost cycle management. Critical in Philippine tropical climate.</p>
+                <ul>
+                    <li>Indoor zone relative humidity</li>
+                    <li>Outdoor ambient humidity</li>
+                    <li>Evaporator coil humidity (frost risk)</li>
+                    <li>Condensate management alerts</li>
+                    <li>Mould risk scoring per zone</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <div style="font-size:40px;margin-bottom:16px;">📳</div>
+                <h3>Vibration Sensors</h3>
+                <p>Tri-axis accelerometer motes mounted on compressor housing and pipework. Fast Fourier Transform (FFT) analysis for bearing and mechanical fault detection.</p>
+                <ul>
+                    <li>Compressor bearing wear signatures</li>
+                    <li>Fan motor imbalance detection</li>
+                    <li>Pipe vibration (resonance alerts)</li>
+                    <li>On/off cycle detection &amp; count</li>
+                    <li>Vibration trend over time (degradation)</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <div style="font-size:40px;margin-bottom:16px;">❄️</div>
+                <h3>Defrost &amp; Ice Detection</h3>
+                <p>Surface temperature + humidity fusion to predict and detect ice build-up on the evaporator. Optimise defrost cycles — avoid unnecessary defrost in Philippines tropical climate.</p>
+                <ul>
+                    <li>Ice formation prediction model</li>
+                    <li>Defrost cycle trigger &amp; duration optimisation</li>
+                    <li>Defrost completion confirmation</li>
+                    <li>COP recovery tracking post-defrost</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <div style="font-size:40px;margin-bottom:16px;">📡</div>
+                <h3>Wireless Mesh Network</h3>
+                <p>Utterberry motes form a self-healing wireless mesh — no cabling required. Motes relay data hop-to-hop to the iSAVE gateway, which uploads to cloud.</p>
+                <ul>
+                    <li>Sub-GHz ISM band (868/915 MHz)</li>
+                    <li>Up to 5-year battery life per mote</li>
+                    <li>Self-healing mesh topology</li>
+                    <li>Encrypted data at the mote level</li>
+                    <li>50+ motes per gateway</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <div style="font-size:40px;margin-bottom:16px;">🔌</div>
+                <h3>Additional Sensor Types</h3>
+                <p>Utterberry platform supports additional mote types that can be added to the iSAVE system as needed.</p>
+                <ul>
+                    <li>Current transformer (CT) clamps — energy metering</li>
+                    <li>Pressure transducers — refrigerant circuits</li>
+                    <li>Acoustic emissions — leak detection</li>
+                    <li>CO₂ / air quality sensors</li>
+                    <li>Door / panel open detection</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     PARTNER INTEGRATION REALITY
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-sensor">Partner Integration Strategy</div>
+        <h2>How Utterberry &amp; Rubidex Actually Connect</h2>
+        <p>Based on each company's actual platform — realistic integration paths for iSAVE</p>
+    </div>
+
+    <!-- UTTERBERRY INTEGRATION -->
+    <div style="background:white;border-radius:20px;padding:48px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:32px;border-left:6px solid #0D9488;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+            <div style="font-size:40px;">🔬</div>
+            <div>
+                <h3 style="font-size:26px;font-weight:700;">Utterberry Integration</h3>
+                <p style="color:var(--text-secondary);font-size:15px;">Dr. Heba Bevan — utterberry.com — London &amp; Leeds</p>
+            </div>
+            <div style="margin-left:auto;display:flex;flex-direction:column;gap:6px;text-align:right;">
+                <span class="badge-small b-teal">IP68 Waterproof</span>
+                <span class="badge-small b-teal">ISO 9001 / 27001</span>
+                <span class="badge-small b-teal">17+ Industries</span>
+            </div>
+        </div>
+
+        <div style="background:#F0FDFA;border-radius:12px;padding:24px;margin-bottom:24px;">
+            <p style="font-size:15px;font-weight:600;color:#134E4A;margin-bottom:8px;">📡 How Utterberry's System Works</p>
+            <p style="font-size:14px;color:#0D9488;font-weight:700;text-align:center;padding:16px;background:rgba(13,148,136,0.1);border-radius:8px;">
+                Sensor Motes (wireless mesh) → Utterberry Base Station → utterberry.io cloud portal
+            </p>
+            <p style="font-size:14px;color:#374151;margin-top:12px;">Sensors form a self-healing wireless mesh and relay data to a Base Station. The Base Station connects to the internet and sends data to Utterberry's secure cloud portal (utterberry.io). Sensors measure temperature, humidity, pressure, vibration/movement, and leak detection. Battery life 1–3 years. Size: 31×56×15mm.</p>
+        </div>
+
+        <div class="cards-3" style="gap:20px;">
+            <div style="background:#F0FDFA;border-radius:12px;padding:24px;border:2px solid #0D9488;">
+                <div style="font-size:24px;margin-bottom:10px;">⭐</div>
+                <h4 style="font-size:16px;font-weight:700;color:#0D9488;margin-bottom:8px;">Option A — Preferred<br><small style="font-size:12px;">Local Base Station Output</small></h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Ask Heba: <em>"Can the Base Station output data locally via MQTT or HTTP?"</em> If yes, the iSAVE edge device receives Utterberry data directly on-site — no cloud dependency. Best for brownout resilience.</p>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:24px;border:1px solid var(--border-color);">
+                <div style="font-size:24px;margin-bottom:10px;">✅</div>
+                <h4 style="font-size:16px;font-weight:700;margin-bottom:8px;">Option B — Cloud API<br><small style="font-size:12px;color:var(--text-secondary);">utterberry.io → iSAVE Cloud</small></h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Ask Heba: <em>"Does utterberry.io have a REST API or webhook?"</em> If yes, Karnot's cloud platform polls or subscribes to Utterberry's cloud and pulls sensor readings into TimescaleDB.</p>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:24px;border:1px solid var(--border-color);">
+                <div style="font-size:24px;margin-bottom:10px;">🤝</div>
+                <h4 style="font-size:16px;font-weight:700;margin-bottom:8px;">Option C — Bundle Deal<br><small style="font-size:12px;color:var(--text-secondary);">OEM Base Station into iSAVE</small></h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Ask Heba: <em>"Can we OEM your Base Station inside the iSAVE enclosure?"</em> One box contains both iSAVE edge controller and Utterberry gateway. Simplest for customer installation.</p>
+            </div>
+        </div>
+
+        <div style="background:#FEF3C7;border-radius:10px;padding:16px 20px;margin-top:20px;">
+            <p style="font-size:14px;color:#92400E;font-weight:600;">📋 Questions for Heba</p>
+            <p style="font-size:14px;color:#92400E;margin-top:4px;">1. Local MQTT/HTTP output from Base Station? &nbsp;•&nbsp; 2. REST API on utterberry.io? &nbsp;•&nbsp; 3. OEM/bundle agreement? &nbsp;•&nbsp; 4. Pricing per sensor kit for Philippines (&lt;$30 target per mote)? &nbsp;•&nbsp; 5. Tropical climate ratings for Philippines deployment?</p>
+        </div>
+    </div>
+
+    <!-- RUBIDEX INTEGRATION -->
+    <div style="background:white;border-radius:20px;padding:48px;box-shadow:0 4px 16px rgba(0,0,0,0.08);border-left:6px solid #6B21A8;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+            <div style="font-size:40px;">🔗</div>
+            <div>
+                <h3 style="font-size:26px;font-weight:700;">Rubidex Integration</h3>
+                <p style="color:var(--text-secondary);font-size:15px;">rubidex.ai &nbsp;•&nbsp; bmsintel.com &nbsp;•&nbsp; gridlock.co</p>
+            </div>
+            <div style="margin-left:auto;display:flex;flex-direction:column;gap:6px;text-align:right;">
+                <span class="badge-small b-purple">Private Blockchain</span>
+                <span class="badge-small b-purple">Data Fabric</span>
+                <span class="badge-small b-purple">IoT Integration Layer</span>
+            </div>
+        </div>
+
+        <div style="background:#F5F3FF;border-radius:12px;padding:24px;margin-bottom:24px;">
+            <p style="font-size:15px;font-weight:600;color:#4C1D95;margin-bottom:8px;">🏗️ Rubidex's Product Family — iSAVE Fits Perfectly</p>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
+                <div style="background:white;border-radius:8px;padding:14px;text-align:center;border:1px solid #DDD6FE;">
+                    <div style="font-size:20px;margin-bottom:6px;">⚙️</div>
+                    <div style="font-size:13px;font-weight:700;color:#5B21B6;">Rubidex Core</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Data securitisation &amp; tokenisation platform</div>
+                </div>
+                <div style="background:white;border-radius:8px;padding:14px;text-align:center;border:1px solid #DDD6FE;">
+                    <div style="font-size:20px;margin-bottom:6px;">🏦</div>
+                    <div style="font-size:13px;font-weight:700;color:#5B21B6;">RubiVault</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Data protection at source</div>
+                </div>
+                <div style="background:#EDE9FE;border-radius:8px;padding:14px;text-align:center;border:2px solid #7C3AED;">
+                    <div style="font-size:20px;margin-bottom:6px;">🏢</div>
+                    <div style="font-size:13px;font-weight:700;color:#5B21B6;">BMSIntel</div>
+                    <div style="font-size:11px;color:#5B21B6;margin-top:4px;font-weight:600;">Building management — closest to iSAVE</div>
+                </div>
+                <div style="background:white;border-radius:8px;padding:14px;text-align:center;border:1px solid #DDD6FE;">
+                    <div style="font-size:20px;margin-bottom:6px;">⚡</div>
+                    <div style="font-size:13px;font-weight:700;color:#5B21B6;">GridLock</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Smart city grid monitoring</div>
+                </div>
+            </div>
+            <p style="font-size:13px;color:#5B21B6;margin-top:12px;text-align:center;font-weight:600;">iSAVE would sit between BMSIntel (buildings) and GridLock (grid) — the energy asset control layer Rubidex doesn't have yet.</p>
+        </div>
+
+        <div class="cards-3" style="gap:20px;">
+            <div style="background:#F5F3FF;border-radius:12px;padding:24px;border:2px solid #7C3AED;">
+                <div style="font-size:24px;margin-bottom:10px;">⭐</div>
+                <h4 style="font-size:16px;font-weight:700;color:#6B21A8;margin-bottom:8px;">Option A — Preferred<br><small style="font-size:12px;">iSAVE as Rubidex Product</small></h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Build iSAVE ON the Rubidex Data Fabric — like BMSIntel is a product built on Rubidex. Karnot brings the energy domain expertise, Rubidex brings the secure data layer. Joint go-to-market for Philippines utilities.</p>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:24px;border:1px solid var(--border-color);">
+                <div style="font-size:24px;margin-bottom:10px;">✅</div>
+                <h4 style="font-size:16px;font-weight:700;margin-bottom:8px;">Option B — API Layer<br><small style="font-size:12px;color:var(--text-secondary);">Write data to Rubidex chain</small></h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">iSAVE remains Karnot's own platform. We use a Rubidex API to write energy readings and DR events to their blockchain. Rubidex is purely the immutable data notary for carbon credits and utility verification.</p>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:24px;border:1px solid var(--border-color);">
+                <div style="font-size:24px;margin-bottom:10px;">🤝</div>
+                <h4 style="font-size:16px;font-weight:700;margin-bottom:8px;">Option C — Co-sell<br><small style="font-size:12px;color:var(--text-secondary);">Joint Philippines pitch</small></h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Rubidex already has GridLock for grid management. Karnot brings heat pumps + thermal storage + iSAVE control. Go to Meralco and Philippine DUs together as a combined smart grid solution.</p>
+            </div>
+        </div>
+
+        <div style="background:#FEF3C7;border-radius:10px;padding:16px 20px;margin-top:20px;">
+            <p style="font-size:14px;color:#92400E;font-weight:600;">📋 Questions for Rubidex</p>
+            <p style="font-size:14px;color:#92400E;margin-top:4px;">1. Do you have a partner API for writing IoT data to your blockchain? &nbsp;•&nbsp; 2. Would you white-label your Data Fabric for iSAVE as you did for BMSIntel? &nbsp;•&nbsp; 3. Are you active in Philippines / SE Asia? &nbsp;•&nbsp; 4. Can GridLock + iSAVE be sold together to Philippine DUs? &nbsp;•&nbsp; 5. Carbon credit pipeline — do you have existing registry integrations (Gold Standard / Verra)?</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     RUBIDEX BLOCKCHAIN
+═══════════════════════════════════════════════════════ -->
+<section class="dark-section rubidex-section">
+    <div class="dark-inner">
+        <div class="section-header">
+            <div class="tag" style="background:rgba(255,255,255,0.2);color:white;">Rubidex Partnership</div>
+            <h2>Rubidex Blockchain Data Layer</h2>
+            <p style="color:rgba(255,255,255,0.85);">Every energy reading, every carbon credit, every DR event — immutably recorded. Data that utilities and carbon markets can trust.</p>
+        </div>
+        <div class="cards-2" style="gap:28px;">
+            <div class="dark-card">
+                <h3>🔗 What Gets Written to the Chain</h3>
+                <ul>
+                    <li>Energy consumption readings (every 15 min hash)</li>
+                    <li>Solar generation totals</li>
+                    <li>Thermal &amp; electric battery SoC logs</li>
+                    <li>Demand response event records (start, end, load shed)</li>
+                    <li>Maintenance alerts and resolution</li>
+                    <li>Sensor calibration certificates</li>
+                    <li>Carbon credit calculation inputs &amp; outputs</li>
+                    <li>Device firmware version at time of reading</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <h3>🏦 Carbon Credit Verification Pipeline</h3>
+                <ul>
+                    <li>Baseline energy model stored on-chain at installation</li>
+                    <li>Actual consumption vs. baseline delta calculated hourly</li>
+                    <li>Grid carbon intensity data timestamped and stored</li>
+                    <li>Avoided CO₂ calculated and committed to Rubidex ledger</li>
+                    <li>Monthly batch submitted to Gold Standard registry API</li>
+                    <li>Credit issuance linked to on-chain device ID</li>
+                    <li>Revenue split automatically via smart contract</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <h3>🔐 Data Protection Architecture</h3>
+                <ul>
+                    <li>Device identity: hardware-rooted key pair at manufacturing</li>
+                    <li>All sensor data signed at the edge before transmission</li>
+                    <li>Rubidex ledger: permissioned chain (utility read access)</li>
+                    <li>Utility data isolated per tenant (no cross-access)</li>
+                    <li>GDPR/Philippines DPA compliant by design</li>
+                    <li>Audit trail: who accessed data, when</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <h3>💰 Demand Response Verification</h3>
+                <ul>
+                    <li>DR event signal received → timestamped on-chain</li>
+                    <li>Device acknowledges and begins curtailment → logged</li>
+                    <li>Actual load shed measured &amp; committed to ledger</li>
+                    <li>Utility can independently verify every event</li>
+                    <li>Automated payment calculation from on-chain records</li>
+                    <li>Dispute resolution via immutable audit trail</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     HARDWARE SPECIFICATION
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-tech">Hardware Spec</div>
+        <h2>iSAVE Edge Device — Technical Specification</h2>
+        <p>Designed for tropical climates, low-cost deployment, and 10-year operational life</p>
+    </div>
+    <table class="spec-table">
+        <tr>
+            <th>Category</th>
+            <th>Specification</th>
+            <th>Notes / Rationale</th>
+        </tr>
+        <tr>
+            <td>Processor</td>
+            <td>ARM Cortex-M33 @ 64 MHz (e.g., STM32H5 or Nordic nRF9160)</td>
+            <td>Low power, hardware cryptography, TrustZone security, TinyML capable</td>
+        </tr>
+        <tr>
+            <td>Memory</td>
+            <td>512 KB Flash, 256 KB SRAM, 8 GB eMMC</td>
+            <td>Local buffering of 30 days data during connectivity loss</td>
+        </tr>
+        <tr>
+            <td>Primary Connectivity</td>
+            <td>LTE-M / NB-IoT (built-in modem)</td>
+            <td>Philippines primary — reliable 4G coverage, low data cost</td>
+        </tr>
+        <tr>
+            <td>Secondary Connectivity</td>
+            <td>Wi-Fi 802.11 b/g/n (2.4GHz)</td>
+            <td>Office/commercial sites with Wi-Fi available</td>
+        </tr>
+        <tr>
+            <td>Utterberry Gateway</td>
+            <td>Sub-GHz radio module (868/915 MHz)</td>
+            <td>Receives data from up to 50 Utterberry sensor motes</td>
+        </tr>
+        <tr>
+            <td>Heat Pump Interface</td>
+            <td>RS485 / ModBus RTU (2× ports)</td>
+            <td>Karnot iHEAT integration + third-party heat pumps</td>
+        </tr>
+        <tr>
+            <td>Battery Interface</td>
+            <td>CAN 2.0B + RS485 ModBus</td>
+            <td>Electric BESS integration (BYD, Pylontech, etc.)</td>
+        </tr>
+        <tr>
+            <td>Solar Inverter Interface</td>
+            <td>RS485 ModBus (SunSpec) + Ethernet (SolarEdge/Enphase API)</td>
+            <td>Supports most major inverter brands</td>
+        </tr>
+        <tr>
+            <td>Analog Inputs</td>
+            <td>8× 0-10V / 4-20mA</td>
+            <td>Pressure transducers, external energy meters</td>
+        </tr>
+        <tr>
+            <td>Digital I/O</td>
+            <td>8× digital in, 4× relay out (10A @ 230VAC)</td>
+            <td>Contactor switching for load control (pumps, fans, heaters)</td>
+        </tr>
+        <tr>
+            <td>Energy Metering</td>
+            <td>Built-in 3-phase energy meter (±0.5% accuracy, MID class)</td>
+            <td>Revenue-grade metering for DR verification</td>
+        </tr>
+        <tr>
+            <td>Power Supply</td>
+            <td>85–264 VAC, 50/60 Hz, 15W max</td>
+            <td>Universal mains input — works on Philippine 220V 60Hz grid</td>
+        </tr>
+        <tr>
+            <td>Battery Backup</td>
+            <td>Internal 2000 mAh LiPo — 4 hours operation</td>
+            <td>Brownout resilience critical for Philippines</td>
+        </tr>
+        <tr>
+            <td>Enclosure</td>
+            <td>IP65, ABS/PC, DIN-rail mount</td>
+            <td>Outdoor-capable, tropical humidity rated</td>
+        </tr>
+        <tr>
+            <td>Operating Temperature</td>
+            <td>−10°C to +70°C</td>
+            <td>Covers Philippines ambient (25–45°C)</td>
+        </tr>
+        <tr>
+            <td>Security</td>
+            <td>Hardware secure element (ATECC608B), TLS 1.3, device cert provisioned at factory</td>
+            <td>Root of trust for Rubidex key pair</td>
+        </tr>
+        <tr>
+            <td>Display</td>
+            <td>2.4" colour TFT + 3× status LEDs</td>
+            <td>On-site diagnostics without app required</td>
+        </tr>
+        <tr>
+            <td>Target BOM Cost</td>
+            <td>&lt; $120 USD at 500 units/year</td>
+            <td>Philippines market target — sell/lease model</td>
+        </tr>
+        <tr>
+            <td>Certifications Target</td>
+            <td>CE, FCC, NTC Philippines, UL, Matter (Phase 1b)</td>
+            <td>Philippines NTC approval required for commercial deployment</td>
+        </tr>
+        <tr>
+            <td>Warranty</td>
+            <td>5 years hardware, OTA firmware updates for 10 years</td>
+            <td>Long-life asset — matches heat pump lifecycle</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SOFTWARE ARCHITECTURE
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-tech">Software Architecture</div>
+        <h2>System Architecture Overview</h2>
+        <p>Three-layer architecture: Sensor mesh → Edge AI → Cloud Control Centre</p>
+    </div>
+    <div class="arch-diagram">
+
+        <div class="arch-layer layer-sensor">
+            <div class="arch-layer-label">Layer 1 — Physical Sensor Layer (Utterberry)</div>
+            <div class="arch-components">
+                <div class="arch-comp comp-teal">🌡️ Temp Motes</div>
+                <div class="arch-comp comp-teal">💧 Humidity Motes</div>
+                <div class="arch-comp comp-teal">📳 Vibration Motes</div>
+                <div class="arch-comp comp-teal">❄️ Defrost Sensors</div>
+                <div class="arch-comp comp-teal">⚡ CT Clamp Motes</div>
+                <div class="arch-comp comp-teal">🔌 Pressure Motes</div>
+                <div class="arch-comp comp-gray">ModBus: Heat Pump</div>
+                <div class="arch-comp comp-gray">ModBus: Inverter</div>
+                <div class="arch-comp comp-gray">CAN: BESS</div>
+            </div>
+        </div>
+
+        <div class="arch-arrow">↕ Sub-GHz Wireless Mesh (Utterberry) + RS485 / CAN</div>
+
+        <div class="arch-layer layer-edge">
+            <div class="arch-layer-label">Layer 2 — iSAVE Edge Device</div>
+            <div class="arch-components">
+                <div class="arch-comp comp-orange">Utterberry Gateway</div>
+                <div class="arch-comp comp-orange">ModBus Driver</div>
+                <div class="arch-comp comp-orange">Energy Meter</div>
+                <div class="arch-comp comp-orange">TinyML Anomaly Engine</div>
+                <div class="arch-comp comp-orange">Demand Response Agent</div>
+                <div class="arch-comp comp-orange">Solar Optimiser</div>
+                <div class="arch-comp comp-orange">Battery Dispatch Logic</div>
+                <div class="arch-comp comp-purple">Rubidex SDK — Data Signing</div>
+                <div class="arch-comp comp-orange">Local MQTT Broker</div>
+                <div class="arch-comp comp-orange">OTA Update Agent</div>
+            </div>
+        </div>
+
+        <div class="arch-arrow">↕ MQTT over TLS (LTE-M / Wi-Fi) + Rubidex blockchain writes</div>
+
+        <div class="arch-layer layer-blockchain">
+            <div class="arch-layer-label">Rubidex Blockchain Layer</div>
+            <div class="arch-components">
+                <div class="arch-comp comp-purple">Device Identity Ledger</div>
+                <div class="arch-comp comp-purple">Energy Data Hashes</div>
+                <div class="arch-comp comp-purple">DR Event Records</div>
+                <div class="arch-comp comp-purple">Carbon Credit Ledger</div>
+                <div class="arch-comp comp-purple">Smart Contract: Revenue Split</div>
+            </div>
+        </div>
+
+        <div class="arch-arrow">↕ REST API / WebSocket</div>
+
+        <div class="arch-layer layer-cloud">
+            <div class="arch-layer-label">Layer 3 — Karnot Cloud Platform</div>
+            <div class="arch-components">
+                <div class="arch-comp comp-blue">MQTT Broker (EMQX)</div>
+                <div class="arch-comp comp-blue">TimescaleDB (time-series)</div>
+                <div class="arch-comp comp-blue">AI/ML Service (Python)</div>
+                <div class="arch-comp comp-blue">DR Engine (OpenADR 2.0)</div>
+                <div class="arch-comp comp-blue">Carbon Credit API</div>
+                <div class="arch-comp comp-blue">REST API Gateway</div>
+                <div class="arch-comp comp-blue">Web Dashboard (React)</div>
+                <div class="arch-comp comp-blue">iOS / Android App</div>
+                <div class="arch-comp comp-green">Utility Portal</div>
+                <div class="arch-comp comp-green">VPP API (Kraken-compatible)</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PHASE 2 — KARNOT CONTROL CENTRE
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="phase-header ph2-header">
+        <div>
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;opacity:0.8;margin-bottom:8px;">Phase Two</div>
+            <h2>Karnot Control Centre</h2>
+            <p>Fleet intelligence platform — the Karnot version of Octopus Kraken. Structured systems data ready for any VPP or utility to act on.</p>
+        </div>
+        <div class="phase-num">02</div>
+    </div>
+
+    <div class="section-header" style="margin-top:0;">
+        <div class="tag tag-phase2">Control Centre</div>
+        <h2>What the Control Centre Does</h2>
+        <p>Aggregates all iSAVE device data into a utility-grade platform — then makes it available for automated decision-making</p>
+    </div>
+    <div class="cards-3">
+        <div class="card">
+            <div class="card-icon">📊</div>
+            <h3>Fleet Dashboard</h3>
+            <p>Real-time view of every iSAVE device in the network. System status, energy flows, alarms, and DR readiness at a glance.</p>
+            <ul>
+                <li>Map view: device locations + status</li>
+                <li>Portfolio energy totals (kWh, kW peak)</li>
+                <li>Aggregate capacity available for DR</li>
+                <li>Alarm management &amp; escalation</li>
+                <li>Maintenance schedule view</li>
+                <li>Carbon credits earned (fleet total)</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>Demand Response Engine</h3>
+            <p>OpenADR 2.0 Virtual Top Node (VTN) — issues DR signals to all iSAVE devices simultaneously. Tracks response, load shed achieved, and payment calculation.</p>
+            <ul>
+                <li>OpenADR 2.0b VTN server</li>
+                <li>Manual or automated DR event creation</li>
+                <li>Asset grouping by DU / zone / feeder</li>
+                <li>Curtailment targeting (MW / percentage)</li>
+                <li>Response tracking per device</li>
+                <li>DR settlement report generation</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔌</div>
+            <h3>VPP Data API</h3>
+            <p>Structured, real-time API that exposes the fleet's flexibility to external platforms like Octopus Kraken, AutoGrid, or Philippine utility SCADA systems.</p>
+            <ul>
+                <li>REST + WebSocket API (v1)</li>
+                <li>Per-device: current load, forecast, DR capacity</li>
+                <li>Fleet aggregate: MW available, response time</li>
+                <li>Historical: energy, DR performance, carbon</li>
+                <li>Kraken-compatible data schema</li>
+                <li>Rate limiting + API key management</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🤖</div>
+            <h3>AI Forecasting Engine</h3>
+            <p>Machine learning models trained on fleet data to forecast demand, solar generation, and battery availability. Feeds automated dispatch decisions.</p>
+            <ul>
+                <li>24-hour demand forecast per device</li>
+                <li>Solar generation forecast (weather integration)</li>
+                <li>Optimal pre-conditioning schedule</li>
+                <li>DR event impact prediction</li>
+                <li>Fleet-level capacity forecasting for utilities</li>
+                <li>Continuous learning from new fleet data</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🏛️</div>
+            <h3>Utility Portal</h3>
+            <p>Dedicated read-only portal for Philippine distribution utilities (DUs) and ESCOs. View the flexible load available on their network without exposing other customers' data.</p>
+            <ul>
+                <li>DU-specific view (their enrolled sites only)</li>
+                <li>Available DR capacity by feeder / substation</li>
+                <li>Historical DR performance reports</li>
+                <li>Carbon credit verification exports</li>
+                <li>API access for SCADA integration</li>
+                <li>Billing data export for DR payments</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔗</div>
+            <h3>Kraken-Compatible Interface</h3>
+            <p>While Karnot builds its own control centre, the data API is designed to be compatible with Octopus Kraken's schema. Any Kraken-powered utility can immediately consume Karnot fleet data.</p>
+            <ul>
+                <li>Kraken FLEX asset registration schema</li>
+                <li>Half-hourly settlement data export</li>
+                <li>Balancing Mechanism compatible signals</li>
+                <li>Frequency response data streams</li>
+                <li>Bidding data for ancillary services</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PHILIPPINES STRATEGY
+═══════════════════════════════════════════════════════ -->
+<section class="dark-section ph-section">
+    <div class="dark-inner">
+        <div class="section-header">
+            <div class="tag" style="background:rgba(206,17,38,0.3);color:#FCA5A5;">🇵🇭 Philippines Market</div>
+            <h2>Philippines Market Strategy</h2>
+            <p style="color:rgba(255,255,255,0.85);">The ideal first market — high electricity prices, strong solar resource, active DR programmes, and government push for energy efficiency</p>
+        </div>
+        <div class="cards-2" style="gap:28px;">
+            <div class="dark-card">
+                <h3>🎯 Why Philippines First</h3>
+                <ul>
+                    <li>Electricity prices: ₱10–14/kWh (among highest in Asia) — highest ROI for demand response</li>
+                    <li>Solar irradiance: 5.1–5.4 kWh/m²/day average — excellent solar economics</li>
+                    <li>ERC (Energy Regulatory Commission) actively pushing DR</li>
+                    <li>Meralco RDSP (Retail DR Service Provider) programme operational</li>
+                    <li>Frequent brownouts → battery + thermal storage critical</li>
+                    <li>Rapid HVAC market growth (tropical climate = cooling essential)</li>
+                    <li>Karnot heat pumps: strong cooling + hot water application</li>
+                    <li>Lower labour costs → field installation competitive</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <h3>🏢 Target Customers</h3>
+                <ul>
+                    <li><strong>Commercial buildings:</strong> hotels, malls, offices — large HVAC loads, DR-eligible</li>
+                    <li><strong>Industrial:</strong> food processing, cold chain — large thermal storage opportunity</li>
+                    <li><strong>Distribution utilities (DUs):</strong> Meralco, Visayan Electric, CEPALCO — DR aggregator contracts</li>
+                    <li><strong>ESCOs:</strong> energy service companies bundling iSAVE into performance contracts</li>
+                    <li><strong>Property developers:</strong> integrate iSAVE into new builds (green building rating)</li>
+                    <li><strong>Government buildings:</strong> DOE energy efficiency mandate compliance</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <h3>📦 Philippines Product Bundle</h3>
+                <ul>
+                    <li>Karnot iHEAT heat pump (cooling + hot water)</li>
+                    <li>Karnot thermal storage tank</li>
+                    <li>iSAVE edge controller (LTE-M + battery backup)</li>
+                    <li>Utterberry sensor kit (6 motes: temp ×3, vibration ×1, humidity ×1, CT ×1)</li>
+                    <li>iSAVE mobile app (Tagalog UI option)</li>
+                    <li>Rubidex blockchain data subscription</li>
+                    <li>5-year monitoring + maintenance contract</li>
+                    <li>DR revenue sharing (Karnot aggregates, splits revenue)</li>
+                </ul>
+            </div>
+            <div class="dark-card">
+                <h3>⚖️ Regulatory &amp; Compliance</h3>
+                <ul>
+                    <li>NTC Type Approval for iSAVE hardware (required for cellular device)</li>
+                    <li>ERC Rule 20: Demand Response Service Provider registration</li>
+                    <li>Philippine Data Privacy Act (DPA) — data residency options</li>
+                    <li>DOE EE&amp;C Act — energy audit reporting compatibility</li>
+                    <li>Green Building Code — iSAVE data supports BERDE/LEED credits</li>
+                    <li>Meralco RDSP: enrolment process for DR aggregation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     DEMAND RESPONSE SPEC
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-tech">Demand Response</div>
+        <h2>Demand Response System Specification</h2>
+        <p>How iSAVE switches assets on and off — safely, verifiably, and automatically</p>
+    </div>
+    <div class="cards-2">
+        <div class="card">
+            <div class="card-icon">📡</div>
+            <h3>DR Signal Sources</h3>
+            <ul>
+                <li><strong>OpenADR 2.0:</strong> Utility VTN issues event → iSAVE VEN executes</li>
+                <li><strong>Karnot Control Centre:</strong> Manual or AI-triggered dispatch</li>
+                <li><strong>Price signal:</strong> Real-time tariff → auto-dispatch on threshold</li>
+                <li><strong>Frequency response:</strong> Grid frequency deviation (under-frequency load shed)</li>
+                <li><strong>Local:</strong> Solar surplus → auto charge thermal/electric battery</li>
+                <li><strong>Manual override:</strong> Operator app override always available</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔄</div>
+            <h3>Curtailment Sequence Logic</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Check comfort limits — is zone temp within acceptable range?</li>
+                <li><strong>Step 2:</strong> Calculate available DR duration (thermal mass, battery SoC)</li>
+                <li><strong>Step 3:</strong> Pre-condition if time allows (store thermal energy before event)</li>
+                <li><strong>Step 4:</strong> Execute curtailment — heat pump off, battery discharge to maintain comfort</li>
+                <li><strong>Step 5:</strong> Monitor comfort — abort and restart if limits breached</li>
+                <li><strong>Step 6:</strong> Event ends — staggered restart (avoid rebound spike)</li>
+                <li><strong>Step 7:</strong> Log all to Rubidex for verification</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">⏱️</div>
+            <h3>Switching Duration Limits (Per Asset)</h3>
+            <ul>
+                <li><strong>Heat pump (cooling mode):</strong> Up to 4 hours off (thermal mass dependent)</li>
+                <li><strong>Heat pump (heating mode):</strong> Up to 2 hours off (thermal mass dependent)</li>
+                <li><strong>Electric water heater:</strong> Up to 6 hours off</li>
+                <li><strong>Thermal battery discharge:</strong> Up to 8 hours (SoC dependent)</li>
+                <li><strong>Electric battery:</strong> Up to 4 hours (SoC and DoD limit)</li>
+                <li><strong>Minimum off-time between events:</strong> 30 minutes (compressor protection)</li>
+                <li>All limits configurable per site by Karnot engineer</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🛡️</div>
+            <h3>Safety &amp; Comfort Overrides</h3>
+            <ul>
+                <li>Hard temperature limits: never let space exceed ±3°C comfort band</li>
+                <li>Compressor minimum-off timer (prevents short-cycling)</li>
+                <li>Maximum continuous-on limit (thermal stress protection)</li>
+                <li>Refrigerant pressure watchdog — emergency restart if out of range</li>
+                <li>Customer override: resident can always override via app</li>
+                <li>Medical priority sites: never curtail (configurable flag)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     REVENUE MODEL
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-phase2">Business Model</div>
+        <h2>Revenue Streams &amp; Value Proposition</h2>
+        <p>Multiple stacked revenue streams make iSAVE a high-value proposition for customers and Karnot alike</p>
+    </div>
+    <div class="revenue-grid">
+        <div class="revenue-card">
+            <div class="revenue-value" style="color:var(--primary-blue);">₱15–30k</div>
+            <div class="revenue-label">Hardware + Installation</div>
+            <div class="revenue-note">Per-site one-time revenue (or lease). iSAVE device + Utterberry kit + commissioning.</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-value" style="color:var(--karnot-orange);">₱3–6k/yr</div>
+            <div class="revenue-label">SaaS Subscription</div>
+            <div class="revenue-note">Per-site annual fee for cloud platform, app, AI, firmware updates, Rubidex data layer.</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-value" style="color:var(--accent-green);">20–30%</div>
+            <div class="revenue-label">DR Revenue Share</div>
+            <div class="revenue-note">Karnot aggregates fleet DR capacity, earns from utility, shares 70–80% with customer.</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-value" style="color:var(--accent-gold);">15–20%</div>
+            <div class="revenue-label">Carbon Credit Commission</div>
+            <div class="revenue-note">Karnot earns commission on carbon credits generated by the fleet via Rubidex/Gold Standard pipeline.</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-value" style="color:var(--rubidex-purple);">TBD</div>
+            <div class="revenue-label">Utility API Licence</div>
+            <div class="revenue-note">Phase 2: DUs and VPP operators pay for access to the Karnot Control Centre fleet data API.</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-value" style="color:var(--utterberry-teal);">+30%</div>
+            <div class="revenue-label">Maintenance Contract Uplift</div>
+            <div class="revenue-note">iSAVE predictive maintenance data supports premium Karnot service contracts at higher margin.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     NEXT ACTIONS
+═══════════════════════════════════════════════════════ -->
+<div class="section">
+    <div class="section-header">
+        <div class="tag tag-phase1">Immediate Actions</div>
+        <h2>What to Do Now — Q2 2026</h2>
+        <p>The 10 actions that unlock Phase 1 development</p>
+    </div>
+    <div class="cards-2">
+        <div class="card">
+            <div class="card-icon">🤝</div>
+            <h3>Partner Agreements</h3>
+            <ul>
+                <li><span class="status status-now">● Now</span> &nbsp; Informal discussion with Utterberry (HEBA) — confirm sensor types &amp; pricing</li>
+                <li><span class="status status-now">● Now</span> &nbsp; Informal discussion with Rubidex — confirm API access &amp; integration model</li>
+                <li><span class="status status-q3">● Q3</span> &nbsp; Draft MOU with Utterberry for sensor supply &amp; co-marketing</li>
+                <li><span class="status status-q3">● Q3</span> &nbsp; Draft MOU with Rubidex for blockchain data layer &amp; carbon credit pipeline</li>
+                <li><span class="status status-q3">● Q3</span> &nbsp; Identify Philippines pilot partner (ESCO or building owner)</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-icon">🛠️</div>
+            <h3>Technical Development</h3>
+            <ul>
+                <li><span class="status status-now">● Now</span> &nbsp; Commission hardware BOM and cost model from EMS/ODM in Philippines</li>
+                <li><span class="status status-q3">● Q3</span> &nbsp; Build software prototype (cloud + basic edge) — test ModBus + Utterberry integration</li>
+                <li><span class="status status-q3">● Q3</span> &nbsp; Rubidex SDK integration — first data hash proof of concept</li>
+                <li><span class="status status-q4">● Q4</span> &nbsp; 10 alpha hardware units manufactured and deployed on pilot sites</li>
+                <li><span class="status status-q4">● Q4</span> &nbsp; NTC Philippines type approval process initiated</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     CTA / FOOTER
+═══════════════════════════════════════════════════════ -->
+<section style="background: linear-gradient(135deg, #0051a5 0%, #007aff 50%, #F56600 100%); color: white; padding: 100px 20px; text-align: center;">
+    <h2 style="font-size: 48px; font-weight: 800; margin-bottom: 20px;">iSAVE — Built to Lead the Philippines Energy Revolution</h2>
+    <p style="font-size: 20px; opacity: 0.9; max-width: 700px; margin: 0 auto 40px;">
+        Karnot technology + Utterberry sensors + Rubidex blockchain = a defensible, data-verified, demand-response-ready energy platform that no competitor in Southeast Asia can match today.
+    </p>
+    <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+        <a href="mailto:stuart@karnot.com" style="display:inline-block;padding:18px 45px;font-size:18px;font-weight:700;border-radius:50px;background:white;color:#007aff;text-decoration:none;">Contact Stuart</a>
+        <a href="isave-platform.html" style="display:inline-block;padding:18px 45px;font-size:18px;font-weight:700;border-radius:50px;background:rgba(255,255,255,0.2);color:white;border:2px solid white;text-decoration:none;">View iSAVE Platform</a>
+    </div>
+</section>
+
+<footer>
+    <h3>Karnot Energy Solutions INC</h3>
+    <p>iSAVE Platform — Roadmap &amp; Technical Specifications v1.0 — February 2026</p>
+    <p style="margin-top:8px;font-size:13px;">Confidential — Not for distribution without written consent of Karnot Energy Solutions INC</p>
+    <div class="footer-partners">
+        <div class="fp">⚡ Karnot Energy Solutions</div>
+        <div class="fp">🔬 Utterberry Sensor Technology</div>
+        <div class="fp">🔗 Rubidex Blockchain</div>
+        <div class="fp">🇵🇭 Philippines Market</div>
+    </div>
+</footer>
+
+</body>
+</html>

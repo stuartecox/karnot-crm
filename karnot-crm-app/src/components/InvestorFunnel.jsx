@@ -1,65 +1,65 @@
 import React, { useState } from 'react';
 import { db } from '../firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { DollarSign, TrendingUp, Users, Mail, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Users, Mail, FileText, CheckCircle, XCircle, AlertCircle, Eye, Briefcase } from 'lucide-react';
 
 const InvestorFunnel = ({ investors, onRefresh, user }) => {
   const [draggedInvestor, setDraggedInvestor] = useState(null);
 
-  // Funnel stages with metadata
+  // Funnel stages — must match INVESTOR_STAGES in InvestorsPage.jsx
   const STAGES = [
-    { 
-      id: 'RESEARCH', 
-      label: 'Research', 
+    {
+      id: 'RESEARCH',
+      label: 'Research',
       color: 'bg-gray-100 border-gray-300',
       icon: AlertCircle,
       description: 'Identifying potential investors'
     },
-    { 
-      id: 'OUTREACH', 
-      label: 'Initial Outreach', 
+    {
+      id: 'EMAILED',
+      label: 'Emailed',
       color: 'bg-blue-100 border-blue-300',
       icon: Mail,
       description: 'First email sent'
     },
-    { 
-      id: 'MEETING', 
-      label: 'In Conversation', 
-      color: 'bg-yellow-100 border-yellow-300',
+    {
+      id: 'INTERESTED',
+      label: 'Interested',
+      color: 'bg-green-100 border-green-300',
+      icon: Eye,
+      description: 'Showed interest / responded'
+    },
+    {
+      id: 'DOCS_SENT',
+      label: 'Docs Sent',
+      color: 'bg-purple-100 border-purple-300',
+      icon: FileText,
+      description: 'Deck / data room shared'
+    },
+    {
+      id: 'MEETING_SET',
+      label: 'Meeting Set',
+      color: 'bg-orange-100 border-orange-300',
       icon: Users,
       description: 'Call scheduled or completed'
     },
-    { 
-      id: 'DILIGENCE', 
-      label: 'Due Diligence', 
-      color: 'bg-orange-100 border-orange-300',
-      icon: FileText,
-      description: 'Data room shared'
-    },
-    { 
-      id: 'TERM_SHEET', 
-      label: 'Term Sheet', 
-      color: 'bg-purple-100 border-purple-300',
-      icon: FileText,
+    {
+      id: 'TERM_SHEET',
+      label: 'Term Sheet',
+      color: 'bg-indigo-100 border-indigo-300',
+      icon: Briefcase,
       description: 'Terms being negotiated'
     },
-    { 
-      id: 'LEGAL', 
-      label: 'Legal/Closing', 
-      color: 'bg-green-100 border-green-300',
-      icon: CheckCircle,
-      description: 'Finalizing documents'
-    },
-    { 
-      id: 'CLOSED', 
-      label: 'Closed Won', 
+    {
+      id: 'COMMITTED',
+      label: 'Committed',
       color: 'bg-green-500 border-green-600 text-white',
       icon: CheckCircle,
-      description: 'Investment received'
+      description: 'Investment committed'
     },
-    { 
-      id: 'PASSED', 
-      label: 'Passed', 
+    {
+      id: 'PASSED',
+      label: 'Passed',
       color: 'bg-red-100 border-red-300',
       icon: XCircle,
       description: 'Not interested'
@@ -71,7 +71,7 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
     const stageInvestors = investors.filter(inv => inv.stage === stage.id);
     const totalAmount = stageInvestors.reduce((sum, inv) => sum + (inv.amount || 0), 0);
     const criticalCount = stageInvestors.filter(inv => inv.priority === 'CRITICAL').length;
-    
+
     return {
       ...stage,
       count: stageInvestors.length,
@@ -82,18 +82,17 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
   });
 
   // Overall funnel metrics
+  const activeStages = ['EMAILED', 'INTERESTED', 'DOCS_SENT', 'MEETING_SET', 'TERM_SHEET'];
   const metrics = {
     total: investors.length,
-    inProgress: investors.filter(inv => 
-      ['OUTREACH', 'MEETING', 'DILIGENCE', 'TERM_SHEET', 'LEGAL'].includes(inv.stage)
-    ).length,
+    inProgress: investors.filter(inv => activeStages.includes(inv.stage)).length,
     totalPipeline: investors
-      .filter(inv => inv.stage !== 'PASSED' && inv.stage !== 'CLOSED')
+      .filter(inv => inv.stage !== 'PASSED' && inv.stage !== 'COMMITTED')
       .reduce((sum, inv) => sum + (inv.amount || 0), 0),
-    closedAmount: investors
-      .filter(inv => inv.stage === 'CLOSED')
+    committedAmount: investors
+      .filter(inv => inv.stage === 'COMMITTED')
       .reduce((sum, inv) => sum + (inv.amount || 0), 0),
-    closedCount: investors.filter(inv => inv.stage === 'CLOSED').length,
+    committedCount: investors.filter(inv => inv.stage === 'COMMITTED').length,
     passedCount: investors.filter(inv => inv.stage === 'PASSED').length
   };
 
@@ -110,7 +109,7 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
 
   const handleDrop = async (e, newStage) => {
     e.preventDefault();
-    
+
     if (!draggedInvestor || draggedInvestor.stage === newStage) {
       setDraggedInvestor(null);
       return;
@@ -123,7 +122,7 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
         lastContact: new Date().toISOString(),
         updatedAt: serverTimestamp()
       });
-      
+
       onRefresh();
       setDraggedInvestor(null);
     } catch (error) {
@@ -131,6 +130,10 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
       alert('Failed to update stage');
     }
   };
+
+  // Pipeline stages (not committed/passed)
+  const pipelineStages = stageStats.filter(s => s.id !== 'COMMITTED' && s.id !== 'PASSED');
+  const endStages = stageStats.filter(s => s.id === 'COMMITTED' || s.id === 'PASSED');
 
   return (
     <div className="space-y-6">
@@ -140,27 +143,27 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
           <div className="text-xs font-bold text-gray-500 uppercase">Total Investors</div>
           <div className="text-2xl font-black text-gray-800">{metrics.total}</div>
         </div>
-        
+
         <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
           <div className="text-xs font-bold text-blue-600 uppercase">In Progress</div>
           <div className="text-2xl font-black text-blue-700">{metrics.inProgress}</div>
         </div>
-        
+
         <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
           <div className="text-xs font-bold text-green-600 uppercase">Pipeline Value</div>
           <div className="text-2xl font-black text-green-700">
             ${(metrics.totalPipeline / 1000).toFixed(0)}k
           </div>
         </div>
-        
+
         <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-          <div className="text-xs font-bold text-purple-600 uppercase">Closed Won</div>
+          <div className="text-xs font-bold text-purple-600 uppercase">Committed</div>
           <div className="text-2xl font-black text-purple-700">
-            ${(metrics.closedAmount / 1000).toFixed(0)}k
+            ${(metrics.committedAmount / 1000).toFixed(0)}k
           </div>
-          <div className="text-xs text-purple-600">{metrics.closedCount} investor{metrics.closedCount !== 1 ? 's' : ''}</div>
+          <div className="text-xs text-purple-600">{metrics.committedCount} investor{metrics.committedCount !== 1 ? 's' : ''}</div>
         </div>
-        
+
         <div className="bg-red-50 p-4 rounded-lg border-2 border-red-200">
           <div className="text-xs font-bold text-red-600 uppercase">Passed</div>
           <div className="text-2xl font-black text-red-700">{metrics.passedCount}</div>
@@ -174,13 +177,13 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
           Drag & drop investors between stages to update their status
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stageStats.filter(stage => stage.id !== 'CLOSED' && stage.id !== 'PASSED').map(stage => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {pipelineStages.map(stage => (
             <div
               key={stage.id}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage.id)}
-              className={`${stage.color} border-2 rounded-lg p-4 min-h-[300px] transition-all ${
+              className={`${stage.color} border-2 rounded-lg p-4 min-h-[200px] transition-all ${
                 draggedInvestor && draggedInvestor.stage !== stage.id ? 'ring-2 ring-blue-400' : ''
               }`}
             >
@@ -191,7 +194,7 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
                   <h3 className="font-black text-sm uppercase">{stage.label}</h3>
                 </div>
                 <p className="text-xs opacity-75">{stage.description}</p>
-                
+
                 {/* Stage Stats */}
                 <div className="flex items-center gap-3 mt-2 text-xs font-bold">
                   <span>{stage.count} investor{stage.count !== 1 ? 's' : ''}</span>
@@ -224,9 +227,9 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
           ))}
         </div>
 
-        {/* Closed & Passed (Full Width) */}
+        {/* Committed & Passed (Full Width) */}
         <div className="grid grid-cols-2 gap-4 mt-4">
-          {stageStats.filter(stage => stage.id === 'CLOSED' || stage.id === 'PASSED').map(stage => (
+          {endStages.map(stage => (
             <div
               key={stage.id}
               onDragOver={handleDragOver}
@@ -279,27 +282,27 @@ const InvestorFunnel = ({ investors, onRefresh, user }) => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <ConversionMetric
             from="Research"
-            to="Outreach"
+            to="Emailed"
             fromCount={stageStats.find(s => s.id === 'RESEARCH')?.count || 0}
-            toCount={stageStats.find(s => s.id === 'OUTREACH')?.count || 0}
+            toCount={stageStats.find(s => s.id === 'EMAILED')?.count || 0}
           />
           <ConversionMetric
-            from="Outreach"
-            to="Meeting"
-            fromCount={stageStats.find(s => s.id === 'OUTREACH')?.count || 0}
-            toCount={stageStats.find(s => s.id === 'MEETING')?.count || 0}
+            from="Emailed"
+            to="Interested"
+            fromCount={stageStats.find(s => s.id === 'EMAILED')?.count || 0}
+            toCount={stageStats.find(s => s.id === 'INTERESTED')?.count || 0}
+          />
+          <ConversionMetric
+            from="Interested"
+            to="Meeting Set"
+            fromCount={stageStats.find(s => s.id === 'INTERESTED')?.count || 0}
+            toCount={stageStats.find(s => s.id === 'MEETING_SET')?.count || 0}
           />
           <ConversionMetric
             from="Meeting"
-            to="Due Diligence"
-            fromCount={stageStats.find(s => s.id === 'MEETING')?.count || 0}
-            toCount={stageStats.find(s => s.id === 'DILIGENCE')?.count || 0}
-          />
-          <ConversionMetric
-            from="Due Diligence"
-            to="Closed"
-            fromCount={stageStats.find(s => s.id === 'DILIGENCE')?.count || 0}
-            toCount={stageStats.find(s => s.id === 'CLOSED')?.count || 0}
+            to="Committed"
+            fromCount={stageStats.find(s => s.id === 'MEETING_SET')?.count || 0}
+            toCount={stageStats.find(s => s.id === 'COMMITTED')?.count || 0}
           />
         </div>
       </div>
@@ -354,7 +357,7 @@ const InvestorCard = ({ investor, onDragStart }) => {
 // Conversion Metric Component
 const ConversionMetric = ({ from, to, fromCount, toCount }) => {
   const rate = fromCount > 0 ? ((toCount / fromCount) * 100).toFixed(0) : 0;
-  
+
   return (
     <div className="bg-white rounded-lg p-3 border">
       <div className="text-xs text-gray-600 mb-1">{from} → {to}</div>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnot Financial Dashboard (R10 Final)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* KARNOT BRAND THEME - MATCHING YOUR INVESTOR VAULT */
+        :root {
+            --green: #27ae60;
+            --dark-green: #1e8449;
+            --blue: #2c3e50;
+            --dark-blue: #3d5a6b;
+            --darker-blue: #2d4a58;
+            --light-blue: #3498db;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --bg-light: #f5f5f7;
+            --border-color: #d2d2d7;
+            --accent: #E67E22;
+            --red-danger: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 40px 22px;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #2d5f6d 0%, #1e3a44 100%);
+            color: #fff;
+            padding: 60px 40px;
+            text-align: center;
+            margin: 0;
+            margin-bottom: 40px;
+        }
+
+        .teaser-badge {
+            display: inline-block;
+            background: transparent;
+            color: #2ecc71;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 2px solid #2ecc71;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1.5px;
+            line-height: 1.2;
+            color: #fff;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        h3 {
+            color: var(--blue);
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--green);
+        }
+
+        /* KPI CARDS - MATCHING YOUR STYLE */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--darker-blue) 100%);
+            padding: 25px 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            color: white;
+            transition: transform 0.2s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .kpi-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .kpi-value.highlight {
+            color: #2ecc71;
+        }
+
+        .kpi-value.accent {
+            color: var(--accent);
+        }
+
+        /* CHART CARDS */
+        .card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        .chart-subtitle {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+        }
+
+        @media (max-width: 1000px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+            .header {
+                padding: 40px 20px;
+            }
+            .kpi-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="teaser-badge">R10 FINAL NUMBERS</div>
+        <h1>Karnot Financial Dashboard</h1>
+        <p class="subtitle">Strategic Projection Model (2026-2030)</p>
+    </div>
+
+    <div class="container">
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-label">2026 Revenue</div>
+                <div class="kpi-value highlight">$514,832</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">2030 Revenue</div>
+                <div class="kpi-value">$14.78M</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">2030 Net Profit</div>
+                <div class="kpi-value highlight">$5.47M</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">2030 Cash Balance</div>
+                <div class="kpi-value accent">$5.98M</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">2030 Net Margin</div>
+                <div class="kpi-value">37%</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>💰 Revenue vs. Net Profit</h3>
+                <div class="chart-container">
+                    <canvas id="keyFinancialsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📈 Margin Expansion</h3>
+                <div class="chart-container">
+                    <canvas id="ratiosChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>💵 Cash Balance Growth</h3>
+                <div class="chart-container">
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>💎 Projected Dividend Payments</h3>
+                <p class="chart-subtitle">Payouts begin 2028</p>
+                <div class="chart-container">
+                    <canvas id="dividendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🎯 Path to Profitability: Monthly Net Profit 2026</h3>
+            <p class="chart-subtitle">Break-even achieved June 2026</p>
+            <div class="chart-container">
+                <canvas id="monthlyProfitChart2026"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>CONFIDENTIAL - DO NOT DISSEMINATE</strong></p>
+        <p>Karnot Energy Solutions Inc. | Data Source: R10 Final Numbers (Generated 18 Jan 2026)</p>
+        <p style="margin-top: 10px; opacity: 0.6;">All values in USD | Projections based on R10 Business Plan</p>
+    </footer>
+
+    <script>
+        // --- KARNOT BRAND COLORS (MATCHING YOUR INVESTOR VAULT) ---
+        const COL_DARK_BLUE = '#3d5a6b';
+        const COL_DARKER_BLUE = '#2d4a58';
+        const COL_BLUE = '#2c3e50';
+        const COL_GREEN = '#27ae60';
+        const COL_DARK_GREEN = '#1e8449';
+        const COL_LIGHT_BLUE = '#3498db';
+        const COL_ACCENT = '#E67E22';
+        const COL_RED = '#e74c3c';
+        const COL_GREY = '#7f8c8d';
+
+        // --- DATA FROM R10 FINAL NUMBERS PDF ---
+        const years = ['2026', '2027', '2028', '2029', '2030'];
+        
+        // Revenue and Profit Data
+        const revenueData = [514832, 1872853, 3818393, 7639138, 14778831];
+        const netProfitData = [7593, 398962, 1107366, 2567857, 5475615];
+        const totalExpensesData = revenueData.map((rev, i) => rev - netProfitData[i]);
+        
+        // Margin Data
+        const grossMarginPercentData = [46, 50, 53, 54, 55]; 
+        const netMarginPercentData = [1, 21, 29, 34, 37];
+
+        // Cash Balance
+        const cashBalanceData = [78061, 510410, 1188032, 2720384, 5980588]; 
+
+        // Dividends
+        const dividendPaymentsData = [0, 0, 442947, 1000000, 2200000];
+
+        // Monthly 2026 Data
+        const months2026 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthlyNetProfit2026 = [-5463, -6513, -10343, -9539, -11785, -182, 24, -273, 9373, 9407, 20738, 12151];
+        
+        // --- HELPER FORMATTER ---
+        const formatCurrency = (value) => {
+            if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+            if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + 'K';
+            return value.toFixed(0);
+        };
+
+        // --- CHART DEFAULTS (KARNOT STYLED) ---
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = COL_GREY;
+        Chart.defaults.borderColor = '#ecf0f1';
+
+        const defaultChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    position: 'bottom', 
+                    labels: { 
+                        color: COL_BLUE, 
+                        font: { weight: '600', size: 12 },
+                        padding: 15
+                    } 
+                },
+                tooltip: {
+                    backgroundColor: '#fff',
+                    titleColor: COL_BLUE,
+                    bodyColor: COL_BLUE,
+                    borderColor: '#ddd',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                if (context.chart.canvas.id === 'ratiosChart') {
+                                    label += context.parsed.y.toFixed(1) + '%';
+                                } else {
+                                    label += '$' + context.parsed.y.toLocaleString(undefined, { maximumFractionDigits: 0 });
+                                }
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f0f0f0' },
+                    ticks: { 
+                        color: COL_GREY,
+                        font: { size: 11 },
+                        callback: function(value) {
+                            return this.chart.canvas.id === 'ratiosChart' 
+                                ? value + '%' 
+                                : '$' + formatCurrency(value);
+                        }
+                    }
+                },
+                x: { 
+                    grid: { display: false },
+                    ticks: { 
+                        color: COL_BLUE,
+                        font: { weight: '600', size: 12 }
+                    }
+                }
+            }
+        };
+
+        // 1. KEY FINANCIALS CHART
+        new Chart(document.getElementById('keyFinancialsChart'), {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    { 
+                        label: 'Revenue',
+                        data: revenueData,
+                        backgroundColor: COL_DARK_BLUE,
+                        borderRadius: 4
+                    }, 
+                    { 
+                        label: 'Expenses',
+                        data: totalExpensesData,
+                        backgroundColor: COL_RED,
+                        borderRadius: 4
+                    },
+                    { 
+                        label: 'Net Profit',
+                        data: netProfitData,
+                        backgroundColor: COL_GREEN,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: defaultChartOptions
+        });
+
+        // 2. RATIOS CHART
+        new Chart(document.getElementById('ratiosChart'), {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    { 
+                        label: 'Gross Margin (%)',
+                        data: grossMarginPercentData,
+                        borderColor: COL_ACCENT,
+                        backgroundColor: COL_ACCENT,
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    },
+                    { 
+                        label: 'Net Margin (%)',
+                        data: netMarginPercentData,
+                        borderColor: COL_GREEN,
+                        backgroundColor: COL_GREEN,
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }
+                ]
+            },
+            options: defaultChartOptions
+        });
+
+        // 3. CASH FLOW CHART
+        new Chart(document.getElementById('cashFlowChart'), {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    { 
+                        label: 'Ending Cash Balance',
+                        data: cashBalanceData,
+                        backgroundColor: COL_DARK_BLUE,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: defaultChartOptions
+        });
+
+        // 4. DIVIDEND CHART
+        new Chart(document.getElementById('dividendChart'), {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [{
+                    label: 'Annual Dividend Payment',
+                    data: dividendPaymentsData,
+                    backgroundColor: COL_ACCENT,
+                    borderRadius: 4
+                }]
+            },
+            options: defaultChartOptions
+        });
+
+        // 5. MONTHLY PROFIT 2026
+        new Chart(document.getElementById('monthlyProfitChart2026'), {
+            type: 'bar',
+            data: {
+                labels: months2026,
+                datasets: [{
+                    label: 'Net Profit (Loss)',
+                    data: monthlyNetProfit2026,
+                    backgroundColor: monthlyNetProfit2026.map(v => v >= 0 ? COL_GREEN : COL_RED),
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                ...defaultChartOptions,
+                plugins: {
+                    ...defaultChartOptions.plugins,
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

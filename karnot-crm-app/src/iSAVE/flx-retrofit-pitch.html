@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLX Retrofit Pitch — UK, Canada &amp; Global Heating Markets</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#007aff;--green:#34c759;--gold:#FFB800;--orange:#F56600;--purple:#6B21A8;--teal:#0D9488;--red:#CE1126;--dark:#0a0a0f;--warm:#ff6b35;--pcm:#22d3ee;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:var(--dark);color:#fff;line-height:1.6;}
+  .hero{background:linear-gradient(160deg,#050510 0%,#0d0a1e 30%,#1a0a2e 60%,#0a1520 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.08);}
+  .hero::before{content:"🔥";position:absolute;font-size:380px;opacity:.05;top:-80px;left:-60px;animation:drift 22s ease-in-out infinite alternate;}
+  .hero::after{content:"🌨";position:absolute;font-size:340px;opacity:.05;bottom:-60px;right:-40px;animation:drift 28s ease-in-out infinite alternate-reverse;}
+  @keyframes drift{0%{transform:translate(0,0) rotate(-5deg)}100%{transform:translate(20px,15px) rotate(5deg)}}
+  .hero-inner{position:relative;z-index:1;max-width:1100px;margin:0 auto;}
+  .badge{display:inline-block;padding:5px 14px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:22px;font-family:'JetBrains Mono',monospace;background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.25);color:#fed7aa;}
+  .hero h1{font-family:'Playfair Display',serif;font-size:56px;font-weight:800;line-height:1.05;margin-bottom:18px;background:linear-gradient(135deg,#fef3c7,#fde68a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero .sub{font-size:19px;opacity:.75;max-width:820px;margin:0 auto 30px;line-height:1.6;}
+  .hero-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .hb{padding:6px 15px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.15);}
+  .disclaimer{font-size:11px;opacity:.4;font-family:'JetBrains Mono',monospace;margin-top:24px;}
+  .sec{padding:64px 40px;max-width:1200px;margin:0 auto;}
+  .sec-title{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#fed7aa;opacity:.7;margin-bottom:10px;font-family:'JetBrains Mono',monospace;}
+  .sec h2{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;margin-bottom:32px;line-height:1.2;}
+  .sec-divider{border:none;border-top:1px solid rgba(255,255,255,.08);margin:0 40px;}
+  .big-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px;}
+  .big-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px;}
+  .big-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:24px;}
+  .num-card{border-radius:16px;padding:28px 24px;text-align:center;}
+  .num-card .n{font-size:42px;font-weight:900;line-height:1;margin-bottom:6px;}
+  .num-card .label{font-size:13px;font-weight:700;margin-bottom:4px;}
+  .num-card .note{font-size:11px;opacity:.6;line-height:1.5;}
+  .nc-warm{background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(255,107,53,.07));border:1px solid rgba(255,107,53,.25);}
+  .nc-green{background:linear-gradient(135deg,rgba(52,199,89,.2),rgba(52,199,89,.07));border:1px solid rgba(52,199,89,.25);}
+  .nc-gold{background:linear-gradient(135deg,rgba(255,184,0,.2),rgba(255,184,0,.07));border:1px solid rgba(255,184,0,.25);}
+  .nc-red{background:linear-gradient(135deg,rgba(206,17,38,.25),rgba(206,17,38,.07));border:1px solid rgba(206,17,38,.25);}
+  .nc-purple{background:linear-gradient(135deg,rgba(107,33,168,.3),rgba(107,33,168,.1));border:1px solid rgba(107,33,168,.3);}
+  .nc-teal{background:linear-gradient(135deg,rgba(13,148,136,.25),rgba(13,148,136,.07));border:1px solid rgba(13,148,136,.25);}
+  .nc-pcm{background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(34,211,238,.07));border:1px solid rgba(34,211,238,.25);}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px;background:rgba(255,255,255,.03);border-radius:14px;overflow:hidden;}
+  .tbl th{background:rgba(255,255,255,.08);padding:12px 16px;text-align:left;font-weight:700;font-size:12px;letter-spacing:.5px;color:rgba(255,255,255,.7);}
+  .tbl td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tr:hover td{background:rgba(255,255,255,.04);}
+  .tbl td:first-child{font-weight:600;}
+  .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin:1px;}
+  .tag-green{background:rgba(52,199,89,.2);color:#86efac;border:1px solid rgba(52,199,89,.3);}
+  .tag-gold{background:rgba(255,184,0,.2);color:#fde68a;border:1px solid rgba(255,184,0,.3);}
+  .tag-orange{background:rgba(245,102,0,.2);color:#fed7aa;border:1px solid rgba(245,102,0,.3);}
+  .tag-purple{background:rgba(107,33,168,.2);color:#c4b5fd;border:1px solid rgba(107,33,168,.3);}
+  .tag-pcm{background:rgba(34,211,238,.2);color:#67e8f9;border:1px solid rgba(34,211,238,.3);}
+  .card{border-radius:16px;padding:28px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .card p,.card li{font-size:14px;opacity:.8;line-height:1.65;}
+  .card ul{padding-left:20px;}
+  .card ul li{margin-bottom:6px;}
+  .callout{border-radius:14px;padding:22px 28px;margin:24px 0;border-left:4px solid;}
+  .callout-warn{background:rgba(245,102,0,.1);border-color:var(--orange);}
+  .callout-info{background:rgba(34,211,238,.1);border-color:var(--pcm);}
+  .callout-success{background:rgba(52,199,89,.1);border-color:var(--green);}
+  .callout-warm{background:rgba(255,107,53,.1);border-color:var(--warm);}
+  .callout p{font-size:14px;line-height:1.65;opacity:.9;}
+  .callout strong{opacity:1;}
+  .market-card{border-radius:18px;padding:36px;margin-bottom:20px;position:relative;overflow:hidden;}
+  .market-card .flag{font-size:48px;margin-bottom:14px;}
+  .market-card h3{font-size:22px;font-weight:800;margin-bottom:8px;}
+  .market-card .strapline{font-size:14px;opacity:.7;margin-bottom:20px;line-height:1.5;}
+  .market-card .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;}
+  .market-card .stat{text-align:center;background:rgba(0,0,0,.2);border-radius:10px;padding:14px;}
+  .market-card .stat .n{font-size:22px;font-weight:900;margin-bottom:4px;}
+  .market-card .stat .l{font-size:11px;opacity:.6;}
+  .mc-uk{background:linear-gradient(135deg,rgba(0,50,150,.2),rgba(0,50,150,.08));border:1px solid rgba(0,122,255,.2);}
+  .mc-ca{background:linear-gradient(135deg,rgba(206,17,38,.15),rgba(206,17,38,.06));border:1px solid rgba(206,17,38,.2);}
+  .mc-eu{background:linear-gradient(135deg,rgba(52,199,89,.12),rgba(52,199,89,.04));border:1px solid rgba(52,199,89,.15);}
+  .retrofit-steps{margin:24px 0;}
+  .retrofit-step{display:grid;grid-template-columns:60px 1fr;gap:20px;margin-bottom:20px;align-items:start;}
+  .step-num{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;background:rgba(255,107,53,.2);border:2px solid rgba(255,107,53,.4);color:#fed7aa;flex-shrink:0;}
+  .step-content h4{font-size:15px;font-weight:700;margin-bottom:6px;}
+  .step-content p{font-size:13px;opacity:.75;line-height:1.6;}
+  .compare-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:start;margin:28px 0;}
+  .compare-col{border-radius:16px;padding:28px;}
+  .compare-col h3{font-size:16px;font-weight:800;margin-bottom:16px;}
+  .compare-col li{font-size:13px;line-height:1.8;opacity:.85;list-style:none;}
+  .compare-sep{display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:rgba(255,255,255,.3);padding:0 16px;padding-top:60px;}
+  .col-before{background:rgba(206,17,38,.08);border:1px solid rgba(206,17,38,.2);}
+  .col-after{background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.2);}
+  .funding-box{border-radius:16px;padding:28px;background:linear-gradient(135deg,rgba(255,184,0,.12),rgba(255,184,0,.04));border:1px solid rgba(255,184,0,.2);margin-bottom:16px;}
+  .funding-box h4{font-size:15px;font-weight:700;color:#fde68a;margin-bottom:10px;}
+  .funding-box p{font-size:13px;opacity:.8;line-height:1.65;}
+  .funding-box .amount{font-size:26px;font-weight:900;color:#fde68a;margin-bottom:4px;}
+  footer{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.07);padding:40px;text-align:center;}
+  footer p{font-size:12px;opacity:.4;font-family:'JetBrains Mono',monospace;line-height:2;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="badge">Karnot Energy Solutions — FLX Retrofit Pitch · UK, Canada &amp; Global</div>
+    <h1>FLX Retrofit — Replace the Defrost Heater</h1>
+    <p class="sub">Drop-in PCM thermal storage module for existing transcritical CO₂ heat pumps. Eliminates electric resistance defrost permanently. Gas boiler replacement, care homes, and Arctic cold stores. £2,940–£4,410/yr savings per iHEAT unit.</p>
+    <div class="hero-badges">
+      <span class="hb" style="background:rgba(255,107,53,.15);color:#fed7aa;">~4 Hour Install</span>
+      <span class="hb" style="background:rgba(52,199,89,.15);color:#86efac;">£2,940–£4,410/yr UK Saving</span>
+      <span class="hb" style="background:rgba(255,184,0,.15);color:#fde68a;">BOM £280–£460</span>
+      <span class="hb" style="background:rgba(167,139,250,.15);color:#c4b5fd;">Zero Electric Defrost</span>
+      <span class="hb" style="background:rgba(34,211,238,.15);color:#67e8f9;">CO₂ Native</span>
+      <span class="hb" style="background:rgba(13,148,136,.15);color:#5eead4;">R290 Compatible</span>
+    </div>
+    <p class="disclaimer">Karnot Energy Solutions INC · Stuart Cox, Founder · February 2026 · Proprietary &amp; Confidential</p>
+  </div>
+</div>
+
+<section class="sec">
+  <p class="sec-title">01 — The Market Gap</p>
+  <h2>Millions of Heat Pumps. None of Them Handle Defrost Well.</h2>
+  <div class="callout callout-warm">
+    <p><strong>The hidden energy penalty:</strong> Every air-source heat pump in a cold or humid climate runs defrost cycles. Conventional approaches — reverse-cycle defrost or electric resistance heaters — impose a 5–10% seasonal COP penalty. For a 35 kW unit running year-round, this is 9.25 kWh wasted per defrost cycle, 4–6 times per day. FLX eliminates this penalty at source, using heat the compressor was already generating and discarding through the gas cooler.</p>
+  </div>
+  <div class="big-grid" style="margin-bottom:32px;">
+    <div class="num-card nc-red"><div class="n" style="color:#fca5a5;">5–10%</div><div class="label">Seasonal COP Loss</div><div class="note">From conventional reverse-cycle or electric resistance defrost</div></div>
+    <div class="num-card nc-warm"><div class="n" style="color:#fed7aa;">9.25 kWh</div><div class="label">Wasted Per Cycle</div><div class="note">FLX saves 9.25 kWh vs reverse-cycle defrost — ORNL-validated</div></div>
+    <div class="num-card nc-gold"><div class="n" style="color:#fde68a;">£4,410</div><div class="label">Max Annual Saving (UK)</div><div class="note">iHEAT 35 kW + FLX at UK commercial tariff, high frost-load climate</div></div>
+    <div class="num-card nc-green"><div class="n" style="color:#86efac;">£280</div><div class="label">Min BOM — Volume</div><div class="note">FLX module bill of materials in volume production</div></div>
+  </div>
+  <div class="compare-grid">
+    <div class="compare-col col-before">
+      <h3 style="color:#fca5a5;">❌ Before FLX — Standard CO₂ Heat Pump</h3>
+      <ul>
+        <li>❌ Electric heater bank: 7–10 kW draw per defrost event</li>
+        <li>❌ Reverse-cycle: reverses refrigerant flow, dumps stored heat outside</li>
+        <li>❌ 4–6 defrost cycles/day × 8–10 min each</li>
+        <li>❌ COP penalty: 5–10% seasonal degradation</li>
+        <li>❌ Product temperature spike: 2–4°C during defrost</li>
+        <li>❌ Thermal shock on evaporator: coil fatigue &amp; leaks accelerated</li>
+        <li>❌ Peak demand spikes: simultaneous defrost events</li>
+        <li>❌ No demand response capability during defrost</li>
+      </ul>
+    </div>
+    <div class="compare-sep">→</div>
+    <div class="compare-col col-after">
+      <h3 style="color:#86efac;">✅ After FLX — Retrofitted CO₂ Heat Pump</h3>
+      <ul>
+        <li>✅ Zero electric heaters — PCM stored heat only</li>
+        <li>✅ No reverse-cycle — refrigerant stays in heating/cooling mode</li>
+        <li>✅ Defrost complete in 8–10 min; system fully operational</li>
+        <li>✅ Seasonal COP restored — 5–10% efficiency gain</li>
+        <li>✅ Temperature stable &lt;0.5°C variation during defrost</li>
+        <li>✅ Gentle thermal gradient — extends coil life</li>
+        <li>✅ iSAVE scheduling — stagger events, avoid demand peaks</li>
+        <li>✅ DR-schedulable: defer defrost up to 4 hrs during grid stress</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<hr class="sec-divider">
+
+<section class="sec">
+  <p class="sec-title">02 — The Retrofit</p>
+  <h2>A Single Service Visit. Permanent Improvement.</h2>
+  <div class="callout callout-info">
+    <p><strong>Retrofit requirement:</strong> The host system must use CO₂ (R744) as the working refrigerant — transcritical or cascade. FLX taps the high-pressure liquid line via a three-port manifold. The FLX tank (190mm × 500mm) mounts alongside the gas cooler unit. Total install time: approximately 4 hours with a CO₂-certified refrigeration engineer.</p>
+  </div>
+  <div class="retrofit-steps">
+    <div class="retrofit-step"><div class="step-num">1</div><div class="step-content"><h4>Site Survey &amp; System Assessment</h4><p>Confirm CO₂ refrigerant, map high-pressure liquid line routing, assess mounting location. Document baseline defrost cycle frequency and energy draw. ~30 min.</p></div></div>
+    <div class="retrofit-step"><div class="step-num">2</div><div class="step-content"><h4>Three-Coil Manifold Installation</h4><p>System pumped down. Three-port manifold installed: (1) subcooling coil feed to FLX tank, (2) existing gas cooler return, (3) defrost coil discharge to evaporator. Re-pressurised, leak-tested to 150 bar. ~2 hrs.</p></div></div>
+    <div class="retrofit-step"><div class="step-num">3</div><div class="step-content"><h4>FLX Tank Fill — FLX Fluid 2.0</h4><p>Tank filled with FLX Fluid 2.0 (coconut oil + graphene + beeswax + PEG PCM blend) from sealed 4L service cans. Copper foam matrix pre-installed. Ultrasonic transducers wired to iSAVE controller. ~45 min.</p></div></div>
+    <div class="retrofit-step"><div class="step-num">4</div><div class="step-content"><h4>iSAVE Controller Commissioning</h4><p>iSAVE edge controller installed (DIN-rail, RS485 ModBus). Fan motor differential pressure sensor wired for defrost trigger. System test: one full charge-discharge cycle confirmed. LTE-M registration to Karnot Control Centre. ~45 min.</p></div></div>
+    <div class="retrofit-step"><div class="step-num">5</div><div class="step-content"><h4>Performance Baseline &amp; Sign-Off</h4><p>First 24 hrs logged: charge rate (target 4.5 kWh/hr), defrost cycle duration, evaporator temp stability, electric heater draw (target: zero). Customer sign-off report generated. FLX Fluid 2.0 next service date registered. ~30 min.</p></div></div>
+  </div>
+</section>
+<hr class="sec-divider">
+
+<section class="sec">
+  <p class="sec-title">03 — Target Markets</p>
+  <h2>Three Major Retrofit &amp; OEM Markets</h2>
+
+  <div class="market-card mc-uk">
+    <div class="flag">🇬🇧</div>
+    <h3>United Kingdom — Gas Boiler Replacement Programme</h3>
+    <p class="strapline">26 million gas boilers to replace. The Heat Pump Ready programme, Future Homes Standard, and BUS (Boiler Upgrade Scheme) are driving CO₂ heat pump adoption. Every iHEAT unit sold into UK commercial/residential ships with FLX as standard.</p>
+    <div class="stats">
+      <div class="stat"><div class="n" style="color:#7dd3fc;">26M</div><div class="l">Gas boilers to replace</div></div>
+      <div class="stat"><div class="n" style="color:#86efac;">£4,410</div><div class="l">Max annual saving/unit</div></div>
+      <div class="stat"><div class="n" style="color:#fde68a;">£7,500</div><div class="l">BUS grant per ASHP</div></div>
+    </div>
+    <table class="tbl" style="font-size:12px;">
+      <thead><tr><th>Segment</th><th>iHEAT Config</th><th>Annual Saving</th><th>CO₂ Avoided</th><th>Key Grant</th></tr></thead>
+      <tbody>
+        <tr><td>Commercial (35 kW)</td><td>iHEAT 35 kW + FLX</td><td style="color:#86efac;">£2,940–£4,410</td><td>2.1–3.15 tCO₂/yr</td><td><span class="tag tag-gold">BUS Commercial</span></td></tr>
+        <tr><td>Care Home Scotland</td><td>iHEAT 35 kW + FLX + iSTOR</td><td style="color:#86efac;">£2,940–£4,410</td><td>2.1–3.15 tCO₂/yr</td><td><span class="tag tag-gold">Heat Network ZI</span></td></tr>
+        <tr><td>Hotel / Hospitality</td><td>iHEAT 75 kW + dual FLX</td><td style="color:#86efac;">£6,000–£9,000</td><td>4.2–6.3 tCO₂/yr</td><td><span class="tag tag-gold">IETF / PSDS</span></td></tr>
+        <tr><td>Food Processing</td><td>iCOOL + iHEAT + FLX</td><td style="color:#fde68a;">£8,000–£12,000</td><td>6–9 tCO₂/yr</td><td><span class="tag tag-pcm">UKRI Energy</span></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span class="tag tag-gold">BUS Scheme — £7,500/unit</span>
+      <span class="tag tag-green">Future Homes Standard 2025</span>
+      <span class="tag tag-pcm">ORNL-validated performance data</span>
+      <span class="tag tag-orange">Salford Energy House test site</span>
+    </div>
+  </div>
+
+  <div class="market-card mc-ca">
+    <div class="flag">🇨🇦</div>
+    <h3>Canada — Arctic &amp; Sub-Arctic Applications</h3>
+    <p class="strapline">Canada's extreme winters (-30°C and below) have historically excluded ASHPs from northern markets. The iHEAT 35 kW transcritical CO₂ platform — delivering hot water to 121°C even at -30°C ambient — changes this. FLX is critical in sub-arctic conditions where frost accumulation is extreme.</p>
+    <div class="stats">
+      <div class="stat"><div class="n" style="color:#fca5a5;">-30°C</div><div class="l">iHEAT min ambient</div></div>
+      <div class="stat"><div class="n" style="color:#c4b5fd;">CAD 3,150</div><div class="l">Max annual saving/unit</div></div>
+      <div class="stat"><div class="n" style="color:#fde68a;">$250M</div><div class="l">Canada Clean Heat Fund</div></div>
+    </div>
+    <table class="tbl" style="font-size:12px;">
+      <thead><tr><th>Segment</th><th>iHEAT Config</th><th>Annual Saving</th><th>Key Advantage</th></tr></thead>
+      <tbody>
+        <tr><td>Remote Communities</td><td>iHEAT 35 kW + FLX, battery backup</td><td style="color:#c4b5fd;">CAD 2,100–3,150/yr</td><td><span class="tag tag-orange">Replaces diesel heating</span></td></tr>
+        <tr><td>Arctic Cold Store</td><td>iCOOL CO₂ + FLX, high frost load</td><td style="color:#c4b5fd;">CAD 4,000–6,000/yr</td><td><span class="tag tag-pcm">High defrost frequency</span></td></tr>
+        <tr><td>Mining / Industrial Sites</td><td>iHEAT 75 kW + dual FLX</td><td style="color:#c4b5fd;">CAD 5,000–8,000/yr</td><td><span class="tag tag-orange">Off-grid, diesel savings</span></td></tr>
+        <tr><td>Care Facilities North</td><td>iHEAT 35 kW + FLX + iSTOR</td><td style="color:#c4b5fd;">CAD 2,100–3,150/yr</td><td><span class="tag tag-gold">High hot water demand</span></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span class="tag tag-orange">Canada Clean Heat Fund — $250M</span>
+      <span class="tag tag-purple">Greener Homes — CAD 5,000/unit</span>
+      <span class="tag tag-pcm">-30°C native CO₂ cycle</span>
+    </div>
+  </div>
+
+  <div class="market-card mc-eu">
+    <div class="flag">🇪🇺</div>
+    <h3>European Union — REPowerEU &amp; Boiler Ban</h3>
+    <p class="strapline">REPowerEU targets 10 million heat pumps by 2027. The Energy Performance of Buildings Directive mandates phasing out fossil fuel boilers from 2025. Matter-certified iHEAT EU variant planned for Q4 2027+ with FLX as standard.</p>
+    <div class="stats">
+      <div class="stat"><div class="n" style="color:#86efac;">10M</div><div class="l">HP target by 2027</div></div>
+      <div class="stat"><div class="n" style="color:#86efac;">€3,500</div><div class="l">Avg annual saving/unit</div></div>
+      <div class="stat"><div class="n" style="color:#fde68a;">€2B+</div><div class="l">EU heat pump subsidies</div></div>
+    </div>
+    <table class="tbl" style="font-size:12px;">
+      <thead><tr><th>Country</th><th>Key Incentive</th><th>iHEAT Positioning</th><th>Timeline</th></tr></thead>
+      <tbody>
+        <tr><td>Germany</td><td>BEG scheme — up to 70% subsidy</td><td>CO₂ heat pump premium positioning</td><td style="color:#86efac;">2027 Q4</td></tr>
+        <tr><td>Netherlands</td><td>ISDE subsidy — €2,500–€5,000</td><td>Gas-free homes 2040 mandate</td><td style="color:#86efac;">2027 Q4</td></tr>
+        <tr><td>Norway / Nordics</td><td>Enova subsidy + district heat</td><td>Cold climate performance advantage</td><td style="color:#86efac;">2027 Q4</td></tr>
+        <tr><td>France</td><td>MaPrimeRénov' — €4,000+</td><td>Low-temperature heating systems</td><td style="color:#fde68a;">2028+</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span class="tag tag-green">REPowerEU — 10M HP by 2027</span>
+      <span class="tag tag-gold">EPBD Boiler Ban</span>
+      <span class="tag tag-pcm">Matter-certified variant Q4 2027</span>
+    </div>
+  </div>
+</section>
+<hr class="sec-divider">
+
+<section class="sec">
+  <p class="sec-title">04 — Grant &amp; Funding Landscape</p>
+  <h2>Funding the FLX Retrofit — Key Programmes</h2>
+  <div class="big-grid-2">
+    <div>
+      <div class="funding-box"><h4>🇬🇧 UK — Boiler Upgrade Scheme (BUS)</h4><div class="amount">£7,500 / unit</div><p>Government grant for qualifying ASHPs. iHEAT + FLX qualifies. Administered by Ofgem. Available to homeowners and businesses.</p></div>
+      <div class="funding-box"><h4>🇬🇧 UK — Industrial Energy Transformation Fund (IETF)</h4><div class="amount">Up to 50% capex</div><p>DESNZ-administered fund for industrial decarbonisation. iHEAT targets high-temperature process heat replacement for gas boilers. FLX strengthens the IETF application by demonstrating COP improvement.</p></div>
+    </div>
+    <div>
+      <div class="funding-box"><h4>🇨🇦 Canada — Clean Heat Fund</h4><div class="amount">CAD $250M programme</div><p>NRCan programme for low-carbon heating in commercial, industrial, and institutional buildings. Strong fit for iHEAT 35/75 kW + FLX in cold-climate commercial applications.</p></div>
+      <div class="funding-box"><h4>🇵🇭 Philippines — DOE GREEN Lane / GEOP</h4><div class="amount">30% Investment Tax Allowance</div><p>Philippine DOE Renewable Energy Act and Green Energy Option Programme. Cold chain operators investing in energy-efficient refrigeration qualify for tax incentives, combined with Meralco RDSP DR revenue.</p></div>
+    </div>
+  </div>
+</section>
+<hr class="sec-divider">
+
+<section class="sec">
+  <p class="sec-title">05 — Technical Specifications</p>
+  <h2>FLX Module — Retrofit Specification Sheet</h2>
+  <div class="big-grid-2" style="margin-bottom:24px;">
+    <table class="tbl">
+      <thead><tr><th colspan="2">Physical &amp; Thermal</th></tr></thead>
+      <tbody>
+        <tr><td>Tank Diameter</td><td style="font-family:'JetBrains Mono',monospace;">190 mm</td></tr>
+        <tr><td>Tank Height</td><td style="font-family:'JetBrains Mono',monospace;">500 mm</td></tr>
+        <tr><td>Tank Volume</td><td style="font-family:'JetBrains Mono',monospace;">14.93 L</td></tr>
+        <tr><td>PCM Mass</td><td style="font-family:'JetBrains Mono',monospace;">13.2 kg</td></tr>
+        <tr><td>PCM Composition</td><td>Virgin coconut oil + 5% beeswax + 3% PEG + 4% graphene (FLX Fluid 2.0)</td></tr>
+        <tr><td>Phase Change Temp</td><td style="font-family:'JetBrains Mono',monospace;">~24°C</td></tr>
+        <tr><td>Latent Heat</td><td style="font-family:'JetBrains Mono',monospace;">~120 kJ/kg</td></tr>
+        <tr><td>Heat Transfer Rate (full stack)</td><td style="font-family:'JetBrains Mono',monospace;color:#67e8f9;font-weight:700;">13.5 W/m·K</td></tr>
+        <tr><td>PCM Utilisation</td><td style="font-family:'JetBrains Mono',monospace;color:#86efac;font-weight:700;">98%</td></tr>
+      </tbody>
+    </table>
+    <table class="tbl">
+      <thead><tr><th colspan="2">Performance &amp; Integration</th></tr></thead>
+      <tbody>
+        <tr><td>Charge Rate (subcooling)</td><td style="font-family:'JetBrains Mono',monospace;">4.5 kWh/hr</td></tr>
+        <tr><td>Normal Defrost Power</td><td style="font-family:'JetBrains Mono',monospace;">3 kW × 10 min</td></tr>
+        <tr><td>Normal Defrost Ice Melt</td><td style="font-family:'JetBrains Mono',monospace;">5.4 kg</td></tr>
+        <tr><td>Super-Boost Defrost</td><td style="font-family:'JetBrains Mono',monospace;">4.5 kW × 8 min = 8.1 kg</td></tr>
+        <tr><td>Ultrasonic Transducers</td><td style="font-family:'JetBrains Mono',monospace;">2 × 100W, 20–40 kHz</td></tr>
+        <tr><td>Compatible Refrigerant</td><td>CO₂ (R744) transcritical — primary. R290 cascade — secondary.</td></tr>
+        <tr><td>BOM (volume production)</td><td style="font-family:'JetBrains Mono',monospace;color:#fde68a;font-weight:700;">£280–£460</td></tr>
+        <tr><td>Service Interval</td><td>FLX Fluid 2.0 replacement every 2 years</td></tr>
+        <tr><td>Platforms</td><td>iHEAT 35 kW, iHEAT 75 kW, iCOOL</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout callout-success">
+    <p><strong>iHEAT System Performance with FLX:</strong> COP heating = 4.67 · COP cooling = 3.60 · Combined COP = 8.27 · Hot water to 121°C · Chilled water to -30°C · 87% Carnot efficiency · Compressor: Panasonic two-stage rotary DC inverter, 900–3,600 RPM · Operating pressures: 80–150 bar HP, 20–35 bar LP · ORNL-validated thermodynamic model.</p>
+  </div>
+</section>
+
+<footer>
+  <p>FLX Retrofit Pitch — UK, Canada &amp; Global Heating Markets</p>
+  <p>Karnot Energy Solutions INC · Stuart Cox, Founder · stuart@karnot.com · February 2026</p>
+  <p>Patent Pending · PCT/WO2022069581A1 Licensed · Proprietary &amp; Confidential</p>
+  <p style="margin-top:12px;font-size:10px;opacity:.3;">Savings estimates based on UK commercial electricity tariff (Ofgem Q4 2025), Canadian NRCan benchmarking, and Karnot FLX-DOC-0016 internal presentation. Grant availability subject to eligibility. — Karnot Energy Solutions INC, Pangasinan, Philippines.</p>
+</footer>
+</body>
+</html>
