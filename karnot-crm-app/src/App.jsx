@@ -78,6 +78,7 @@ import DatasheetLibrary from './components/DatasheetLibrary.jsx';
 import RSRHCalculator from './components/RSRHCalculator.jsx';
 // --- NEW IMPORT HERE ---
 import SolvivaPartnerCalculator from './components/SolvivaPartnerCalculator.jsx';
+import PinchCalculator from './components/PinchCalculator.jsx';
 
 // ==========================================
 // 2B. NEW INVESTOR RESEARCH COMPONENTS
@@ -107,7 +108,7 @@ import {
     Users, Settings, Calculator, Plus, Landmark, ChevronDown,
     MapPin, Wrench, Briefcase, FileText, Target, Package, 
     UserCheck, Calendar as CalendarIcon, CheckCircle, Globe, Upload, Sparkles,
-    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap
+    DollarSign, Mail, TrendingUp, Phone, Grid, Printer, Map, Zap, Activity
 } from 'lucide-react'; 
 
 // ==========================================
@@ -238,7 +239,8 @@ const Header = ({ activeView, setActiveView, quoteCount, onLogout, onNewQuote, u
         { view: 'coldRoomCalc', label: 'Cold Room', icon: Calculator },
         { view: 'rsrhCalc', label: 'RSRH Cattle', icon: Target },
         // --- ADDED NEW SOLVIVA CALCULATOR HERE ---
-        { view: 'solvivaCalc', label: 'Solviva Partner', icon: Zap, badge: 'NEW' } 
+        { view: 'solvivaCalc', label: 'Solviva Partner', icon: Zap, badge: 'NEW' },
+        { view: 'pinchCalc', label: 'Pinch Analysis', icon: Activity, badge: 'NEW' } 
     ];
 
     return (
@@ -857,6 +859,7 @@ export default function App() {
                 
                 {activeView === 'warmRoomCalc' && <WarmRoomCalc setActiveView={setActiveView} user={user} />}
                 {activeView === 'coldRoomCalc' && <ColdRoomCalc setActiveView={setActiveView} user={user} />}
+                {activeView === 'pinchCalc' && <PinchCalculator setActiveView={setActiveView} user={user} />}
                 
                 {/* --- ADDED SOLVIVA VIEW HERE --- */}
                 {activeView === 'solvivaCalc' && (

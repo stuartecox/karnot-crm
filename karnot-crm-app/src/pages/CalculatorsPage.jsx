@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../data/constants.jsx';
-import { Calculator, Sun, Droplets, Wind, Zap, Flame, ArrowRight, Snowflake, Target, Thermometer } from 'lucide-react';
+import { Calculator, Sun, Droplets, Wind, Zap, Flame, ArrowRight, Snowflake, Target, Thermometer, Activity } from 'lucide-react';
 
 const CalculatorsPage = ({ setActiveView }) => {
     const tools = [
@@ -48,6 +48,14 @@ const CalculatorsPage = ({ setActiveView }) => {
             icon: <Thermometer className="text-red-500" size={32} />,
             status: 'Ready',
             badge: 'New'
+        },
+        {
+            id: 'pinchCalc',
+            title: 'Utility Pinch Analysis',
+            description: 'Optimize heating & cooling utility networks for dairy plants. Composite curves, CO2 heat pump sizing, and ROI.',
+            icon: <Activity className="text-green-600" size={32} />,
+            status: 'Ready',
+            badge: 'Dairy'
         },
         {
             id: 'poolCalc',
