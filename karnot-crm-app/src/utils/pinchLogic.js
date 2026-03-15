@@ -424,42 +424,99 @@ export function calculatePayback(annualSavings, capitalCost) {
 }
 
 /**
- * Find best matching Karnot CO2 heat pump from Firebase product inventory.
+ * Find best matching Karnot heat pump from Firebase product inventory.
+ * Prefers CO2 (R744) for dairy applications where sink temp > 70°C.
+ * Falls back to R290 if CO2 unavailable or sink temp ≤ 70°C.
+ * Returns product with real pricing from the database.
  */
-export function findMatchingProduct(products, requiredDutyKW) {
+export function findMatchingProduct(products, requiredDutyKW, sinkTemp = 90) {
     if (!products || products.length === 0 || !requiredDutyKW) return null;
 
-    // Filter to heat pump products
+    // Helper: read a product field using multiple possible key names
+    const get = (p, ...keys) => {
+        for (const k of keys) {
+            if (p[k] !== undefined && p[k] !== null && p[k] !== '') return p[k];
+        }
+        return null;
+    };
+
+    // Filter to iHEAT heat pump products with a heating capacity
     const heatPumps = products.filter(p => {
-        const name = (p.name || '').toUpperCase();
-        const cat = (p.category || '').toUpperCase();
-        return name.includes('IHEAT') || name.includes('HEAT PUMP') ||
-               name.includes('CO2') || name.includes('R744') ||
-               cat.includes('HEAT PUMP') || cat.includes('IHEAT');
+        const cat = (get(p, 'category', 'Category') || '').toUpperCase();
+        const name = (get(p, 'name', 'Product Name') || '').toUpperCase();
+        if (!cat.includes('IHEAT') && !name.includes('IHEAT')) return false;
+        const kw = parseFloat(get(p, 'kW_DHW_Nominal')) || 0;
+        return kw > 0;
     });
 
     if (heatPumps.length === 0) return null;
 
-    // Try to extract kW rating from product name
-    const withKW = heatPumps.map(p => {
-        const match = (p.name || '').match(/(\d+\.?\d*)\s*kW/i);
-        const kw = match ? parseFloat(match[1]) : (p.heatingCapacity || p.capacity || 0);
-        return { ...p, extractedKW: kw };
-    }).filter(p => p.extractedKW > 0);
+    // Enrich each product with normalised specs
+    const enriched = heatPumps.map(p => {
+        const name     = get(p, 'name', 'Product Name') || '';
+        const nameUC   = name.toUpperCase();
+        const kw       = parseFloat(get(p, 'kW_DHW_Nominal')) || 0;
+        const ref      = (get(p, 'Refrigerant', 'refrigerant') || '').toUpperCase();
+        const maxTemp  = parseFloat(get(p, 'max_temp_c', 'Max Temp', 'maxTemp')) || 60;
+        const price    = parseFloat(get(p, 'salesPriceUSD', 'Sales Price', 'salesPrice')) || 0;
+        const costP    = parseFloat(get(p, 'costPriceUSD', 'Cost Price', 'costPrice')) || 0;
+        const cop      = parseFloat(get(p, 'COP_DHW', 'cop', 'COP')) || 3.5;
+        const coolKW   = parseFloat(get(p, 'kW_Cooling_Nominal')) || 0;
+        const isR744   = ref.includes('R744') || ref.includes('CO2') || nameUC.includes('CO2');
+        const isR290   = ref.includes('R290');
+        const isWSHP   = nameUC.includes('WSHP');
+        const isASHP   = nameUC.includes('ASHP') || nameUC.includes('ASAP');
 
-    if (withKW.length === 0) return heatPumps[0];
+        return {
+            ...p, name, extractedKW: kw, refrigerant: ref, maxTemp, price, costPrice: costP,
+            cop, isR744, isR290, isWSHP, isASHP, coolingKW: coolKW,
+            refrigerantLabel: isR744 ? 'CO\u2082 (R-744)' : isR290 ? 'R-290 (Propane)' : ref,
+        };
+    });
 
-    // Find smallest unit that meets or exceeds requirement
-    withKW.sort((a, b) => a.extractedKW - b.extractedKW);
+    // Application needs CO2 if sink temp exceeds R290 max (70°C)
+    const needsCO2 = sinkTemp > 70;
 
-    // Can we meet with a single unit?
-    const singleMatch = withKW.find(p => p.extractedKW >= requiredDutyKW);
-    if (singleMatch) {
-        return { ...singleMatch, quantity: 1, totalCapacity: singleMatch.extractedKW };
+    // Build candidate pool: prefer CO2 for high-temp, then any
+    let pool;
+    if (needsCO2) {
+        const co2 = enriched.filter(p => p.isR744);
+        pool = co2.length > 0 ? co2 : enriched;
+    } else {
+        pool = enriched;
     }
 
-    // Otherwise recommend largest unit with quantity needed
-    const largest = withKW[withKW.length - 1];
-    const qty = Math.ceil(requiredDutyKW / largest.extractedKW);
-    return { ...largest, quantity: qty, totalCapacity: largest.extractedKW * qty };
+    // For utility pinch with waste heat recovery, prefer WSHP
+    const wshp = pool.filter(p => p.isWSHP);
+    let candidates = wshp.length > 0 ? wshp : pool;
+
+    // Filter by temperature capability
+    const tempOK = candidates.filter(p => p.maxTemp >= sinkTemp);
+    if (tempOK.length > 0) candidates = tempOK;
+
+    // Sort by capacity ascending
+    candidates.sort((a, b) => a.extractedKW - b.extractedKW);
+
+    if (candidates.length === 0) return null;
+
+    // Single unit match or multiple units of largest
+    const single = candidates.find(p => p.extractedKW >= requiredDutyKW);
+    let result;
+    if (single) {
+        result = { ...single, quantity: 1, totalCapacity: single.extractedKW };
+    } else {
+        const largest = candidates[candidates.length - 1];
+        const qty = Math.ceil(requiredDutyKW / largest.extractedKW);
+        result = { ...largest, quantity: qty, totalCapacity: largest.extractedKW * qty };
+    }
+
+    // Attach pricing totals
+    result.unitPrice    = result.price;
+    result.totalPrice   = result.price * result.quantity;
+    result.unitCost     = result.costPrice;
+    result.totalCost    = result.costPrice * result.quantity;
+    result.margin       = result.totalPrice > 0 && result.totalCost > 0
+        ? Math.round((1 - result.totalCost / result.totalPrice) * 100) : 0;
+
+    return result;
 }
