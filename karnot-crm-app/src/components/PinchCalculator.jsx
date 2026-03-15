@@ -12,6 +12,7 @@ import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
     Legend, ResponsiveContainer, ReferenceLine
 } from 'recharts';
+import html2pdf from 'html2pdf.js';
 import {
     PINCH_CONFIG, PROCESS_TEMPLATES,
     problemTableAlgorithm, buildCompositeCurves, buildGrandCompositeCurve,
@@ -216,16 +217,23 @@ const PinchCalculator = ({ setActiveView, user }) => {
         setParams(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
     };
 
+    const [showReport, setShowReport] = useState(false);
+
     const downloadPDF = () => {
-        const el = reportRef.current;
-        if (!el || typeof html2pdf === 'undefined') return;
-        window.html2pdf().set({
-            margin: [8, 8, 8, 8],
-            filename: `Pinch_Analysis_${selectedTemplate}_${new Date().toISOString().split('T')[0]}.pdf`,
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        const el = document.getElementById('pinch-report');
+        if (!el) return;
+        html2pdf().set({
+            margin: [10, 10, 10, 10],
+            filename: `Karnot_Pinch_Analysis_${selectedTemplate}_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+            pagebreak: {
+                mode: ['avoid-all', 'css', 'legacy'],
+                before: '.page-break-before',
+                after: '.page-break-after',
+                avoid: ['tr', '.no-break']
+            }
         }).from(el).save();
     };
 
@@ -246,8 +254,8 @@ const PinchCalculator = ({ setActiveView, user }) => {
                         <Info size={14} className="mr-1" /> How It Works
                     </Button>
                     {pinchResult && (
-                        <Button onClick={downloadPDF} className="text-xs">
-                            <Download size={14} className="mr-1" /> Export PDF
+                        <Button onClick={() => setShowReport(true)} className="text-xs bg-orange-600 hover:bg-orange-700 text-white">
+                            <Download size={14} className="mr-1" /> Generate Report
                         </Button>
                     )}
                 </div>
@@ -830,6 +838,350 @@ const PinchCalculator = ({ setActiveView, user }) => {
                             No suitable heat pump found for {params.sinkTemp}°C sink temperature. Check your product inventory for units rated to this temperature.
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* ============================================ */}
+            {/* COMPREHENSIVE PDF REPORT */}
+            {/* ============================================ */}
+            {showReport && hpSizing && pinchResult && (
+                <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+                    <div className="max-w-[210mm] mx-auto my-8 bg-white">
+                        {/* Report controls (not printed) */}
+                        <div className="no-print sticky top-0 z-10 bg-white border-b p-4 flex items-center justify-between shadow-md">
+                            <span className="font-bold text-gray-700">Report Preview</span>
+                            <div className="flex gap-2">
+                                <button onClick={downloadPDF} className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-bold hover:bg-orange-700 flex items-center gap-2">
+                                    <Download size={14} /> Download PDF
+                                </button>
+                                <button onClick={() => setShowReport(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ===== PDF CONTENT ===== */}
+                        <div id="pinch-report" style={{ fontFamily: 'Inter, system-ui, sans-serif', color: '#1a1a2e', lineHeight: 1.5 }}>
+                            <style>{`
+                                @media print {
+                                    .no-print { display: none !important; }
+                                    .page-break-after { page-break-after: always !important; }
+                                    .page-break-before { page-break-before: always !important; }
+                                    .no-break { page-break-inside: avoid !important; }
+                                    #pinch-report { box-shadow: none !important; border: none !important; }
+                                }
+                                #pinch-report table { border-collapse: collapse; width: 100%; }
+                                #pinch-report th, #pinch-report td { padding: 6px 10px; text-align: left; font-size: 11px; }
+                                #pinch-report th { background: #f56600; color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+                                #pinch-report .metric-box { background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; }
+                                #pinch-report .metric-value { font-size: 22px; font-weight: 900; color: #1a1a2e; }
+                                #pinch-report .metric-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; font-weight: 700; }
+                                #pinch-report .section-title { font-size: 16px; font-weight: 800; color: #f56600; border-bottom: 2px solid #f56600; padding-bottom: 6px; margin: 20px 0 12px 0; }
+                                #pinch-report .subsection { font-size: 12px; font-weight: 700; color: #374151; margin: 14px 0 6px 0; }
+                            `}</style>
+
+                            {/* PAGE 1: COVER / EXECUTIVE SUMMARY */}
+                            <div style={{ padding: '40px 40px 30px 40px' }}>
+                                {/* Header */}
+                                <div style={{ textAlign: 'center', marginBottom: 30 }}>
+                                    <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>
+                                        Utility Pinch Analysis Report
+                                    </div>
+                                    <div style={{ fontSize: 28, fontWeight: 900, color: '#1a1a2e', lineHeight: 1.2 }}>
+                                        Heat Pump Integration Study
+                                    </div>
+                                    <div style={{ fontSize: 14, color: '#f56600', fontWeight: 700, marginTop: 6 }}>
+                                        {PROCESS_TEMPLATES[selectedTemplate]?.name || selectedTemplate}
+                                    </div>
+                                    <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 10 }}>
+                                        Prepared by Karnot Energy Solutions Inc. — {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </div>
+                                </div>
+
+                                {/* Executive Summary Box */}
+                                <div style={{ background: '#fff7ed', border: '2px solid #f56600', borderRadius: 12, padding: 20, marginBottom: 24 }} className="no-break">
+                                    <div style={{ fontSize: 13, fontWeight: 800, color: '#f56600', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Executive Summary
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
+                                        <div className="metric-box">
+                                            <div className="metric-label">Annual Savings</div>
+                                            <div className="metric-value" style={{ color: '#16a34a' }}>{fmtCurrency(hpSizing.annualSavings)}</div>
+                                        </div>
+                                        <div className="metric-box">
+                                            <div className="metric-label">CO₂ Reduction</div>
+                                            <div className="metric-value" style={{ color: '#16a34a' }}>{hpSizing.co2Reduction} t/yr</div>
+                                        </div>
+                                        <div className="metric-box">
+                                            <div className="metric-label">Simple Payback</div>
+                                            <div className="metric-value" style={{ color: '#f56600' }}>{payback || '—'} yrs</div>
+                                        </div>
+                                        <div className="metric-box">
+                                            <div className="metric-label">Cost Reduction</div>
+                                            <div className="metric-value" style={{ color: '#16a34a' }}>{hpSizing.savingsPercent}%</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Pinch Analysis Results */}
+                                <div className="section-title">1. Pinch Analysis Results</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 16 }} className="no-break">
+                                    <div className="metric-box">
+                                        <div className="metric-label">Pinch Temperature</div>
+                                        <div className="metric-value">{pinchResult.pinchTemp}°C</div>
+                                    </div>
+                                    <div className="metric-box">
+                                        <div className="metric-label">Min Heating (QH min)</div>
+                                        <div className="metric-value" style={{ color: '#dc2626' }}>{fmt(pinchResult.qHMin)} kW</div>
+                                    </div>
+                                    <div className="metric-box">
+                                        <div className="metric-label">Min Cooling (QC min)</div>
+                                        <div className="metric-value" style={{ color: '#2563eb' }}>{fmt(pinchResult.qCMin)} kW</div>
+                                    </div>
+                                    <div className="metric-box">
+                                        <div className="metric-label">ΔT min</div>
+                                        <div className="metric-value">{params.dTmin}°C</div>
+                                    </div>
+                                </div>
+
+                                {/* Process Stream Table */}
+                                <div className="subsection">Process Streams</div>
+                                <table className="no-break">
+                                    <thead>
+                                        <tr>
+                                            <th>Stream</th>
+                                            <th>Type</th>
+                                            <th>Supply (°C)</th>
+                                            <th>Target (°C)</th>
+                                            <th>Duty (kW)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {streams.map((s, i) => (
+                                            <tr key={i} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                                <td style={{ fontWeight: 600 }}>{s.name}</td>
+                                                <td><span style={{ background: s.type === 'hot' ? '#fecaca' : '#bfdbfe', padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>{s.type === 'hot' ? 'HOT' : 'COLD'}</span></td>
+                                                <td>{s.supplyTemp}°C</td>
+                                                <td>{s.targetTemp}°C</td>
+                                                <td style={{ fontWeight: 700 }}>{s.load} kW</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+
+                                {/* Operating Assumptions */}
+                                <div className="subsection" style={{ marginTop: 16 }}>Operating Assumptions</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 11 }} className="no-break">
+                                    <div style={{ background: '#f9fafb', padding: 8, borderRadius: 6 }}>
+                                        <span style={{ color: '#6b7280' }}>Operating Hours: </span><strong>{fmt(params.operatingHours)} hrs/yr</strong>
+                                    </div>
+                                    <div style={{ background: '#f9fafb', padding: 8, borderRadius: 6 }}>
+                                        <span style={{ color: '#6b7280' }}>Gas Rate: </span><strong>${params.gasRate}/kWh</strong>
+                                    </div>
+                                    <div style={{ background: '#f9fafb', padding: 8, borderRadius: 6 }}>
+                                        <span style={{ color: '#6b7280' }}>Electricity Rate: </span><strong>${params.elecRate}/kWh</strong>
+                                    </div>
+                                    <div style={{ background: '#f9fafb', padding: 8, borderRadius: 6 }}>
+                                        <span style={{ color: '#6b7280' }}>Boiler Efficiency: </span><strong>{params.boilerEfficiency}%</strong>
+                                    </div>
+                                    <div style={{ background: '#f9fafb', padding: 8, borderRadius: 6 }}>
+                                        <span style={{ color: '#6b7280' }}>Chiller COP: </span><strong>{params.chillerCOP}</strong>
+                                    </div>
+                                    <div style={{ background: '#f9fafb', padding: 8, borderRadius: 6 }}>
+                                        <span style={{ color: '#6b7280' }}>HP Duty: </span><strong>{fmt(params.hpDutyKW)} kW</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PAGE 2: COST ANALYSIS & EQUIPMENT */}
+                            <div style={{ padding: '30px 40px' }} className="page-break-before">
+                                <div className="section-title">2. Annual Cost Comparison</div>
+                                <table className="no-break">
+                                    <thead>
+                                        <tr>
+                                            <th style={{ width: '40%' }}>Cost Item</th>
+                                            <th style={{ textAlign: 'right' }}>Baseline (No HP)</th>
+                                            <th style={{ textAlign: 'right' }}>With Karnot HP</th>
+                                            <th style={{ textAlign: 'right' }}>Annual Saving</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                            <td>Heating (Gas Boiler)</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtCurrency(hpSizing.baseHeatingCost)}</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtCurrency(hpSizing.newHeatingCost)}</td>
+                                            <td style={{ textAlign: 'right', color: '#16a34a', fontWeight: 700 }}>{fmtCurrency(hpSizing.baseHeatingCost - hpSizing.newHeatingCost)}</td>
+                                        </tr>
+                                        <tr style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                            <td>Cooling (Chiller)</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtCurrency(hpSizing.baseCoolingCost)}</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtCurrency(hpSizing.newCoolingCost)}</td>
+                                            <td style={{ textAlign: 'right', color: '#16a34a', fontWeight: 700 }}>{fmtCurrency(hpSizing.baseCoolingCost - hpSizing.newCoolingCost)}</td>
+                                        </tr>
+                                        <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                            <td>Heat Pump Electricity</td>
+                                            <td style={{ textAlign: 'right', color: '#9ca3af' }}>—</td>
+                                            <td style={{ textAlign: 'right', color: '#dc2626' }}>{fmtCurrency(hpSizing.hpRunningCost)}</td>
+                                            <td style={{ textAlign: 'right', color: '#dc2626' }}>({fmtCurrency(hpSizing.hpRunningCost)})</td>
+                                        </tr>
+                                        <tr style={{ borderTop: '3px solid #1a1a2e', fontWeight: 900, fontSize: 13 }}>
+                                            <td>TOTAL Annual Cost</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtCurrency(hpSizing.baseTotalCost)}</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtCurrency(hpSizing.newTotalCost)}</td>
+                                            <td style={{ textAlign: 'right', color: '#16a34a' }}>{fmtCurrency(hpSizing.annualSavings)}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                {/* CO2 Emissions */}
+                                <div className="subsection" style={{ marginTop: 18 }}>Carbon Emissions Comparison</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }} className="no-break">
+                                    <div className="metric-box">
+                                        <div className="metric-label">Baseline CO₂</div>
+                                        <div className="metric-value">{hpSizing.baseCO2} t/yr</div>
+                                    </div>
+                                    <div className="metric-box">
+                                        <div className="metric-label">With Heat Pump</div>
+                                        <div className="metric-value">{hpSizing.newCO2} t/yr</div>
+                                    </div>
+                                    <div className="metric-box" style={{ background: '#f0fdf4', border: '2px solid #16a34a' }}>
+                                        <div className="metric-label" style={{ color: '#16a34a' }}>CO₂ Saved</div>
+                                        <div className="metric-value" style={{ color: '#16a34a' }}>{hpSizing.co2Reduction} t/yr</div>
+                                    </div>
+                                </div>
+
+                                {/* Heat Pump Sizing */}
+                                <div className="section-title">3. Heat Pump Configuration</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }} className="no-break">
+                                    <div>
+                                        <div className="subsection">Utility Ring Temperatures</div>
+                                        <table>
+                                            <tbody>
+                                                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                    <td style={{ color: '#6b7280' }}>Source Temperature (Evaporator)</td>
+                                                    <td style={{ fontWeight: 700, color: '#2563eb' }}>{params.sourceTemp}°C</td>
+                                                </tr>
+                                                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                    <td style={{ color: '#6b7280' }}>Sink Temperature (Gas Cooler)</td>
+                                                    <td style={{ fontWeight: 700, color: '#dc2626' }}>{params.sinkTemp}°C</td>
+                                                </tr>
+                                                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                    <td style={{ color: '#6b7280' }}>Temperature Lift</td>
+                                                    <td style={{ fontWeight: 700 }}>{params.sinkTemp - params.sourceTemp}°C</td>
+                                                </tr>
+                                                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                    <td style={{ color: '#6b7280' }}>HP Thermal Output</td>
+                                                    <td style={{ fontWeight: 700 }}>{fmt(params.hpDutyKW)} kW</td>
+                                                </tr>
+                                                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                    <td style={{ color: '#6b7280' }}>Compressor Input</td>
+                                                    <td style={{ fontWeight: 700 }}>{fmt(hpSizing.hpElecInput)} kW</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style={{ color: '#6b7280' }}>COP</td>
+                                                    <td style={{ fontWeight: 700 }}>{params.hpCOP}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div>
+                                        <div className="subsection">Why CO₂ (R-744)?</div>
+                                        <div style={{ fontSize: 10, color: '#374151', lineHeight: 1.6 }}>
+                                            <p style={{ marginBottom: 6 }}><strong>Transcritical operation:</strong> CO₂ operates above its critical point (31°C, 73.8 bar), using a gas cooler instead of a condenser. The resulting temperature glide perfectly matches water heating from cold to hot — ideal for dairy process water.</p>
+                                            <p style={{ marginBottom: 6 }}><strong>Single-stage lift:</strong> CO₂ can lift from 4°C chilled water to 90°C+ hot water in a single compression stage with COP 4.0–5.0. No cascade systems needed.</p>
+                                            <p style={{ marginBottom: 6 }}><strong>GWP = 1:</strong> CO₂ (R-744) has a Global Warming Potential of just 1, compared to R-410A (GWP 2,088) or R-134a (GWP 1,430). Future-proof against F-gas regulations.</p>
+                                            <p><strong>Simultaneous heating + cooling:</strong> WSHP variants provide both hot water for pasteurisation and chilled water for product cooling from a single compressor — eliminating the need for separate boilers and chillers.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Recommended Equipment */}
+                                {recommendedProduct && (
+                                    <div className="no-break" style={{ marginTop: 10 }}>
+                                        <div className="section-title">4. Recommended Karnot Equipment</div>
+                                        <div style={{ background: '#fff7ed', border: '2px solid #f56600', borderRadius: 10, padding: 16 }}>
+                                            <div style={{ fontSize: 18, fontWeight: 900, color: '#1a1a2e', marginBottom: 4 }}>
+                                                {recommendedProduct.name}
+                                            </div>
+                                            {recommendedProduct.quantity > 1 && (
+                                                <div style={{ fontSize: 12, color: '#f56600', fontWeight: 700, marginBottom: 8 }}>
+                                                    Quantity: {recommendedProduct.quantity} units ({fmt(recommendedProduct.totalCapacity)} kW total capacity)
+                                                </div>
+                                            )}
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 10 }}>
+                                                <div className="metric-box">
+                                                    <div className="metric-label">Unit Price</div>
+                                                    <div style={{ fontSize: 16, fontWeight: 900 }}>{fmtCurrency(recommendedProduct.unitPrice)}</div>
+                                                </div>
+                                                <div className="metric-box" style={{ background: '#fff7ed', border: '2px solid #f56600' }}>
+                                                    <div className="metric-label" style={{ color: '#f56600' }}>Total CAPEX</div>
+                                                    <div style={{ fontSize: 16, fontWeight: 900, color: '#f56600' }}>{fmtCurrency(recommendedProduct.totalPrice)}</div>
+                                                </div>
+                                                <div className="metric-box">
+                                                    <div className="metric-label">COP</div>
+                                                    <div style={{ fontSize: 16, fontWeight: 900 }}>{recommendedProduct.cop}</div>
+                                                </div>
+                                                <div className="metric-box">
+                                                    <div className="metric-label">Max Temp</div>
+                                                    <div style={{ fontSize: 16, fontWeight: 900 }}>{recommendedProduct.maxTemp}°C</div>
+                                                </div>
+                                                <div className="metric-box">
+                                                    <div className="metric-label">Refrigerant</div>
+                                                    <div style={{ fontSize: 12, fontWeight: 900 }}>{recommendedProduct.refrigerantLabel || 'CO₂'}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Investment Summary */}
+                                <div className="no-break" style={{ marginTop: 18 }}>
+                                    <div className="section-title">5. Investment Summary</div>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: '50%' }}>Metric</th>
+                                                <th style={{ textAlign: 'right' }}>Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                <td>Capital Investment (Equipment)</td>
+                                                <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtCurrency(params.capitalCost)}</td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                                <td>Annual Energy Savings</td>
+                                                <td style={{ textAlign: 'right', fontWeight: 700, color: '#16a34a' }}>{fmtCurrency(hpSizing.annualSavings)}</td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                <td>Simple Payback Period</td>
+                                                <td style={{ textAlign: 'right', fontWeight: 700, color: '#f56600' }}>{payback || '—'} years</td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                                <td>Annual CO₂ Emissions Avoided</td>
+                                                <td style={{ textAlign: 'right', fontWeight: 700, color: '#16a34a' }}>{hpSizing.co2Reduction} tonnes</td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                <td>5-Year Net Benefit</td>
+                                                <td style={{ textAlign: 'right', fontWeight: 900, color: '#16a34a', fontSize: 14 }}>{fmtCurrency(hpSizing.annualSavings * 5 - params.capitalCost)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>10-Year Net Benefit</td>
+                                                <td style={{ textAlign: 'right', fontWeight: 900, color: '#16a34a', fontSize: 14 }}>{fmtCurrency(hpSizing.annualSavings * 10 - params.capitalCost)}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Footer */}
+                                <div style={{ marginTop: 24, paddingTop: 12, borderTop: '1px solid #e5e7eb', fontSize: 9, color: '#9ca3af', textAlign: 'center' }}>
+                                    <p>This report was generated by Karnot Energy Solutions Inc. using Utility Pinch Analysis methodology.</p>
+                                    <p>All values are indicative estimates. Actual performance depends on site conditions, installation, and operating parameters.</p>
+                                    <p style={{ marginTop: 4, color: '#f56600', fontWeight: 700 }}>www.karnotenergy.com | info@karnotenergy.com</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
