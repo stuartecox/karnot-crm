@@ -97,6 +97,8 @@ const PinchCalculator = ({ setActiveView, user }) => {
         hpDutyKW: 200,
         hpCOP: 3.5,
         capitalCost: 150000,
+        sourceTemp: 4,
+        sinkTemp: 90,
     });
 
     // UI toggles
@@ -149,6 +151,8 @@ const PinchCalculator = ({ setActiveView, user }) => {
             ...params,
             boilerEfficiency: params.boilerEfficiency / 100,
             hpDutyKW: params.hpDutyKW,
+            sourceTemp: params.sourceTemp,
+            sinkTemp: params.sinkTemp,
         });
     }, [pinchResult, params]);
 
@@ -619,14 +623,39 @@ const PinchCalculator = ({ setActiveView, user }) => {
                     </div>
 
                     {/* HP Operating Envelope */}
-                    {hpSizing && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-                            <MetricCard icon={Snowflake} label="Source Temp (Evaporator)" value={`${hpSizing.sourceTemp.toFixed(0)}°C`} color="blue" />
-                            <MetricCard icon={Flame} label="Sink Temp (Condenser)" value={`${hpSizing.sinkTemp.toFixed(0)}°C`} color="red" />
-                            <MetricCard icon={Thermometer} label="Temperature Lift" value={`${hpSizing.temperatureLift.toFixed(0)}°C`} color="orange" />
-                            <MetricCard icon={Zap} label="Compressor Input" value={`${fmt(hpSizing.hpElecInput)} kW`} sub={`Evaporator: ${fmt(hpSizing.evapDuty)} kW`} color="gray" />
+                    {/* Utility Ring Temperatures */}
+                    <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 rounded-xl border border-gray-200">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                            CO2 Transcritical Heat Pump — Utility Ring Temperatures
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-blue-600 uppercase mb-1">Source Temp (Evaporator)</label>
+                                <div className="flex items-center gap-1">
+                                    <input type="number" value={params.sourceTemp}
+                                        onChange={(e) => updateParam('sourceTemp', e.target.value)}
+                                        className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm text-center font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" />
+                                    <span className="text-sm text-gray-500">°C</span>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">Chilled water return</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-red-600 uppercase mb-1">Sink Temp (Gas Cooler)</label>
+                                <div className="flex items-center gap-1">
+                                    <input type="number" value={params.sinkTemp}
+                                        onChange={(e) => updateParam('sinkTemp', e.target.value)}
+                                        className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm text-center font-bold focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white" />
+                                    <span className="text-sm text-gray-500">°C</span>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">Hot water supply</p>
+                            </div>
+                            <MetricCard icon={Thermometer} label="Temperature Lift" value={`${params.sinkTemp - params.sourceTemp}°C`} color="orange" />
+                            {hpSizing && <MetricCard icon={Zap} label="Compressor Input" value={`${fmt(hpSizing.hpElecInput)} kW`} sub={`Evaporator: ${fmt(hpSizing.evapDuty)} kW`} color="gray" />}
                         </div>
-                    )}
+                        <p className="text-[10px] text-gray-400 mt-3 italic">
+                            CO2 (R-744) transcritical cycle: no condenser, uses a gas cooler. Temperature glide matches water heating perfectly. Typical dairy lift: 4°C → 90°C.
+                        </p>
+                    </div>
                 </div>
             )}
 
@@ -744,11 +773,11 @@ const PinchCalculator = ({ setActiveView, user }) => {
                                 </div>
                                 <div className="bg-white rounded-lg p-2 text-center">
                                     <div className="text-xs text-gray-500">Source → Sink</div>
-                                    <div className="font-bold">{hpSizing.sourceTemp.toFixed(0)}°C → {hpSizing.sinkTemp.toFixed(0)}°C</div>
+                                    <div className="font-bold">{params.sourceTemp}°C → {params.sinkTemp}°C</div>
                                 </div>
                                 <div className="bg-white rounded-lg p-2 text-center">
                                     <div className="text-xs text-gray-500">Temp Lift</div>
-                                    <div className="font-bold">{hpSizing.temperatureLift.toFixed(0)}°C</div>
+                                    <div className="font-bold">{params.sinkTemp - params.sourceTemp}°C</div>
                                 </div>
                             </div>
                         </div>
