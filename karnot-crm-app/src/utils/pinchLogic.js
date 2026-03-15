@@ -18,6 +18,9 @@ export const PINCH_CONFIG = {
     // Emission factors
     CO2_FACTOR_GAS: 0.205,        // kgCO2/kWh (natural gas combustion)
     CO2_FACTOR_ELEC: 0.417,       // kgCO2/kWh (US grid average 2024)
+    // CO2 heat pump utility temperatures (dairy defaults)
+    DEFAULT_SOURCE_TEMP: 4,       // deg C - chilled water return (evaporator inlet)
+    DEFAULT_SINK_TEMP: 90,        // deg C - hot water supply (gas cooler outlet)
 };
 
 // ============================================
@@ -328,6 +331,8 @@ export function calculateHeatPumpSizing(pinchResult, params) {
         chillerCOP = PINCH_CONFIG.DEFAULT_CHILLER_COP,
         elecRate = PINCH_CONFIG.DEFAULT_ELEC_RATE,
         gasRate = PINCH_CONFIG.DEFAULT_GAS_RATE,
+        sourceTemp = PINCH_CONFIG.DEFAULT_SOURCE_TEMP,
+        sinkTemp = PINCH_CONFIG.DEFAULT_SINK_TEMP,
     } = params;
 
     if (!pinchResult || !hpDutyKW || hpDutyKW <= 0) return null;
@@ -371,9 +376,8 @@ export function calculateHeatPumpSizing(pinchResult, params) {
     const savingsPercent = baseTotalCost > 0 ? (annualSavings / baseTotalCost) * 100 : 0;
     const co2Reduction = baseCO2 - newCO2;
 
-    // Utility temperatures for heat pump operating envelope
-    const sourceTemp = pinchResult.pinchTempCold;
-    const sinkTemp = pinchResult.pinchTempHot;
+    // Utility ring operating temperatures (user-defined, not pinch-derived)
+    // CO2 transcritical heat pumps can lift from 4C chilled water to 90C hot water
     const temperatureLift = sinkTemp - sourceTemp;
 
     return {
