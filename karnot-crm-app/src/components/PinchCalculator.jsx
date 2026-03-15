@@ -163,8 +163,8 @@ const PinchCalculator = ({ setActiveView, user }) => {
 
     const recommendedProduct = useMemo(() => {
         if (!hpSizing || !products.length) return null;
-        return findMatchingProduct(products, params.hpDutyKW);
-    }, [hpSizing, products, params.hpDutyKW]);
+        return findMatchingProduct(products, params.hpDutyKW, params.sinkTemp);
+    }, [hpSizing, products, params.hpDutyKW, params.sinkTemp]);
 
     // Auto-set HP duty to 80% of QH_min when pinch result changes
     useEffect(() => {
@@ -175,6 +175,17 @@ const PinchCalculator = ({ setActiveView, user }) => {
             }));
         }
     }, [pinchResult?.qHMin]);
+
+    // Auto-set capital cost and COP from recommended product pricing
+    useEffect(() => {
+        if (recommendedProduct && recommendedProduct.totalPrice > 0) {
+            setParams(prev => ({
+                ...prev,
+                capitalCost: Math.round(recommendedProduct.totalPrice),
+                hpCOP: recommendedProduct.cop || prev.hpCOP,
+            }));
+        }
+    }, [recommendedProduct?.name, recommendedProduct?.quantity, recommendedProduct?.totalPrice]);
 
     // ==========================================
     // HANDLERS
@@ -758,28 +769,51 @@ const PinchCalculator = ({ setActiveView, user }) => {
                                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
                                     <Zap size={16} className="text-white" />
                                 </div>
-                                <h4 className="font-bold text-orange-800 text-lg">Recommended Karnot Product</h4>
+                                <h4 className="font-bold text-orange-800 text-lg">Recommended Karnot Equipment</h4>
                             </div>
                             <p className="text-xl font-black text-gray-800">{recommendedProduct.name}</p>
                             {recommendedProduct.quantity > 1 && (
                                 <p className="text-sm text-orange-700 font-semibold mt-1">
-                                    Quantity: {recommendedProduct.quantity} units ({fmt(recommendedProduct.totalCapacity)} kW total)
+                                    Quantity: {recommendedProduct.quantity} units ({fmt(recommendedProduct.totalCapacity)} kW total capacity)
                                 </p>
                             )}
-                            <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                                <div className="bg-white rounded-lg p-2 text-center">
-                                    <div className="text-xs text-gray-500">Refrigerant</div>
-                                    <div className="font-bold">CO2 (R-744)</div>
+                            <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                <div className="bg-white rounded-lg p-3 text-center border border-orange-100">
+                                    <div className="text-[10px] text-gray-500 uppercase font-bold">Unit Price</div>
+                                    <div className="text-lg font-black text-gray-800">{fmtCurrency(recommendedProduct.unitPrice)}</div>
                                 </div>
-                                <div className="bg-white rounded-lg p-2 text-center">
-                                    <div className="text-xs text-gray-500">Source → Sink</div>
-                                    <div className="font-bold">{params.sourceTemp}°C → {params.sinkTemp}°C</div>
+                                <div className="bg-white rounded-lg p-3 text-center border border-orange-100">
+                                    <div className="text-[10px] text-gray-500 uppercase font-bold">{recommendedProduct.quantity > 1 ? `Total (×${recommendedProduct.quantity})` : 'Equipment Cost'}</div>
+                                    <div className="text-lg font-black text-orange-700">{fmtCurrency(recommendedProduct.totalPrice)}</div>
                                 </div>
-                                <div className="bg-white rounded-lg p-2 text-center">
-                                    <div className="text-xs text-gray-500">Temp Lift</div>
-                                    <div className="font-bold">{params.sinkTemp - params.sourceTemp}°C</div>
+                                <div className="bg-white rounded-lg p-3 text-center border border-orange-100">
+                                    <div className="text-[10px] text-gray-500 uppercase font-bold">COP (from specs)</div>
+                                    <div className="text-lg font-black text-gray-800">{recommendedProduct.cop}</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 text-center border border-orange-100">
+                                    <div className="text-[10px] text-gray-500 uppercase font-bold">Max Water Temp</div>
+                                    <div className="text-lg font-black text-gray-800">{recommendedProduct.maxTemp}°C</div>
                                 </div>
                             </div>
+                            <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                                <div className="bg-white rounded-lg p-2 text-center border border-orange-100">
+                                    <div className="text-[10px] text-gray-500 uppercase font-bold">Refrigerant</div>
+                                    <div className="font-bold text-sm">{recommendedProduct.refrigerantLabel || recommendedProduct.refrigerant}</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-2 text-center border border-orange-100">
+                                    <div className="text-[10px] text-gray-500 uppercase font-bold">Source → Sink</div>
+                                    <div className="font-bold text-sm">{params.sourceTemp}°C → {params.sinkTemp}°C</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-2 text-center border border-orange-100">
+                                    <div className="text-[10px] text-gray-500 uppercase font-bold">Margin</div>
+                                    <div className="font-bold text-sm text-green-600">{recommendedProduct.margin}%</div>
+                                </div>
+                            </div>
+                            {payback && (
+                                <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200 text-center">
+                                    <span className="text-sm text-green-800">Equipment payback: <strong>{payback} years</strong> based on {fmtCurrency(recommendedProduct.totalPrice)} CAPEX and {fmtCurrency(hpSizing.annualSavings)}/yr savings</span>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -787,6 +821,13 @@ const PinchCalculator = ({ setActiveView, user }) => {
                         <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 flex items-center gap-2">
                             <AlertCircle size={16} />
                             No Karnot heat pump products found in your inventory. Add products to get automatic recommendations.
+                        </div>
+                    )}
+
+                    {!recommendedProduct && products.length > 0 && !loading && (
+                        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700 flex items-center gap-2">
+                            <AlertCircle size={16} />
+                            No suitable heat pump found for {params.sinkTemp}°C sink temperature. Check your product inventory for units rated to this temperature.
                         </div>
                     )}
                 </div>
